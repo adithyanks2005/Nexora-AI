@@ -6,7 +6,7 @@ An advanced AI-powered healthcare assistant with chat, symptom analysis, health 
 
 | Feature | Description |
 |---|---|
-| 💬 AI Chat | Conversational health assistant powered by Google Gemini with a Claude-like response style and full chat history |
+| 💬 AI Chat | Conversational health assistant powered by OpenRouter with a Claude-style model and full chat history |
 | 🩺 Symptom Checker | AI-powered symptom analysis with body area, severity & duration context |
 | 🧮 Health Calculators | BMI, Daily Calories (with macros), Water Intake, Ideal Body Weight |
 | ⏰ Medication Reminders | Add, toggle, and manage health reminders with icons |
@@ -18,15 +18,15 @@ An advanced AI-powered healthcare assistant with chat, symptom analysis, health 
 ## Tech Stack
 
 - **Backend**: FastAPI + Uvicorn
-- **AI**: Google Gemini (`gemini-2.5-flash` by default)
+- **AI**: OpenRouter (`anthropic/claude-sonnet-4.6` by default)
 - **Database**: SQLite (chat history, reminders, health records)
 - **Frontend**: Vanilla HTML / CSS / JavaScript (no framework needed)
 - **Tests**: Pytest
 
 ## Quick Start
 
-### 1. Get a Google AI Studio API Key
-Create a Gemini API key in [Google AI Studio](https://aistudio.google.com/app/apikey).
+### 1. Get an OpenRouter API Key
+Create an API key in [OpenRouter](https://openrouter.ai/settings/keys).
 
 ### 2. Setup
 
@@ -37,7 +37,7 @@ python -m venv .venv
 source .venv/bin/activate     # macOS / Linux
 pip install -r requirements.txt
 cp .env.example .env
-# Edit .env and add your GOOGLE_API_KEY
+# Edit .env and add your OPENROUTER_API_KEY
 ```
 
 Or just double-click **`setup.bat`** on Windows.
@@ -58,7 +58,7 @@ Open **http://localhost:8000** in your browser.
 nexora-ai/
 ├── backend/
 │   ├── main.py          # FastAPI routes
-│   ├── ai.py            # Gemini AI integration
+│   ├── ai.py            # OpenRouter AI integration
 │   ├── calculators.py   # Health calculators
 │   ├── database.py      # SQLite setup
 │   └── models.py        # Pydantic models

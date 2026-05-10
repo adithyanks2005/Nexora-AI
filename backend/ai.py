@@ -4,7 +4,8 @@ import os
 import httpx
 from fastapi import HTTPException
 
-DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+DEFAULT_OPENROUTER_MODEL = "anthropic/claude-sonnet-4.6"
 
 SYSTEM_PROMPT = """You are Nexora AI, an advanced, empathetic healthcare assistant.
 
@@ -34,50 +35,45 @@ Voice and style:
 
 
 async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
-    api_key = os.getenv("GOOGLE_API_KEY", "")
-    model = os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL)
-    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    api_key = os.getenv("OPENROUTER_API_KEY", "")
+    model = os.getenv("OPENROUTER_MODEL", DEFAULT_OPENROUTER_MODEL)
 
     if not api_key:
-        raise HTTPException(status_code=500, detail="GOOGLE_API_KEY not configured. Add it to your .env file.")
+        raise HTTPException(status_code=500, detail="OPENROUTER_API_KEY not configured. Add it to your .env file.")
 
-    gemini_messages = [
-        {
-            "role": "model" if msg.get("role") == "assistant" else "user",
-            "parts": [{"text": msg.get("content", "")}],
-        }
+    chat_messages = [{"role": "system", "content": system}] + [
+        {"role": msg.get("role", "user"), "content": msg.get("content", "")}
         for msg in messages
         if msg.get("content")
     ]
 
     payload = {
-        "systemInstruction": {"parts": [{"text": system}]},
-        "contents": gemini_messages,
-        "generationConfig": {
-            "temperature": 0.72,
-            "topP": 0.92,
-            "maxOutputTokens": 1024,
-        },
+        "model": model,
+        "messages": chat_messages,
+        "temperature": 0.72,
+        "top_p": 0.92,
+        "max_tokens": 1024,
     }
     headers = {
-        "x-goog-api-key": api_key,
+        "Authorization": f"Bearer {api_key}",
         "content-type": "application/json",
+        "HTTP-Referer": "http://localhost:8001",
+        "X-Title": "Nexora AI",
     }
     async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.post(gemini_url, json=payload, headers=headers)
+        resp = await client.post(OPENROUTER_URL, json=payload, headers=headers)
     if resp.status_code != 200:
         raise HTTPException(status_code=resp.status_code, detail=resp.text)
     data  = resp.json()
-    parts = data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
-    reply = "".join(part.get("text", "") for part in parts).strip()
+    reply = data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
     if not reply:
-        raise HTTPException(status_code=502, detail="Gemini returned an empty response. Please try again.")
+        raise HTTPException(status_code=502, detail="OpenRouter returned an empty response. Please try again.")
     return reply
 
 
 def get_ai_status() -> dict[str, str]:
     return {
-        "provider": "gemini",
-        "model": os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL),
-        "api_key": "configured" if os.getenv("GOOGLE_API_KEY", "") else "missing",
+        "provider": "openrouter",
+        "model": os.getenv("OPENROUTER_MODEL", DEFAULT_OPENROUTER_MODEL),
+        "api_key": "configured" if os.getenv("OPENROUTER_API_KEY", "") else "missing",
     }
