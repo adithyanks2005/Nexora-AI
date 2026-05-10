@@ -1,4 +1,4 @@
-# 🧬 Nexora AI — Healthcare Chatbot
+# Nexora AI - Healthcare Chatbot
 
 An advanced AI-powered healthcare assistant with chat, symptom analysis, health calculators, medication reminders, and health record tracking.
 
@@ -8,26 +8,28 @@ An advanced AI-powered healthcare assistant with chat, symptom analysis, health 
 
 | Feature | Description |
 |---|---|
-| 💬 AI Chat | Conversational health assistant powered by OpenRouter with a Claude-style model and full chat history |
-| 🩺 Symptom Checker | AI-powered symptom analysis with body area, severity & duration context |
-| 🧮 Health Calculators | BMI, Daily Calories (with macros), Water Intake, Ideal Body Weight |
-| ⏰ Medication Reminders | Add, toggle, and manage health reminders with icons |
-| 📋 Health Records | Log and track blood pressure, sugar, weight, heart rate, mood, and more |
-| 🎤 Voice Input | Speak your health questions directly |
-| 🌙 Dark / Light Mode | Toggle between themes |
-| 📱 Responsive | Works on desktop and mobile |
+| AI Chat | Conversational health assistant powered by OpenRouter with a Claude-style model and full chat history |
+| Symptom Checker | AI-powered symptom analysis with body area, severity, and duration context |
+| Health Calculators | BMI, daily calories with macros, water intake, and ideal body weight |
+| Medication Reminders | Add, toggle, and manage health reminders with icons |
+| Health Records | Log and track blood pressure, sugar, weight, heart rate, mood, and more |
+| Voice Input | Speak your health questions directly |
+| Dark / Light Mode | Toggle between themes |
+| Responsive UI | Works on desktop and mobile |
 
 ## Tech Stack
 
 - **Backend**: FastAPI + Uvicorn
 - **AI**: OpenRouter (`anthropic/claude-sonnet-4.6` by default)
-- **Database**: SQLite (chat history, reminders, health records)
-- **Frontend**: Vanilla HTML / CSS / JavaScript (no framework needed)
+- **Database**: SQLite for chat history, reminders, and health records
+- **Frontend**: Vanilla HTML, CSS, and JavaScript
 - **Tests**: Pytest
+- **Deployment**: Render Blueprint via `render.yaml`
 
 ## Quick Start
 
 ### 1. Get an OpenRouter API Key
+
 Create an API key in [OpenRouter](https://openrouter.ai/settings/keys).
 
 ### 2. Setup
@@ -35,28 +37,29 @@ Create an API key in [OpenRouter](https://openrouter.ai/settings/keys).
 ```bash
 cd nexora-ai
 python -m venv .venv
-.venv\Scripts\activate        # Windows
-source .venv/bin/activate     # macOS / Linux
+.venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env
-# Edit .env and add your OPENROUTER_API_KEY
+copy .env.example .env
 ```
 
-Or just double-click **`setup.bat`** on Windows.
+Edit `.env` and add your key:
+
+```env
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+OPENROUTER_MODEL=anthropic/claude-sonnet-4.6
+```
 
 ### 3. Run
 
 ```bash
-uvicorn backend.main:app --reload --port 8000
+python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8001
 ```
 
-Or double-click **`run.bat`** on Windows.
-
-Open **http://localhost:8000** in your browser.
+Open [http://127.0.0.1:8001](http://127.0.0.1:8001) in your browser.
 
 ## Project Structure
 
-```
+```text
 nexora-ai/
 ├── backend/
 │   ├── main.py          # FastAPI routes
@@ -66,13 +69,17 @@ nexora-ai/
 │   └── models.py        # Pydantic models
 ├── frontend/
 │   ├── index.html       # Single-page app
+│   ├── manifest.webmanifest
+│   ├── service-worker.js
 │   └── static/
 │       ├── css/style.css
+│       ├── icons/icon.svg
 │       └── js/app.js
 ├── tests/
-│   └── test_api.py      # Full test suite
-├── data/                # SQLite database (auto-created)
+│   └── test_api.py
+├── data/
 ├── .env.example
+├── render.yaml
 ├── requirements.txt
 ├── setup.bat
 └── run.bat
@@ -99,6 +106,25 @@ nexora-ai/
 | GET/POST | `/api/records` | Health records |
 | DELETE | `/api/records/{id}` | Delete record |
 
+## Deploy
+
+This project includes a Render Blueprint:
+
+```text
+render.yaml
+```
+
+After pushing to GitHub, open:
+
+[Render Blueprint Deploy](https://dashboard.render.com/blueprint/new?repo=https://github.com/adithyanks2005/Nexora-AI)
+
+Set these environment variables in Render:
+
+```env
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+OPENROUTER_MODEL=anthropic/claude-sonnet-4.6
+```
+
 ## Running Tests
 
 ```bash
@@ -108,3 +134,7 @@ pytest tests/ -v
 ## Disclaimer
 
 Nexora AI provides general health information only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider for medical concerns.
+
+## License
+
+MIT License. See [LICENSE](LICENSE).
