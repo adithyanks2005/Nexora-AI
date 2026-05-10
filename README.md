@@ -2,7 +2,7 @@
 
 An advanced AI-powered healthcare assistant with chat, symptom analysis, health calculators, medication reminders, and health record tracking.
 
-**Author:** ADITHYAN KS
+> Created by **ADITHYAN KS**
 
 ## Features
 
@@ -134,6 +134,10 @@ pytest tests/ -v
 ## Disclaimer
 
 Nexora AI provides general health information only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider for medical concerns.
+
+## Author
+
+**ADITHYAN KS**
 
 ## License
 
