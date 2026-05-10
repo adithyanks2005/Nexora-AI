@@ -2,6 +2,8 @@
 
 An advanced AI-powered healthcare assistant with chat, symptom analysis, health calculators, medication reminders, and health record tracking.
 
+**Author:** ADITHYAN KS
+
 ## Features
 
 | Feature | Description |
