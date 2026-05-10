@@ -1,0 +1,20 @@
+{
+  "name": "Nexora AI Healthcare Assistant",
+  "short_name": "Nexora AI",
+  "description": "A personal healthcare assistant with AI chat, symptom guidance, calculators, reminders, and records.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#6c63ff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "medical", "productivity"]
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Nexora AI">
+  <rect width="512" height="512" rx="112" fill="#0f1117"/>
+  <circle cx="174" cy="164" r="54" fill="#6c63ff"/>
+  <circle cx="338" cy="164" r="54" fill="#1d9e75"/>
+  <circle cx="174" cy="348" r="54" fill="#378add"/>
+  <circle cx="338" cy="348" r="54" fill="#a78bfa"/>
+  <path d="M174 164c54 54 110 130 164 184M338 164C284 218 228 294 174 348" fill="none" stroke="#e8eaf6" stroke-width="34" stroke-linecap="round"/>
+  <path d="M256 146v220" fill="none" stroke="#e8eaf6" stroke-width="28" stroke-linecap="round" opacity=".72"/>
+</svg>

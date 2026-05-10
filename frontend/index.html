@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#6c63ff" />
+  <meta name="description" content="Nexora AI is a healthcare assistant with chat, symptom guidance, calculators, reminders, and records." />
+  <title>Nexora AI — Healthcare Assistant</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/static/icons/icon.svg" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <span class="logo-icon">🧬</span>
+        <span class="logo-text">Nexora AI</span>
+      </div>
+      <button class="btn-icon" id="newChatBtn" title="New Chat">✏️</button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-page="chat">
+        <span class="nav-icon">💬</span><span>Chat</span>
+      </button>
+      <button class="nav-item" data-page="symptoms">
+        <span class="nav-icon">🩺</span><span>Symptom Checker</span>
+      </button>
+      <button class="nav-item" data-page="calculators">
+        <span class="nav-icon">🧮</span><span>Calculators</span>
+      </button>
+      <button class="nav-item" data-page="reminders">
+        <span class="nav-icon">⏰</span><span>Reminders</span>
+      </button>
+      <button class="nav-item" data-page="records">
+        <span class="nav-icon">📋</span><span>Health Records</span>
+      </button>
+    </nav>
+
+    <div class="session-list" id="sessionList"></div>
+
+    <div class="sidebar-footer">
+      <button class="btn-icon" id="themeToggle" title="Toggle theme">🌙</button>
+      <span class="version">v2.0.0</span>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main" id="main">
+    <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+
+    <!-- Chat Page -->
+    <section class="page active" id="page-chat">
+      <div class="chat-header">
+        <h2 id="chatTitle">Nexora AI</h2>
+        <p class="chat-subtitle">Your personal healthcare assistant</p>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="welcome-card">
+          <div class="welcome-icon">🧬</div>
+          <h3>Hello! I'm Nexora AI</h3>
+          <p>Your intelligent healthcare companion. Ask me anything about health, wellness, symptoms, nutrition, or mental wellbeing.</p>
+          <div class="quick-prompts">
+            <button class="quick-btn" data-prompt="What are the symptoms of diabetes?">🩸 Diabetes symptoms</button>
+            <button class="quick-btn" data-prompt="How can I improve my sleep quality?">😴 Better sleep tips</button>
+            <button class="quick-btn" data-prompt="What foods boost the immune system?">🥦 Immune boosting foods</button>
+            <button class="quick-btn" data-prompt="How do I manage stress and anxiety?">🧘 Stress management</button>
+            <button class="quick-btn" data-prompt="What is a healthy daily routine?">📅 Healthy daily routine</button>
+            <button class="quick-btn" data-prompt="How much water should I drink daily?">💧 Daily water intake</button>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <div class="chat-input-wrapper">
+          <button class="btn-icon voice-btn" id="voiceBtn" title="Voice input">🎤</button>
+          <textarea
+            id="chatInput"
+            placeholder="Ask me anything about your health..."
+            rows="1"
+            maxlength="2000"
+          ></textarea>
+          <button class="btn-send" id="sendBtn" title="Send">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+        <p class="disclaimer">Nexora AI provides general health information only. Always consult a doctor for medical advice.</p>
+      </div>
+    </section>
+
+    <!-- Symptom Checker Page -->
+    <section class="page" id="page-symptoms">
+      <div class="page-header">
+        <h2>🩺 Symptom Checker</h2>
+        <p>Describe your symptoms and get AI-powered health guidance</p>
+      </div>
+      <div class="symptom-container">
+        <div class="symptom-form card">
+          <div class="form-group">
+            <label>Symptoms <span class="required">*</span></label>
+            <div class="tag-input-wrapper">
+              <div class="tags" id="symptomTags"></div>
+              <input type="text" id="symptomInput" placeholder="Type a symptom and press Enter..." />
+            </div>
+            <div class="common-symptoms">
+              <span class="label-sm">Common:</span>
+              <button class="chip" data-symptom="Headache">Headache</button>
+              <button class="chip" data-symptom="Fever">Fever</button>
+              <button class="chip" data-symptom="Cough">Cough</button>
+              <button class="chip" data-symptom="Fatigue">Fatigue</button>
+              <button class="chip" data-symptom="Nausea">Nausea</button>
+              <button class="chip" data-symptom="Chest pain">Chest pain</button>
+              <button class="chip" data-symptom="Shortness of breath">Shortness of breath</button>
+              <button class="chip" data-symptom="Dizziness">Dizziness</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Body Area</label>
+              <select id="bodyArea">
+                <option value="">Select area...</option>
+                <option>Head & Neck</option>
+                <option>Chest</option>
+                <option>Abdomen</option>
+                <option>Back</option>
+                <option>Arms & Hands</option>
+                <option>Legs & Feet</option>
+                <option>Skin</option>
+                <option>General / Whole body</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Severity</label>
+              <select id="severity">
+                <option value="">Select severity...</option>
+                <option>Mild</option>
+                <option>Moderate</option>
+                <option>Severe</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Duration</label>
+              <select id="duration">
+                <option value="">Select duration...</option>
+                <option>Less than 1 day</option>
+                <option>1–3 days</option>
+                <option>4–7 days</option>
+                <option>1–2 weeks</option>
+                <option>More than 2 weeks</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-primary" id="analyzeBtn">🔍 Analyze Symptoms</button>
+        </div>
+        <div class="symptom-result card hidden" id="symptomResult">
+          <h3>📋 Analysis Result</h3>
+          <div id="symptomResultContent"></div>
+          <p class="disclaimer mt-1">This is general information only. Please consult a healthcare professional for proper diagnosis.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Calculators Page -->
+    <section class="page" id="page-calculators">
+      <div class="page-header">
+        <h2>🧮 Health Calculators</h2>
+        <p>Evidence-based tools to track your health metrics</p>
+      </div>
+      <div class="calc-tabs">
+        <button class="calc-tab active" data-calc="bmi">BMI</button>
+        <button class="calc-tab" data-calc="calories">Calories</button>
+        <button class="calc-tab" data-calc="water">Water</button>
+        <button class="calc-tab" data-calc="ideal">Ideal Weight</button>
+      </div>
+
+      <!-- BMI -->
+      <div class="calc-panel active card" id="calc-bmi">
+        <h3>Body Mass Index</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Unit</label>
+            <select id="bmiUnit">
+              <option value="metric">Metric (kg / cm)</option>
+              <option value="imperial">Imperial (lbs / cm)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Weight</label>
+            <input type="number" id="bmiWeight" placeholder="70" min="1" />
+          </div>
+          <div class="form-group">
+            <label>Height (cm)</label>
+            <input type="number" id="bmiHeight" placeholder="175" min="1" />
+          </div>
+        </div>
+        <button class="btn-primary" onclick="calcBMI()">Calculate BMI</button>
+        <div class="calc-result hidden" id="bmiResult"></div>
+      </div>
+
+      <!-- Calories -->
+      <div class="calc-panel card" id="calc-calories">
+        <h3>Daily Calorie Needs</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Age</label>
+            <input type="number" id="calAge" placeholder="25" min="1" max="120" />
+          </div>
+          <div class="form-group">
+            <label>Gender</label>
+            <select id="calGender">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Weight (kg)</label>
+            <input type="number" id="calWeight" placeholder="70" min="1" />
+          </div>
+          <div class="form-group">
+            <label>Height (cm)</label>
+            <input type="number" id="calHeight" placeholder="175" min="1" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Activity Level</label>
+            <select id="calActivity">
+              <option value="1.2">Sedentary (little/no exercise)</option>
+              <option value="1.375">Light (1–3 days/week)</option>
+              <option value="1.55" selected>Moderate (3–5 days/week)</option>
+              <option value="1.725">Active (6–7 days/week)</option>
+              <option value="1.9">Very Active (hard exercise daily)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Goal</label>
+            <select id="calGoal">
+              <option value="lose">Lose weight</option>
+              <option value="maintain" selected>Maintain weight</option>
+              <option value="gain">Gain weight</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="calcCalories()">Calculate Calories</button>
+        <div class="calc-result hidden" id="caloriesResult"></div>
+      </div>
+
+      <!-- Water -->
+      <div class="calc-panel card" id="calc-water">
+        <h3>Daily Water Intake</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Weight (kg)</label>
+            <input type="number" id="waterWeight" placeholder="70" min="1" />
+          </div>
+          <div class="form-group">
+            <label>Exercise (extra litres)</label>
+            <select id="waterActivity">
+              <option value="0">None</option>
+              <option value="0.35">Light (30 min)</option>
+              <option value="0.7">Moderate (1 hr)</option>
+              <option value="1.0">Intense (1.5+ hr)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Climate</label>
+            <select id="waterClimate">
+              <option value="0">Temperate</option>
+              <option value="0.3">Hot / Humid</option>
+              <option value="0.5">Very Hot</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="calcWater()">Calculate Water</button>
+        <div class="calc-result hidden" id="waterResult"></div>
+      </div>
+
+      <!-- Ideal Weight -->
+      <div class="calc-panel card" id="calc-ideal">
+        <h3>Ideal Body Weight</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Height (cm)</label>
+            <input type="number" id="idealHeight" placeholder="175" min="100" max="250" />
+          </div>
+          <div class="form-group">
+            <label>Gender</label>
+            <select id="idealGender">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="calcIdeal()">Calculate Ideal Weight</button>
+        <div class="calc-result hidden" id="idealResult"></div>
+      </div>
+    </section>
+
+    <!-- Reminders Page -->
+    <section class="page" id="page-reminders">
+      <div class="page-header">
+        <h2>⏰ Medication Reminders</h2>
+        <p>Never miss a dose or health routine</p>
+      </div>
+      <div class="reminders-layout">
+        <div class="card reminder-form-card">
+          <h3>Add Reminder</h3>
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="remTitle" placeholder="e.g. Morning vitamins" maxlength="100" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Time</label>
+              <input type="time" id="remTime" value="08:00" />
+            </div>
+            <div class="form-group">
+              <label>Repeat</label>
+              <select id="remRepeat">
+                <option>Daily</option>
+                <option>Weekdays</option>
+                <option>Weekends</option>
+                <option>Weekly</option>
+                <option>Once</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <input type="text" id="remNotes" placeholder="e.g. Take with food" maxlength="200" />
+          </div>
+          <div class="form-group">
+            <label>Icon</label>
+            <div class="icon-picker" id="iconPicker">
+              <button class="icon-btn active" data-icon="💊">💊</button>
+              <button class="icon-btn" data-icon="💧">💧</button>
+              <button class="icon-btn" data-icon="🏃">🏃</button>
+              <button class="icon-btn" data-icon="🧘">🧘</button>
+              <button class="icon-btn" data-icon="🥗">🥗</button>
+              <button class="icon-btn" data-icon="😴">😴</button>
+              <button class="icon-btn" data-icon="🩺">🩺</button>
+              <button class="icon-btn" data-icon="🧪">🧪</button>
+            </div>
+          </div>
+          <button class="btn-primary" id="addReminderBtn">+ Add Reminder</button>
+        </div>
+        <div class="reminders-list-card">
+          <div class="reminders-header">
+            <h3>Your Reminders</h3>
+            <button class="btn-sm btn-danger" id="clearDoneBtn">Clear Done</button>
+          </div>
+          <div id="remindersList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Health Records Page -->
+    <section class="page" id="page-records">
+      <div class="page-header">
+        <h2>📋 Health Records</h2>
+        <p>Track your health metrics over time</p>
+      </div>
+      <div class="records-layout">
+        <div class="card record-form-card">
+          <h3>Log Health Data</h3>
+          <div class="form-group">
+            <label>Type</label>
+            <select id="recType">
+              <option value="Blood Pressure">Blood Pressure</option>
+              <option value="Blood Sugar">Blood Sugar</option>
+              <option value="Weight">Weight</option>
+              <option value="Heart Rate">Heart Rate</option>
+              <option value="Temperature">Temperature</option>
+              <option value="Oxygen Level">Oxygen Level</option>
+              <option value="Sleep">Sleep</option>
+              <option value="Exercise">Exercise</option>
+              <option value="Mood">Mood</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Value / Data</label>
+            <input type="text" id="recData" placeholder="e.g. 120/80 mmHg" maxlength="200" />
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <input type="text" id="recNotes" placeholder="Optional notes" maxlength="300" />
+          </div>
+          <button class="btn-primary" id="addRecordBtn">+ Log Record</button>
+        </div>
+        <div class="records-list-card">
+          <h3>Recent Records</h3>
+          <div id="recordsList"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
