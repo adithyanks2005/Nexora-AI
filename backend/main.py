@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend.ai import call_claude, SYSTEM_PROMPT
+from backend.ai import call_ai, SYSTEM_PROMPT
 from backend.calculators import calc_bmi, calc_calories, calc_water, calc_ideal_weight
 from backend.database import get_connection, init_db
 from backend.models import (
@@ -41,8 +41,11 @@ app.add_middleware(
 # ── Health check ──────────────────────────────────────────────────────────────
 @app.get("/api/health")
 def health() -> dict[str, str]:
-    from backend.ai import ANTHROPIC_API_KEY
-    return {"status": "ok", "api_key": "configured" if ANTHROPIC_API_KEY else "missing"}
+    from backend.ai import get_ai_status
+    return {
+        "status": "ok",
+        **get_ai_status(),
+    }
 
 
 # ── Chat sessions ─────────────────────────────────────────────────────────────
@@ -97,7 +100,7 @@ async def chat(req: ChatRequest) -> dict[str, str]:
             )
 
     messages = [m.model_dump() for m in req.messages]
-    reply    = await call_claude(messages)
+    reply    = await call_ai(messages)
 
     with get_connection() as conn:
         # save last user message + assistant reply
@@ -131,7 +134,7 @@ async def analyze_symptoms(req: SymptomRequest) -> dict[str, str]:
         "Provide: 1) Possible common causes, 2) Self-care tips, "
         "3) Warning signs that need urgent care. Under 250 words. Be reassuring but honest."
     )
-    reply = await call_claude([{"role": "user", "content": prompt}])
+    reply = await call_ai([{"role": "user", "content": prompt}])
     return {"reply": reply}
 
 
