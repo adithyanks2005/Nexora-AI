@@ -1,14 +1,15 @@
 .env
+.venv/
+venv/
 __pycache__/
 *.pyc
 *.pyo
-.venv/
-venv/
 *.db
 .pytest_cache/
 dist/
 build/
 *.egg-info/
-.vercel
+
+# Local duplicate folders/files created during development
 * - Copy*
 *- Copy*

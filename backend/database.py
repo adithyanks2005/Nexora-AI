@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import sqlite3
+import os
+import tempfile
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-DATA_DIR = BASE_DIR / "data"
+DATA_DIR = Path(tempfile.gettempdir()) / "nexora-data" if os.getenv("VERCEL") else BASE_DIR / "data"
 DB_PATH  = DATA_DIR / "nexora.db"
 
 
