@@ -57,6 +57,31 @@ python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8001
 
 Open [http://127.0.0.1:8001](http://127.0.0.1:8001) in your browser.
 
+## App Install Options
+
+### Install from the live site
+
+Open the deployed site in Chrome, Edge, or another PWA-capable browser and use the app install prompt or browser menu to install **Nexora AI**.
+
+### Run as a local Windows app
+
+After downloading the GitHub ZIP, extract it and double-click:
+
+```text
+run_app.bat
+```
+
+The launcher creates the Python environment if needed, installs dependencies, and opens Nexora AI locally. Add your OpenRouter key to `.env` before using AI chat.
+
+### Optional desktop EXE build
+
+```bash
+pip install -r requirements-desktop.txt
+pyinstaller --onefile --name NexoraAI desktop_app.py
+```
+
+The generated executable will be in `dist/`.
+
 ## Project Structure
 
 ```text

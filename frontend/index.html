@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#6c63ff" />
+  <meta name="application-name" content="Nexora AI" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Nexora AI" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="description" content="Nexora AI is a healthcare assistant with chat, symptom guidance, calculators, reminders, and records." />
   <title>Nexora AI — Healthcare Assistant</title>
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -46,6 +51,7 @@
 
     <div class="sidebar-footer">
       <button class="btn-icon" id="themeToggle" title="Toggle theme">🌙</button>
+      <button class="install-app-btn" id="installAppBtn" hidden>Install</button>
       <span class="version">v2.0.0</span>
     </div>
   </aside>
@@ -405,6 +411,7 @@
 
   <!-- Toast -->
   <div class="toast" id="toast"></div>
+  <div class="offline-banner" id="offlineBanner" hidden>Offline mode: cached app shell is available, AI features need internet.</div>
 
   <script src="/static/js/app.js"></script>
 </body>

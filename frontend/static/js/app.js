@@ -8,6 +8,7 @@ let selectedIcon     = '💊';
 let symptoms         = [];
 let isRecording      = false;
 let recognition      = null;
+let deferredInstallPrompt = null;
 
 /* ── DOM refs ────────────────────────────────────────────────────────────── */
 const chatMessages  = document.getElementById('chatMessages');
@@ -17,10 +18,27 @@ const voiceBtn      = document.getElementById('voiceBtn');
 const sessionList   = document.getElementById('sessionList');
 const chatTitle     = document.getElementById('chatTitle');
 const toast         = document.getElementById('toast');
+const installAppBtn = document.getElementById('installAppBtn');
+const offlineBanner = document.getElementById('offlineBanner');
+
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  if (!isStandaloneApp() && installAppBtn) installAppBtn.hidden = false;
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  if (installAppBtn) installAppBtn.hidden = true;
+  showToast('Nexora AI installed');
+});
 
 /* ── Init ────────────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   registerAppShell();
+  setupInstallPrompt();
+  syncOnlineStatus();
+  openInitialPage();
   loadSessions();
   loadReminders();
   loadRecords();
@@ -110,6 +128,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('addRecordBtn').addEventListener('click', addRecord);
 });
 
+window.addEventListener('online', () => {
+  syncOnlineStatus();
+  showToast('Back online');
+});
+
+window.addEventListener('offline', () => {
+  syncOnlineStatus();
+  showToast('Offline mode enabled', 'error');
+});
+
 function registerAppShell() {
   if (!('serviceWorker' in navigator)) return;
   window.addEventListener('load', () => {
@@ -117,10 +145,51 @@ function registerAppShell() {
   });
 }
 
+function setupInstallPrompt() {
+  if (!installAppBtn) return;
+  if (isStandaloneApp()) {
+    installAppBtn.hidden = true;
+    return;
+  }
+  installAppBtn.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) {
+      showToast('Use your browser menu to install Nexora AI');
+      return;
+    }
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice.catch(() => null);
+    deferredInstallPrompt = null;
+    installAppBtn.hidden = true;
+  });
+}
+
+function isStandaloneApp() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function syncOnlineStatus() {
+  if (!offlineBanner) return;
+  offlineBanner.hidden = navigator.onLine;
+}
+
+function openInitialPage() {
+  const requested = new URLSearchParams(window.location.search).get('page');
+  const allowed = ['chat', 'symptoms', 'calculators', 'reminders', 'records'];
+  if (!allowed.includes(requested)) return;
+  switchPage(requested);
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.page === requested);
+  });
+}
+
 /* ── Page switching ──────────────────────────────────────────────────────── */
 function switchPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
+  if (history.replaceState) {
+    const url = page === 'chat' ? '/' : `/?page=${encodeURIComponent(page)}`;
+    history.replaceState(null, '', url);
+  }
 }
 
 /* ── Toast ───────────────────────────────────────────────────────────────── */
@@ -557,7 +626,12 @@ async function apiFetch(path, method = 'GET', body = null) {
     headers: { 'Content-Type': 'application/json' },
   };
   if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(API + path, opts);
+  let res;
+  try {
+    res = await fetch(API + path, opts);
+  } catch {
+    throw new Error('You are offline. Connect to the internet to use AI and saved data.');
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail || 'Request failed');

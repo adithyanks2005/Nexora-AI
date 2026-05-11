@@ -1,10 +1,12 @@
 {
+  "id": "/",
   "name": "Nexora AI Healthcare Assistant",
   "short_name": "Nexora AI",
   "description": "A personal healthcare assistant with AI chat, symptom guidance, calculators, reminders, and records.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
   "background_color": "#0f1117",
   "theme_color": "#6c63ff",
   "orientation": "portrait-primary",
@@ -16,5 +18,47 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["health", "medical", "productivity"]
+  "shortcuts": [
+    {
+      "name": "New Health Chat",
+      "short_name": "Chat",
+      "description": "Open Nexora AI chat",
+      "url": "/?page=chat",
+      "icons": [
+        {
+          "src": "/static/icons/icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Medication Reminders",
+      "short_name": "Reminders",
+      "description": "Open health reminders",
+      "url": "/?page=reminders",
+      "icons": [
+        {
+          "src": "/static/icons/icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Health Records",
+      "short_name": "Records",
+      "description": "Open health records",
+      "url": "/?page=records",
+      "icons": [
+        {
+          "src": "/static/icons/icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "categories": ["health", "medical", "productivity"],
+  "prefer_related_applications": false
 }
