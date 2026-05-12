@@ -393,6 +393,140 @@ body{
 .welcome-banner h3{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:6px;}
 .welcome-banner p{font-size:13px;color:var(--text2);line-height:1.6;}
 .welcome-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
+
+/* ── SMARTWATCH ── */
+.watch-connect-bar{
+  padding:14px 24px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex-shrink:0;
+}
+.watch-status-dot{
+  width:10px;height:10px;border-radius:50%;background:var(--text3);flex-shrink:0;
+  transition:background 0.3s;
+}
+.watch-status-dot.connected{background:var(--success);box-shadow:0 0 8px rgba(67,217,140,0.5);}
+.watch-status-dot.connecting{background:var(--warn);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.watch-status-text{font-size:13px;color:var(--text2);}
+.watch-status-text strong{color:var(--text);font-weight:600;}
+.connect-btn{
+  margin-left:auto;padding:8px 18px;border-radius:20px;
+  font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;
+  border:1px solid rgba(79,156,249,0.4);
+  background:rgba(79,156,249,0.1);color:var(--accent);
+  transition:all 0.15s;
+}
+.connect-btn:hover{background:rgba(79,156,249,0.2);}
+.connect-btn.danger{border-color:rgba(255,107,107,0.4);background:rgba(255,107,107,0.08);color:var(--danger);}
+
+.watch-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:12px;margin-bottom:20px;
+}
+.watch-metric{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;
+  display:flex;flex-direction:column;gap:6px;
+  position:relative;overflow:hidden;
+  transition:border 0.2s;
+}
+.watch-metric.alert{border-color:rgba(255,107,107,0.5);}
+.watch-metric.alert::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--danger);
+}
+.watch-metric.good::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--success);
+}
+.watch-metric.warn::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--warn);
+}
+.wm-icon{font-size:20px;margin-bottom:2px;}
+.wm-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;}
+.wm-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1;}
+.wm-unit{font-size:12px;color:var(--text2);margin-top:2px;}
+.wm-status{font-size:11px;margin-top:4px;font-weight:500;}
+.wm-trend{font-size:11px;color:var(--text3);}
+
+.watch-live-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:600;
+  background:rgba(67,217,140,0.1);color:var(--success);
+  border:1px solid rgba(67,217,140,0.25);margin-left:8px;
+}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse 1s infinite;}
+
+/* Alert banner */
+.alert-banner{
+  background:rgba(255,107,107,0.08);
+  border:1px solid rgba(255,107,107,0.3);
+  border-radius:var(--radius-sm);
+  padding:10px 14px;
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:12px;font-size:13px;
+  animation:slideIn 0.3s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+.alert-banner .ab-icon{font-size:18px;flex-shrink:0;}
+.alert-banner .ab-close{margin-left:auto;background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px;padding:0 2px;}
+#alertContainer{margin-bottom:4px;}
+
+/* Chart canvas */
+.watch-chart-wrap{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;
+}
+.watch-chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.watch-chart-header h3{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;}
+.chart-tabs{display:flex;gap:4px;}
+.chart-tab{
+  padding:4px 12px;border-radius:20px;font-size:12px;cursor:pointer;
+  border:1px solid var(--border2);background:none;color:var(--text2);transition:all 0.15s;
+}
+.chart-tab.active{background:rgba(79,156,249,0.12);color:var(--accent);border-color:rgba(79,156,249,0.3);}
+canvas.watch-chart{width:100%!important;height:160px!important;}
+
+/* Sleep section */
+.sleep-breakdown{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;
+  margin-top:12px;
+}
+.sleep-stage{
+  background:var(--surface2);border-radius:var(--radius-sm);
+  padding:12px;text-align:center;
+}
+.sleep-stage .ss-bar{height:4px;border-radius:2px;margin:6px 0;}
+.sleep-stage .ss-label{font-size:11px;color:var(--text3);}
+.sleep-stage .ss-val{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;}
+
+/* Simulator disclaimer */
+.sim-note{
+  background:rgba(123,97,255,0.07);border:1px solid rgba(123,97,255,0.2);
+  border-radius:var(--radius-sm);padding:10px 14px;
+  font-size:12px;color:var(--text2);margin-bottom:16px;
+  display:flex;gap:8px;align-items:flex-start;
+}
+
+/* Activity ring */
+.activity-rings{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.ring-svg{flex-shrink:0;}
+.ring-legend{display:flex;flex-direction:column;gap:8px;}
+.ring-leg-item{display:flex;align-items:center;gap:8px;font-size:13px;}
+.ring-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+@media(max-width:768px){
+  .watch-connect-bar{padding:12px 16px;}
+  .watch-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:420px){
+  .watch-grid{grid-template-columns:1fr 1fr;}
+  .wm-val{font-size:22px;}
+}
 </style>
 </head>
 <body>
@@ -407,7 +541,7 @@ body{
       <div>
         <div class="logo-text">Nexora<span>AI</span></div>
       </div>
-      <span class="sidebar-version">v2.0.0</span>
+      <span class="sidebar-version">v3.0.0</span>
     </div>
     <nav class="nav">
       <button class="nav-item active" onclick="switchSection('chat',this)">
@@ -424,6 +558,9 @@ body{
       </button>
       <button class="nav-item" onclick="switchSection('records',this)">
         <span class="nav-icon">📋</span> Health Records
+      </button>
+      <button class="nav-item" onclick="switchSection('watch',this)">
+        <span class="nav-icon">⌚</span> Smart Watch
       </button>
     </nav>
     <div class="sidebar-footer">
@@ -783,8 +920,125 @@ body{
         </div>
       </div>
     </div>
+
+    <!-- ── SMART WATCH SECTION ── -->
+    <div class="section" id="section-watch" style="flex-direction:column;">
+      <div class="watch-connect-bar">
+        <div class="watch-status-dot" id="wsDot"></div>
+        <div class="watch-status-text"><strong id="wsName">No device connected</strong><br><span id="wsInfo" style="font-size:11px;">Connect your smartwatch via Bluetooth</span></div>
+        <span class="watch-live-badge" id="wsLiveBadge" style="display:none;"><div class="live-dot"></div>Live</span>
+        <button class="connect-btn" id="wsConnectBtn" onclick="toggleWatchConnect()">⌚ Connect Watch</button>
+      </div>
+      <div class="panel">
+        <div class="sim-note" id="simNote" style="display:none;">
+          ⚡ <div>Running in <strong>simulator mode</strong> — real data streams when a Bluetooth device is paired. Web Bluetooth requires Chrome on Android/desktop with Bluetooth enabled.</div>
+        </div>
+        <div id="alertContainer"></div>
+        <div class="watch-grid">
+          <div class="watch-metric" id="wm-hr">
+            <div class="wm-icon">❤️</div><div class="wm-label">Heart Rate</div>
+            <div class="wm-val" id="wv-hr">--</div><div class="wm-unit">bpm</div>
+            <div class="wm-status" id="ws-hr" style="color:var(--text3);">—</div>
+          </div>
+          <div class="watch-metric" id="wm-spo2">
+            <div class="wm-icon">🩸</div><div class="wm-label">SpO₂</div>
+            <div class="wm-val" id="wv-spo2">--</div><div class="wm-unit">%</div>
+            <div class="wm-status" id="ws-spo2" style="color:var(--text3);">—</div>
+          </div>
+          <div class="watch-metric" id="wm-steps">
+            <div class="wm-icon">🚶</div><div class="wm-label">Steps</div>
+            <div class="wm-val" id="wv-steps">--</div><div class="wm-unit">/ 10,000 goal</div>
+            <div class="wm-status" id="ws-steps" style="color:var(--text3);">—</div>
+          </div>
+          <div class="watch-metric" id="wm-cal">
+            <div class="wm-icon">🔥</div><div class="wm-label">Calories</div>
+            <div class="wm-val" id="wv-cal">--</div><div class="wm-unit">kcal burned</div>
+            <div class="wm-status" id="ws-cal" style="color:var(--text3);">—</div>
+          </div>
+          <div class="watch-metric" id="wm-sleep">
+            <div class="wm-icon">😴</div><div class="wm-label">Last Sleep</div>
+            <div class="wm-val" id="wv-sleep">--</div><div class="wm-unit">hours</div>
+            <div class="wm-status" id="ws-sleep" style="color:var(--text3);">—</div>
+          </div>
+          <div class="watch-metric" id="wm-stress">
+            <div class="wm-icon">🧠</div><div class="wm-label">Stress Level</div>
+            <div class="wm-val" id="wv-stress">--</div><div class="wm-unit">/ 100</div>
+            <div class="wm-status" id="ws-stress" style="color:var(--text3);">—</div>
+          </div>
+        </div>
+        <!-- HR Chart -->
+        <div class="watch-chart-wrap">
+          <div class="watch-chart-header">
+            <h3>📈 Live History</h3>
+            <div class="chart-tabs">
+              <button class="chart-tab active" onclick="switchWatchChart('hr',this)">Heart Rate</button>
+              <button class="chart-tab" onclick="switchWatchChart('spo2',this)">SpO₂</button>
+              <button class="chart-tab" onclick="switchWatchChart('steps',this)">Steps</button>
+            </div>
+          </div>
+          <canvas id="watchChart" style="width:100%;height:160px;"></canvas>
+        </div>
+        <!-- Activity Rings -->
+        <div class="watch-chart-wrap">
+          <div class="watch-chart-header"><h3>🏃 Activity Rings</h3></div>
+          <div class="activity-rings">
+            <svg class="ring-svg" width="130" height="130" viewBox="0 0 130 130">
+              <circle cx="65" cy="65" r="55" fill="none" stroke="rgba(255,107,107,0.15)" stroke-width="10"/>
+              <circle cx="65" cy="65" r="55" fill="none" stroke="#ff6b6b" stroke-width="10" stroke-dasharray="346" stroke-dashoffset="346" stroke-linecap="round" transform="rotate(-90 65 65)" id="ring-move" style="transition:stroke-dashoffset 1.2s ease;"/>
+              <circle cx="65" cy="65" r="42" fill="none" stroke="rgba(67,217,140,0.15)" stroke-width="10"/>
+              <circle cx="65" cy="65" r="42" fill="none" stroke="#43d98c" stroke-width="10" stroke-dasharray="264" stroke-dashoffset="264" stroke-linecap="round" transform="rotate(-90 65 65)" id="ring-exercise" style="transition:stroke-dashoffset 1.2s ease;"/>
+              <circle cx="65" cy="65" r="29" fill="none" stroke="rgba(79,156,249,0.15)" stroke-width="10"/>
+              <circle cx="65" cy="65" r="29" fill="none" stroke="#4f9cf9" stroke-width="10" stroke-dasharray="182" stroke-dashoffset="182" stroke-linecap="round" transform="rotate(-90 65 65)" id="ring-stand" style="transition:stroke-dashoffset 1.2s ease;"/>
+            </svg>
+            <div class="ring-legend">
+              <div class="ring-leg-item"><div class="ring-dot" style="background:#ff6b6b;"></div><div><div style="font-size:12px;color:var(--text2);">Move</div><div style="font-weight:600;" id="ring-move-label">-- kcal</div></div></div>
+              <div class="ring-leg-item"><div class="ring-dot" style="background:#43d98c;"></div><div><div style="font-size:12px;color:var(--text2);">Exercise</div><div style="font-weight:600;" id="ring-ex-label">-- min</div></div></div>
+              <div class="ring-leg-item"><div class="ring-dot" style="background:#4f9cf9;"></div><div><div style="font-size:12px;color:var(--text2);">Stand</div><div style="font-weight:600;" id="ring-stand-label">-- hrs</div></div></div>
+            </div>
+          </div>
+        </div>
+        <!-- Sleep -->
+        <div class="watch-chart-wrap">
+          <div class="watch-chart-header"><h3>😴 Sleep Analysis</h3></div>
+          <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:14px;">
+            <div>
+              <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Total</div>
+              <div style="font-family:'Syne',sans-serif;font-size:34px;font-weight:800;color:var(--accent3);" id="sleep-total">--</div>
+              <div style="font-size:12px;color:var(--text2);">hours last night</div>
+            </div>
+            <div style="flex:1;min-width:160px;">
+              <div style="height:10px;border-radius:5px;overflow:hidden;display:flex;margin-bottom:8px;" id="sleep-bar">
+                <div style="background:#7b61ff;width:20%;"></div>
+                <div style="background:#4f9cf9;width:50%;"></div>
+                <div style="background:#00d4aa;width:20%;"></div>
+                <div style="background:#8ca0c4;width:10%;"></div>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <span style="font-size:11px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#7b61ff;display:inline-block;"></span>Deep</span>
+                <span style="font-size:11px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#4f9cf9;display:inline-block;"></span>Light</span>
+                <span style="font-size:11px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#00d4aa;display:inline-block;"></span>REM</span>
+                <span style="font-size:11px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#8ca0c4;display:inline-block;"></span>Awake</span>
+              </div>
+            </div>
+          </div>
+          <div class="sleep-breakdown">
+            <div class="sleep-stage"><div class="ss-label">Deep</div><div class="ss-val" id="sl-deep">--</div><div class="ss-bar" style="background:#7b61ff;"></div><div class="ss-label">hrs</div></div>
+            <div class="sleep-stage"><div class="ss-label">Light</div><div class="ss-val" id="sl-light">--</div><div class="ss-bar" style="background:#4f9cf9;"></div><div class="ss-label">hrs</div></div>
+            <div class="sleep-stage"><div class="ss-label">REM</div><div class="ss-val" id="sl-rem">--</div><div class="ss-bar" style="background:#00d4aa;"></div><div class="ss-label">hrs</div></div>
+            <div class="sleep-stage"><div class="ss-label">Awake</div><div class="ss-val" id="sl-awake">--</div><div class="ss-bar" style="background:#8ca0c4;"></div><div class="ss-label">hrs</div></div>
+          </div>
+        </div>
+        <div style="text-align:center;padding:12px 0 6px;font-size:11px;color:var(--text3);line-height:1.7;">
+          Smartwatch data is for wellness tracking only and does not constitute medical advice.<br>
+          Web Bluetooth works in Chrome on Android and desktop. Not supported on iOS Safari.
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
 // ── NAVIGATION ──
@@ -1112,6 +1366,349 @@ function deleteRecord(id) {
 // init
 renderReminders();
 renderRecords();
+
+// ── SMARTWATCH ──
+let wsConnected = false;
+let wsSimulating = false;
+let wsInterval = null;
+let btDevice = null;
+let btServer = null;
+
+// Chart data
+const MAX_POINTS = 20;
+const chartData = {
+  hr:    { labels:[], data:[], color:'#ff6b6b', label:'Heart Rate (bpm)', min:40, max:180 },
+  spo2:  { labels:[], data:[], color:'#4f9cf9', label:'SpO₂ (%)', min:85, max:100 },
+  steps: { labels:[], data:[], color:'#43d98c', label:'Steps', min:0, max:12000 },
+};
+let activeChart = 'hr';
+let watchChartInstance = null;
+
+// Simulated base values
+let sim = { hr:72, spo2:98, steps:3200, cal:280, stress:32 };
+
+function toggleWatchConnect() {
+  if (wsConnected || wsSimulating) {
+    disconnectWatch();
+  } else {
+    connectWatch();
+  }
+}
+
+async function connectWatch() {
+  const btn = document.getElementById('wsConnectBtn');
+  const dot = document.getElementById('wsDot');
+  const nameEl = document.getElementById('wsName');
+  const infoEl = document.getElementById('wsInfo');
+
+  // Try real Web Bluetooth first
+  if (navigator.bluetooth) {
+    try {
+      dot.className = 'watch-status-dot connecting';
+      nameEl.textContent = 'Searching…';
+      infoEl.textContent = 'Looking for Bluetooth devices…';
+      btn.textContent = 'Cancel';
+
+      btDevice = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: [
+          'heart_rate',
+          '0000180d-0000-1000-8000-00805f9b34fb',
+          '0000180a-0000-1000-8000-00805f9b34fb',
+        ]
+      });
+
+      btServer = await btDevice.gatt.connect();
+      dot.className = 'watch-status-dot connected';
+      nameEl.textContent = btDevice.name || 'Bluetooth Device';
+      infoEl.textContent = 'Connected via Web Bluetooth';
+      wsConnected = true;
+      wsSimulating = false;
+      document.getElementById('wsLiveBadge').style.display = 'inline-flex';
+      btn.textContent = '⏏ Disconnect';
+      btn.classList.add('danger');
+      document.getElementById('simNote').style.display = 'none';
+
+      // Try to read heart rate characteristic
+      try {
+        const hrService = await btServer.getPrimaryService('heart_rate');
+        const hrChar = await hrService.getCharacteristic('heart_rate_measurement');
+        await hrChar.startNotifications();
+        hrChar.addEventListener('characteristicvaluechanged', (e) => {
+          const val = e.target.value.getUint8(1);
+          updateMetric('hr', val);
+          pushChartPoint('hr', val);
+        });
+      } catch(e) {
+        // HR characteristic not available, fall to simulation for missing metrics
+        startSimInterval(true);
+      }
+
+      btDevice.addEventListener('gattserverdisconnected', () => disconnectWatch());
+      initWatchChart();
+      loadSleepData();
+      updateActivityRings();
+      return;
+
+    } catch(err) {
+      if (err.name === 'NotFoundError' || err.name === 'NotAllowedError' || err.message.includes('cancelled')) {
+        nameEl.textContent = 'No device connected';
+        infoEl.textContent = 'Connect your smartwatch via Bluetooth';
+        dot.className = 'watch-status-dot';
+        btn.textContent = '⌚ Connect Watch';
+        btn.classList.remove('danger');
+        return;
+      }
+      // Other errors — fall through to simulator
+    }
+  }
+
+  // Simulator fallback
+  startSimulator();
+}
+
+function startSimulator() {
+  wsSimulating = true;
+  wsConnected = false;
+  const dot = document.getElementById('wsDot');
+  const nameEl = document.getElementById('wsName');
+  const infoEl = document.getElementById('wsInfo');
+  const btn = document.getElementById('wsConnectBtn');
+
+  dot.className = 'watch-status-dot connected';
+  nameEl.textContent = 'Nexora Sim Watch';
+  infoEl.textContent = 'Simulator mode — Web Bluetooth not available';
+  document.getElementById('wsLiveBadge').style.display = 'inline-flex';
+  document.getElementById('simNote').style.display = 'flex';
+  btn.textContent = '⏏ Disconnect';
+  btn.classList.add('danger');
+
+  initWatchChart();
+  loadSleepData();
+  startSimInterval(false);
+  updateActivityRings();
+}
+
+function startSimInterval(partial) {
+  if (wsInterval) clearInterval(wsInterval);
+  wsInterval = setInterval(() => {
+    // Drift sim values naturally
+    sim.hr = Math.min(120, Math.max(50, sim.hr + (Math.random()-0.48)*3));
+    sim.spo2 = Math.min(100, Math.max(92, sim.spo2 + (Math.random()-0.5)*0.4));
+    sim.steps = Math.min(15000, sim.steps + Math.floor(Math.random()*12));
+    sim.cal = Math.round(sim.steps * 0.04 + 120);
+    sim.stress = Math.min(90, Math.max(10, sim.stress + (Math.random()-0.5)*4));
+
+    const hr = Math.round(sim.hr);
+    const spo2 = parseFloat(sim.spo2.toFixed(1));
+    const steps = sim.steps;
+
+    updateMetric('hr', hr);
+    updateMetric('spo2', spo2);
+    updateMetric('steps', steps.toLocaleString());
+    updateMetric('cal', sim.cal.toLocaleString());
+    updateMetric('stress', Math.round(sim.stress));
+    updateMetric('sleep', '7.4');
+
+    pushChartPoint('hr', hr);
+    pushChartPoint('spo2', spo2);
+    pushChartPoint('steps', steps);
+
+    checkAlerts(hr, spo2, Math.round(sim.stress));
+  }, 2000);
+}
+
+function disconnectWatch() {
+  if (btDevice && btDevice.gatt.connected) btDevice.gatt.disconnect();
+  if (wsInterval) clearInterval(wsInterval); wsInterval = null;
+  wsConnected = false; wsSimulating = false; btDevice = null; btServer = null;
+
+  const dot = document.getElementById('wsDot');
+  dot.className = 'watch-status-dot';
+  document.getElementById('wsName').textContent = 'No device connected';
+  document.getElementById('wsInfo').textContent = 'Connect your smartwatch via Bluetooth';
+  document.getElementById('wsLiveBadge').style.display = 'none';
+  document.getElementById('simNote').style.display = 'none';
+  const btn = document.getElementById('wsConnectBtn');
+  btn.textContent = '⌚ Connect Watch';
+  btn.classList.remove('danger');
+
+  // Reset metrics
+  ['hr','spo2','steps','cal','sleep','stress'].forEach(k => {
+    const v = document.getElementById('wv-'+k);
+    const s = document.getElementById('ws-'+k);
+    if(v) v.textContent='--';
+    if(s){ s.textContent='—'; s.style.color='var(--text3)'; }
+    const m = document.getElementById('wm-'+k);
+    if(m) m.className='watch-metric';
+  });
+  document.getElementById('alertContainer').innerHTML = '';
+}
+
+function updateMetric(key, val) {
+  const el = document.getElementById('wv-'+key);
+  const st = document.getElementById('ws-'+key);
+  const card = document.getElementById('wm-'+key);
+  if (!el) return;
+  el.textContent = val;
+
+  if (key === 'hr') {
+    const n = parseFloat(val);
+    let cls='good', msg='Normal', color='var(--success)';
+    if(n<50||n>100){cls='alert';msg=n<50?'Too low':'Elevated';color='var(--danger)';}
+    else if(n>90){cls='warn';msg='Slightly high';color='var(--warn)';}
+    card.className='watch-metric '+cls;
+    st.textContent=msg; st.style.color=color;
+  } else if (key === 'spo2') {
+    const n = parseFloat(val);
+    let cls='good',msg='Normal',color='var(--success)';
+    if(n<93){cls='alert';msg='Low — seek help';color='var(--danger)';}
+    else if(n<95){cls='warn';msg='Borderline';color='var(--warn)';}
+    card.className='watch-metric '+cls;
+    st.textContent=msg; st.style.color=color;
+  } else if (key === 'steps') {
+    const n = parseInt(String(val).replace(/,/g,''));
+    const pct = Math.min(100,Math.round(n/100));
+    let cls='good',msg=pct+'% of goal',color='var(--success)';
+    if(pct<30){cls='';msg='Keep moving!';color='var(--text2)';}
+    else if(pct<70){cls='warn';msg='Halfway there';color='var(--warn)';}
+    card.className='watch-metric '+cls;
+    st.textContent=msg; st.style.color=color;
+  } else if (key === 'stress') {
+    const n = parseFloat(val);
+    let cls='good',msg='Relaxed',color='var(--success)';
+    if(n>70){cls='alert';msg='High stress';color='var(--danger)';}
+    else if(n>45){cls='warn';msg='Moderate';color='var(--warn)';}
+    card.className='watch-metric '+cls;
+    st.textContent=msg; st.style.color=color;
+  } else if (key === 'sleep') {
+    const n = parseFloat(val);
+    let cls='good',msg='Well rested',color='var(--success)';
+    if(n<6){cls='alert';msg='Sleep debt';color='var(--danger)';}
+    else if(n<7){cls='warn';msg='Slightly low';color='var(--warn)';}
+    card.className='watch-metric '+cls;
+    st.textContent=msg; st.style.color=color;
+  } else if (key === 'cal') {
+    card.className='watch-metric good';
+    st.textContent='Active'; st.style.color='var(--success)';
+  }
+}
+
+const alertShown = new Set();
+function checkAlerts(hr, spo2, stress) {
+  const alerts = [];
+  if(hr>100 && !alertShown.has('hr-high')){ alerts.push({key:'hr-high',icon:'❤️',msg:`Heart rate elevated: ${hr} bpm`}); alertShown.add('hr-high'); }
+  if(hr<50 && !alertShown.has('hr-low')){ alerts.push({key:'hr-low',icon:'❤️',msg:`Heart rate too low: ${hr} bpm — rest and monitor`}); alertShown.add('hr-low'); }
+  if(spo2<95 && !alertShown.has('spo2-low')){ alerts.push({key:'spo2-low',icon:'🩸',msg:`SpO₂ low: ${spo2}% — consider breathing exercises or seek medical advice`}); alertShown.add('spo2-low'); }
+  if(stress>70 && !alertShown.has('stress-high')){ alerts.push({key:'stress-high',icon:'🧠',msg:'Stress level high — try a breathing exercise or short walk'}); alertShown.add('stress-high'); }
+  // Auto-clear old alerts after a few cycles
+  if(hr<=100) alertShown.delete('hr-high');
+  if(hr>=50) alertShown.delete('hr-low');
+  if(spo2>=95) alertShown.delete('spo2-low');
+  if(stress<=70) alertShown.delete('stress-high');
+
+  alerts.forEach(a => {
+    const c = document.getElementById('alertContainer');
+    const d = document.createElement('div');
+    d.className='alert-banner'; d.id='alert-'+a.key;
+    d.innerHTML=`<div class="ab-icon">${a.icon}</div><div>${a.msg}</div><button class="ab-close" onclick="this.parentElement.remove()">✕</button>`;
+    c.prepend(d);
+    setTimeout(()=>{const el=document.getElementById('alert-'+a.key);if(el)el.remove();},8000);
+  });
+}
+
+// ── CHART ──
+function initWatchChart() {
+  const canvas = document.getElementById('watchChart');
+  if (!canvas) return;
+  if (watchChartInstance) { watchChartInstance.destroy(); watchChartInstance = null; }
+  const cd = chartData[activeChart];
+  watchChartInstance = new Chart(canvas, {
+    type:'line',
+    data:{
+      labels: cd.labels,
+      datasets:[{
+        label: cd.label,
+        data: cd.data,
+        borderColor: cd.color,
+        backgroundColor: cd.color+'22',
+        borderWidth: 2,
+        pointRadius: 2,
+        tension: 0.4,
+        fill: true,
+      }]
+    },
+    options:{
+      animation:{duration:300},
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{
+        x:{ticks:{color:'#4a6080',font:{size:10}},grid:{color:'rgba(99,179,237,0.06)'}},
+        y:{ticks:{color:'#4a6080',font:{size:10}},grid:{color:'rgba(99,179,237,0.06)'},min:cd.min,max:cd.max}
+      }
+    }
+  });
+}
+
+function pushChartPoint(key, val) {
+  const cd = chartData[key];
+  const time = new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  cd.labels.push(time); cd.data.push(val);
+  if(cd.labels.length > MAX_POINTS){ cd.labels.shift(); cd.data.shift(); }
+  if(activeChart === key && watchChartInstance) {
+    watchChartInstance.update('none');
+  }
+}
+
+function switchWatchChart(key, btn) {
+  activeChart = key;
+  document.querySelectorAll('.chart-tab').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(watchChartInstance) watchChartInstance.destroy();
+  initWatchChart();
+}
+
+// ── SLEEP DATA ──
+function loadSleepData() {
+  const deep  = +(1.2 + Math.random()*0.8).toFixed(1);
+  const rem   = +(1.0 + Math.random()*0.6).toFixed(1);
+  const awake = +(0.3 + Math.random()*0.3).toFixed(1);
+  const light = +(7.4 - deep - rem - awake).toFixed(1);
+  const total = 7.4;
+  document.getElementById('sleep-total').textContent = total;
+  document.getElementById('sl-deep').textContent  = deep;
+  document.getElementById('sl-light').textContent = light;
+  document.getElementById('sl-rem').textContent   = rem;
+  document.getElementById('sl-awake').textContent = awake;
+
+  // Update bar proportions
+  const bar = document.getElementById('sleep-bar');
+  bar.innerHTML = `
+    <div style="background:#7b61ff;width:${(deep/total*100).toFixed(0)}%;height:100%;"></div>
+    <div style="background:#4f9cf9;width:${(light/total*100).toFixed(0)}%;height:100%;"></div>
+    <div style="background:#00d4aa;width:${(rem/total*100).toFixed(0)}%;height:100%;"></div>
+    <div style="background:#8ca0c4;width:${(awake/total*100).toFixed(0)}%;height:100%;"></div>`;
+}
+
+// ── ACTIVITY RINGS ──
+function updateActivityRings() {
+  const moveKcal = Math.round(200 + Math.random()*200);
+  const exMin    = Math.round(15 + Math.random()*45);
+  const standHrs = Math.round(6 + Math.random()*6);
+
+  const movePct  = Math.min(1, moveKcal/400);
+  const exPct    = Math.min(1, exMin/60);
+  const standPct = Math.min(1, standHrs/12);
+
+  // Circumferences: 346, 264, 182
+  document.getElementById('ring-move').style.strokeDashoffset     = 346 - 346*movePct;
+  document.getElementById('ring-exercise').style.strokeDashoffset = 264 - 264*exPct;
+  document.getElementById('ring-stand').style.strokeDashoffset    = 182 - 182*standPct;
+
+  document.getElementById('ring-move-label').textContent  = moveKcal+' / 400 kcal';
+  document.getElementById('ring-ex-label').textContent    = exMin+' / 60 min';
+  document.getElementById('ring-stand-label').textContent = standHrs+' / 12 hrs';
+}
 </script>
 </body>
 </html>
