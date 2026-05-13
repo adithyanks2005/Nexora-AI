@@ -1,0 +1,26 @@
+{
+  "name": "primary",
+  "version": "1.0.0",
+  "description": "An advanced AI-powered healthcare assistant with chat, symptom analysis, health calculators, medication reminders, and health record tracking.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adithyanks2005/Nexora-AI.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/adithyanks2005/Nexora-AI/issues"
+  },
+  "homepage": "https://github.com/adithyanks2005/Nexora-AI#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}

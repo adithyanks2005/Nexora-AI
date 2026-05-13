@@ -14,18 +14,20 @@
   ],
   "routes": [
     {
+      "src": "/static/(.*)",
+      "dest": "/frontend/static/$1"
+    },
+    {
+      "src": "/manifest.webmanifest",
+      "dest": "/backend/main.py"
+    },
+    {
+      "src": "/service-worker.js",
+      "dest": "/backend/main.py"
+    },
+    {
       "src": "/(.*)",
       "dest": "/backend/main.py"
     }
-  ],
-  "env": {
-    "PYTHON_VERSION": "3.12.10",
-    "OPENROUTER_MODEL": "anthropic/claude-sonnet-4.6"
-  },
-  "functions": {
-    "backend/main.py": {
-      "maxDuration": 30,
-      "memory": 1024
-    }
-  }
+  ]
 }

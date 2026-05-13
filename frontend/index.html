@@ -1,160 +1,669 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#6c63ff" />
-  <meta name="application-name" content="Nexora AI" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="Nexora AI" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="description" content="Nexora AI is a healthcare assistant with chat, symptom guidance, calculators, reminders, and records." />
-  <title>Nexora AI — Healthcare Assistant</title>
-  <link rel="manifest" href="/manifest.webmanifest" />
-  <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/static/icons/icon.svg" />
-  <link rel="stylesheet" href="/static/css/style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#0a0f1e"/>
+<title>Nexora AI — Healthcare Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#04080f;
+  --surface:#0d1425;
+  --surface2:#121c32;
+  --border:rgba(99,179,237,0.12);
+  --border2:rgba(99,179,237,0.22);
+  --accent:#4f9cf9;
+  --accent2:#7b61ff;
+  --accent3:#00d4aa;
+  --text:#e8f0fe;
+  --text2:#8ca0c4;
+  --text3:#4a6080;
+  --danger:#ff6b6b;
+  --warn:#f9c74f;
+  --success:#43d98c;
+  --radius:14px;
+  --radius-sm:8px;
+  --glow:0 0 24px rgba(79,156,249,0.15);
+  --glow2:0 0 40px rgba(123,97,255,0.12);
+}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  font-size:15px;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+
+/* ── GRID LAYOUT ── */
+.app{display:flex;height:100vh;overflow:hidden;}
+
+/* Sidebar */
+.sidebar{
+  width:240px;flex-shrink:0;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  padding:0;overflow:hidden;
+  transition:transform 0.3s ease;
+  z-index:100;
+}
+.sidebar-logo{
+  padding:24px 20px 16px;
+  display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--border);
+}
+.logo-icon{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;letter-spacing:-0.3px;}
+.logo-text span{color:var(--accent);}
+.sidebar-version{font-size:10px;color:var(--text3);margin-left:auto;letter-spacing:0.5px;}
+
+.nav{flex:1;padding:12px 10px;overflow-y:auto;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:var(--radius-sm);
+  cursor:pointer;color:var(--text2);
+  font-size:14px;font-weight:500;
+  transition:all 0.18s ease;
+  margin-bottom:2px;border:none;background:none;width:100%;text-align:left;
+}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:rgba(79,156,249,0.12);color:var(--accent);border:1px solid rgba(79,156,249,0.2);}
+.nav-icon{font-size:17px;width:20px;text-align:center;flex-shrink:0;}
+
+.sidebar-footer{
+  padding:12px 10px 20px;
+  border-top:1px solid var(--border);
+  font-size:11px;color:var(--text3);
+  line-height:1.5;padding-top:14px;
+}
+
+/* Main area */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+
+/* Top bar (mobile) */
+.topbar{
+  display:none;
+  padding:14px 16px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  align-items:center;gap:12px;
+}
+.topbar-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;}
+.topbar-logo span{color:var(--accent);}
+.topbar-menu{
+  margin-left:auto;background:none;border:none;
+  color:var(--text2);cursor:pointer;font-size:22px;line-height:1;padding:4px;
+}
+
+/* Sections */
+.section{display:none;flex:1;overflow:hidden;}
+.section.active{display:flex;flex-direction:column;}
+
+/* ── CHAT ── */
+.chat-header{
+  padding:16px 24px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface);
+  flex-shrink:0;
+}
+.chat-header h2{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;}
+.chat-header p{font-size:13px;color:var(--text2);margin-top:2px;}
+
+.chat-messages{
+  flex:1;overflow-y:auto;
+  padding:20px 24px;display:flex;flex-direction:column;gap:16px;
+  scroll-behavior:smooth;
+}
+.chat-messages::-webkit-scrollbar{width:4px;}
+.chat-messages::-webkit-scrollbar-track{background:transparent;}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+
+.msg{display:flex;gap:10px;max-width:680px;}
+.msg.user{margin-left:auto;flex-direction:row-reverse;}
+
+.msg-avatar{
+  width:32px;height:32px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+}
+.bot-avatar{background:linear-gradient(135deg,var(--accent),var(--accent2));}
+.user-avatar{background:var(--surface2);border:1px solid var(--border2);font-size:12px;}
+
+.msg-bubble{
+  padding:12px 16px;border-radius:var(--radius);
+  font-size:14px;line-height:1.65;
+}
+.bot .msg-bubble{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:4px var(--radius) var(--radius) var(--radius);
+}
+.user .msg-bubble{
+  background:linear-gradient(135deg,rgba(79,156,249,0.18),rgba(123,97,255,0.18));
+  border:1px solid rgba(79,156,249,0.25);
+  border-radius:var(--radius) 4px var(--radius) var(--radius);
+  text-align:right;
+}
+
+.quick-chips{
+  display:flex;flex-wrap:wrap;gap:8px;padding:0 24px 16px;flex-shrink:0;
+}
+.chip{
+  padding:7px 14px;border-radius:20px;
+  border:1px solid var(--border2);
+  background:var(--surface);
+  color:var(--text2);font-size:12px;cursor:pointer;
+  transition:all 0.15s;white-space:nowrap;
+}
+.chip:hover{background:rgba(79,156,249,0.1);color:var(--accent);border-color:rgba(79,156,249,0.3);}
+
+.chat-input-bar{
+  padding:14px 24px 20px;
+  border-top:1px solid var(--border);
+  background:var(--surface);
+  flex-shrink:0;
+}
+.chat-input-row{display:flex;gap:10px;align-items:flex-end;}
+.chat-input{
+  flex:1;background:var(--surface2);
+  border:1px solid var(--border2);
+  border-radius:var(--radius);
+  color:var(--text);font-family:inherit;font-size:14px;
+  padding:12px 16px;resize:none;min-height:44px;max-height:120px;
+  outline:none;transition:border 0.15s;
+}
+.chat-input:focus{border-color:rgba(79,156,249,0.5);}
+.chat-input::placeholder{color:var(--text3);}
+.send-btn{
+  width:44px;height:44px;border-radius:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;cursor:pointer;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;transition:opacity 0.15s;
+}
+.send-btn:hover{opacity:0.88;}
+.disclaimer{font-size:11px;color:var(--text3);text-align:center;margin-top:8px;}
+
+/* Typing indicator */
+.typing{display:flex;align-items:center;gap:5px;padding:10px 14px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--text3);animation:bounce 1.2s infinite;}
+.dot:nth-child(2){animation-delay:0.2s;}
+.dot:nth-child(3){animation-delay:0.4s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);}}
+
+/* ── SYMPTOM CHECKER ── */
+.panel{flex:1;overflow-y:auto;padding:24px;}
+.panel::-webkit-scrollbar{width:4px;}
+.panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+
+.panel-header{margin-bottom:24px;}
+.panel-header h2{font-family:'Syne',sans-serif;font-weight:700;font-size:22px;margin-bottom:4px;}
+.panel-header p{font-size:13px;color:var(--text2);}
+
+.form-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;margin-bottom:16px;
+}
+.form-label{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:8px;display:block;}
+.form-label span{color:var(--danger);}
+.form-input,.form-select,.form-textarea{
+  width:100%;background:var(--surface2);
+  border:1px solid var(--border2);border-radius:var(--radius-sm);
+  color:var(--text);font-family:inherit;font-size:14px;
+  padding:10px 14px;outline:none;transition:border 0.15s;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:rgba(79,156,249,0.5);}
+.form-textarea{min-height:90px;resize:vertical;}
+.form-select{cursor:pointer;}
+.form-select option{background:var(--surface);}
+.tag-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.tag{
+  padding:5px 12px;border-radius:20px;
+  border:1px solid var(--border2);background:var(--surface2);
+  color:var(--text2);font-size:12px;cursor:pointer;transition:all 0.15s;
+}
+.tag:hover,.tag.active{background:rgba(79,156,249,0.12);color:var(--accent);border-color:rgba(79,156,249,0.35);}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:500px){.form-row{grid-template-columns:1fr;}}
+
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 22px;border-radius:var(--radius-sm);
+  font-family:inherit;font-size:14px;font-weight:500;
+  cursor:pointer;transition:all 0.18s;border:none;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;
+}
+.btn-primary:hover{opacity:0.88;transform:translateY(-1px);}
+.btn-full{width:100%;justify-content:center;}
+
+.result-card{
+  background:var(--surface);border:1px solid rgba(67,217,140,0.25);
+  border-radius:var(--radius);padding:20px;margin-top:16px;
+  display:none;
+}
+.result-card.show{display:block;}
+.result-badge{
+  display:inline-block;padding:4px 12px;border-radius:20px;
+  font-size:11px;font-weight:600;letter-spacing:0.5px;margin-bottom:12px;
+}
+.badge-warn{background:rgba(249,199,79,0.15);color:var(--warn);border:1px solid rgba(249,199,79,0.3);}
+.badge-info{background:rgba(79,156,249,0.12);color:var(--accent);border:1px solid rgba(79,156,249,0.25);}
+.result-card h3{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:8px;}
+.result-card p{font-size:13px;color:var(--text2);line-height:1.7;}
+
+/* ── CALCULATORS ── */
+.calc-tabs{
+  display:flex;gap:4px;padding:16px 24px 0;
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;flex-shrink:0;
+}
+.calc-tabs::-webkit-scrollbar{height:0;}
+.calc-tab{
+  padding:9px 18px;border-radius:var(--radius-sm) var(--radius-sm) 0 0;
+  font-size:13px;font-weight:500;cursor:pointer;
+  color:var(--text2);background:none;border:none;
+  border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap;
+}
+.calc-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.calc-panel{display:none;padding:24px;overflow-y:auto;flex:1;}
+.calc-panel.active{display:block;}
+
+.result-display{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--radius);padding:16px 20px;margin-top:16px;text-align:center;
+  display:none;
+}
+.result-display.show{display:block;}
+.result-val{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--accent);}
+.result-label{font-size:13px;color:var(--text2);margin-top:4px;}
+.result-meta{font-size:12px;color:var(--text3);margin-top:8px;line-height:1.5;}
+
+.bmi-gauge{
+  display:flex;justify-content:space-between;
+  margin-top:12px;gap:2px;
+}
+.gauge-seg{flex:1;height:6px;border-radius:3px;}
+
+/* ── REMINDERS ── */
+.reminder-grid{display:flex;flex-direction:column;gap:10px;}
+.reminder-item{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+}
+.reminder-icon{font-size:22px;flex-shrink:0;}
+.reminder-info{flex:1;min-width:0;}
+.reminder-info h4{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.reminder-info p{font-size:12px;color:var(--text2);margin-top:2px;}
+.reminder-actions{display:flex;gap:6px;flex-shrink:0;}
+.icon-btn{
+  width:30px;height:30px;border-radius:var(--radius-sm);
+  background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text2);cursor:pointer;font-size:14px;
+  display:flex;align-items:center;justify-content:center;transition:all 0.15s;
+}
+.icon-btn:hover{color:var(--text);}
+.icon-btn.del:hover{color:var(--danger);border-color:rgba(255,107,107,0.4);}
+
+.empty-state{
+  text-align:center;padding:48px 24px;
+  color:var(--text3);
+}
+.empty-state .es-icon{font-size:40px;margin-bottom:12px;}
+.empty-state p{font-size:14px;}
+
+/* ── HEALTH RECORDS ── */
+.records-list{display:flex;flex-direction:column;gap:10px;}
+.record-item{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+}
+.record-type-badge{
+  padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;
+  background:rgba(79,156,249,0.12);color:var(--accent);
+  border:1px solid rgba(79,156,249,0.25);flex-shrink:0;
+}
+.record-val{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;margin-left:auto;color:var(--accent3);}
+.record-time{font-size:11px;color:var(--text3);}
+
+/* ── MOBILE OVERLAY NAV ── */
+.overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:90;
+}
+.overlay.show{display:block;}
+
+/* ── MOBILE BOTTOM NAV ── */
+.bottom-nav{display:none;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .sidebar{
+    position:fixed;top:0;left:0;bottom:0;
+    transform:translateX(-100%);
+  }
+  .sidebar.open{transform:translateX(0);}
+  .topbar{display:flex;}
+  .app{flex-direction:column;}
+  .main{height:calc(100vh - 57px);}
+  .chat-messages{padding:16px;}
+  .quick-chips{padding:0 16px 12px;}
+  .chat-input-bar{padding:12px 16px 16px;}
+  .panel{padding:16px;}
+  .calc-tabs{padding:12px 16px 0;}
+  .chat-header{padding:14px 16px;}
+  .form-card{padding:16px;}
+}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+
+/* Utility */
+.mt-12{margin-top:12px;}
+.mt-16{margin-top:16px;}
+.mt-20{margin-top:20px;}
+.hidden{display:none!important;}
+
+/* welcome banner */
+.welcome-banner{
+  background:linear-gradient(135deg,rgba(79,156,249,0.08),rgba(123,97,255,0.08));
+  border:1px solid rgba(79,156,249,0.15);
+  border-radius:var(--radius);padding:20px;
+  display:flex;gap:14px;align-items:flex-start;
+}
+.welcome-banner .wb-icon{font-size:28px;flex-shrink:0;margin-top:2px;}
+.welcome-banner h3{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:6px;}
+.welcome-banner p{font-size:13px;color:var(--text2);line-height:1.6;}
+.welcome-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
+
+/* ── SMARTWATCH ── */
+.watch-connect-bar{
+  padding:14px 24px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex-shrink:0;
+}
+.watch-status-dot{
+  width:10px;height:10px;border-radius:50%;background:var(--text3);flex-shrink:0;
+  transition:background 0.3s;
+}
+.watch-status-dot.connected{background:var(--success);box-shadow:0 0 8px rgba(67,217,140,0.5);}
+.watch-status-dot.connecting{background:var(--warn);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.watch-status-text{font-size:13px;color:var(--text2);}
+.watch-status-text strong{color:var(--text);font-weight:600;}
+.connect-btn{
+  margin-left:auto;padding:8px 18px;border-radius:20px;
+  font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;
+  border:1px solid rgba(79,156,249,0.4);
+  background:rgba(79,156,249,0.1);color:var(--accent);
+  transition:all 0.15s;
+}
+.connect-btn:hover{background:rgba(79,156,249,0.2);}
+.connect-btn.danger{border-color:rgba(255,107,107,0.4);background:rgba(255,107,107,0.08);color:var(--danger);}
+
+.watch-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:12px;margin-bottom:20px;
+}
+.watch-metric{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;
+  display:flex;flex-direction:column;gap:6px;
+  position:relative;overflow:hidden;
+  transition:border 0.2s;
+}
+.watch-metric.alert{border-color:rgba(255,107,107,0.5);}
+.watch-metric.alert::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--danger);
+}
+.watch-metric.good::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--success);
+}
+.watch-metric.warn::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--warn);
+}
+.wm-icon{font-size:20px;margin-bottom:2px;}
+.wm-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;}
+.wm-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1;}
+.wm-unit{font-size:12px;color:var(--text2);margin-top:2px;}
+.wm-status{font-size:11px;margin-top:4px;font-weight:500;}
+.wm-trend{font-size:11px;color:var(--text3);}
+
+.watch-live-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:600;
+  background:rgba(67,217,140,0.1);color:var(--success);
+  border:1px solid rgba(67,217,140,0.25);margin-left:8px;
+}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse 1s infinite;}
+
+/* Alert banner */
+.alert-banner{
+  background:rgba(255,107,107,0.08);
+  border:1px solid rgba(255,107,107,0.3);
+  border-radius:var(--radius-sm);
+  padding:10px 14px;
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:12px;font-size:13px;
+  animation:slideIn 0.3s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+.alert-banner .ab-icon{font-size:18px;flex-shrink:0;}
+.alert-banner .ab-close{margin-left:auto;background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px;padding:0 2px;}
+#alertContainer{margin-bottom:4px;}
+
+/* Chart canvas */
+.watch-chart-wrap{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;
+}
+.watch-chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.watch-chart-header h3{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;}
+.chart-tabs{display:flex;gap:4px;}
+.chart-tab{
+  padding:4px 12px;border-radius:20px;font-size:12px;cursor:pointer;
+  border:1px solid var(--border2);background:none;color:var(--text2);transition:all 0.15s;
+}
+.chart-tab.active{background:rgba(79,156,249,0.12);color:var(--accent);border-color:rgba(79,156,249,0.3);}
+canvas.watch-chart{width:100%!important;height:160px!important;}
+
+/* Sleep section */
+.sleep-breakdown{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;
+  margin-top:12px;
+}
+.sleep-stage{
+  background:var(--surface2);border-radius:var(--radius-sm);
+  padding:12px;text-align:center;
+}
+.sleep-stage .ss-bar{height:4px;border-radius:2px;margin:6px 0;}
+.sleep-stage .ss-label{font-size:11px;color:var(--text3);}
+.sleep-stage .ss-val{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;}
+
+/* Simulator disclaimer */
+.sim-note{
+  background:rgba(123,97,255,0.07);border:1px solid rgba(123,97,255,0.2);
+  border-radius:var(--radius-sm);padding:10px 14px;
+  font-size:12px;color:var(--text2);margin-bottom:16px;
+  display:flex;gap:8px;align-items:flex-start;
+}
+
+/* Activity ring */
+.activity-rings{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.ring-svg{flex-shrink:0;}
+.ring-legend{display:flex;flex-direction:column;gap:8px;}
+.ring-leg-item{display:flex;align-items:center;gap:8px;font-size:13px;}
+.ring-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+@media(max-width:768px){
+  .watch-connect-bar{padding:12px 16px;}
+  .watch-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:420px){
+  .watch-grid{grid-template-columns:1fr 1fr;}
+  .wm-val{font-size:22px;}
+}
+</style>
 </head>
 <body>
-  <!-- Sidebar -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="logo">
-        <span class="logo-icon">🧬</span>
-        <span class="logo-text">Nexora AI</span>
-      </div>
-      <button class="btn-icon" id="newChatBtn" title="New Chat">✏️</button>
-    </div>
 
-    <nav class="sidebar-nav">
-      <button class="nav-item active" data-page="chat">
-        <span class="nav-icon">💬</span><span>Chat</span>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🧬</div>
+      <div>
+        <div class="logo-text">Nexora<span>AI</span></div>
+      </div>
+      <span class="sidebar-version">v3.0.0</span>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" onclick="switchSection('chat',this)">
+        <span class="nav-icon">💬</span> Chat
       </button>
-      <button class="nav-item" data-page="symptoms">
-        <span class="nav-icon">🩺</span><span>Symptom Checker</span>
+      <button class="nav-item" onclick="switchSection('symptom',this)">
+        <span class="nav-icon">🩺</span> Symptom Checker
       </button>
-      <button class="nav-item" data-page="calculators">
-        <span class="nav-icon">🧮</span><span>Calculators</span>
+      <button class="nav-item" onclick="switchSection('calc',this)">
+        <span class="nav-icon">🧮</span> Calculators
       </button>
-      <button class="nav-item" data-page="reminders">
-        <span class="nav-icon">⏰</span><span>Reminders</span>
+      <button class="nav-item" onclick="switchSection('reminders',this)">
+        <span class="nav-icon">⏰</span> Reminders
       </button>
-      <button class="nav-item" data-page="records">
-        <span class="nav-icon">📋</span><span>Health Records</span>
+      <button class="nav-item" onclick="switchSection('records',this)">
+        <span class="nav-icon">📋</span> Health Records
+      </button>
+      <button class="nav-item" onclick="switchSection('watch',this)">
+        <span class="nav-icon">⌚</span> Smart Watch
       </button>
     </nav>
-
-    <div class="session-list" id="sessionList"></div>
-
     <div class="sidebar-footer">
-      <button class="btn-icon" id="themeToggle" title="Toggle theme">🌙</button>
-      <button class="install-app-btn" id="installAppBtn" hidden>Install</button>
-      <span class="version">v2.0.0</span>
+      Nexora AI provides general health information only. Always consult a doctor for medical advice.
     </div>
   </aside>
 
-  <!-- Main -->
-  <main class="main" id="main">
-    <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+  <!-- MAIN -->
+  <div class="main">
+    <!-- Mobile top bar -->
+    <div class="topbar">
+      <div class="logo-icon" style="width:30px;height:30px;font-size:16px;">🧬</div>
+      <span class="topbar-logo">Nexora<span>AI</span></span>
+      <button class="topbar-menu" onclick="openSidebar()">☰</button>
+    </div>
 
-    <!-- Chat Page -->
-    <section class="page active" id="page-chat">
+    <!-- ── CHAT SECTION ── -->
+    <div class="section active" id="section-chat">
       <div class="chat-header">
-        <h2 id="chatTitle">Nexora AI</h2>
-        <p class="chat-subtitle">Your personal healthcare assistant</p>
+        <h2>💬 Chat with Nexora</h2>
+        <p>Your intelligent healthcare companion</p>
       </div>
       <div class="chat-messages" id="chatMessages">
-        <div class="welcome-card">
-          <div class="welcome-icon">🧬</div>
-          <h3>Hello! I'm Nexora AI</h3>
-          <p>Your intelligent healthcare companion. Ask me anything about health, wellness, symptoms, nutrition, or mental wellbeing.</p>
-          <div class="quick-prompts">
-            <button class="quick-btn" data-prompt="What are the symptoms of diabetes?">🩸 Diabetes symptoms</button>
-            <button class="quick-btn" data-prompt="How can I improve my sleep quality?">😴 Better sleep tips</button>
-            <button class="quick-btn" data-prompt="What foods boost the immune system?">🥦 Immune boosting foods</button>
-            <button class="quick-btn" data-prompt="How do I manage stress and anxiety?">🧘 Stress management</button>
-            <button class="quick-btn" data-prompt="What is a healthy daily routine?">📅 Healthy daily routine</button>
-            <button class="quick-btn" data-prompt="How much water should I drink daily?">💧 Daily water intake</button>
+        <div class="welcome-banner">
+          <div class="wb-icon">🧬</div>
+          <div>
+            <h3>Hello! I'm Nexora AI</h3>
+            <p>Your intelligent healthcare companion. Ask me anything about health, wellness, symptoms, nutrition, or mental wellbeing.</p>
+            <div class="welcome-chips">
+              <span class="chip" onclick="sendQuick(this)">🩸 Diabetes symptoms</span>
+              <span class="chip" onclick="sendQuick(this)">😴 Better sleep tips</span>
+              <span class="chip" onclick="sendQuick(this)">🥦 Immune boosting foods</span>
+              <span class="chip" onclick="sendQuick(this)">🧘 Stress management</span>
+              <span class="chip" onclick="sendQuick(this)">💧 Daily water intake</span>
+            </div>
           </div>
         </div>
       </div>
-      <div class="chat-input-area">
-        <div class="chat-input-wrapper">
-          <button class="btn-icon voice-btn" id="voiceBtn" title="Voice input">🎤</button>
-          <textarea
-            id="chatInput"
-            placeholder="Ask me anything about your health..."
-            rows="1"
-            maxlength="2000"
-          ></textarea>
-          <button class="btn-send" id="sendBtn" title="Send">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
-          </button>
-        </div>
-        <p class="disclaimer">Nexora AI provides general health information only. Always consult a doctor for medical advice.</p>
+      <div class="quick-chips" id="quickChips">
+        <span class="chip" onclick="sendQuick(this)">📅 Healthy daily routine</span>
+        <span class="chip" onclick="sendQuick(this)">🥗 Nutrition tips</span>
+        <span class="chip" onclick="sendQuick(this)">❤️ Heart health</span>
+        <span class="chip" onclick="sendQuick(this)">🧠 Mental wellbeing</span>
       </div>
-    </section>
+      <div class="chat-input-bar">
+        <div class="chat-input-row">
+          <textarea class="chat-input" id="chatInput" placeholder="Ask about your health…" rows="1" onkeydown="chatKeydown(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" onclick="sendChat()">➤</button>
+        </div>
+        <div class="disclaimer">Nexora AI provides general health information only. Always consult a doctor for medical advice.</div>
+      </div>
+    </div>
 
-    <!-- Symptom Checker Page -->
-    <section class="page" id="page-symptoms">
-      <div class="page-header">
-        <h2>🩺 Symptom Checker</h2>
-        <p>Describe your symptoms and get AI-powered health guidance</p>
-      </div>
-      <div class="symptom-container">
-        <div class="symptom-form card">
-          <div class="form-group">
-            <label>Symptoms <span class="required">*</span></label>
-            <div class="tag-input-wrapper">
-              <div class="tags" id="symptomTags"></div>
-              <input type="text" id="symptomInput" placeholder="Type a symptom and press Enter..." />
-            </div>
-            <div class="common-symptoms">
-              <span class="label-sm">Common:</span>
-              <button class="chip" data-symptom="Headache">Headache</button>
-              <button class="chip" data-symptom="Fever">Fever</button>
-              <button class="chip" data-symptom="Cough">Cough</button>
-              <button class="chip" data-symptom="Fatigue">Fatigue</button>
-              <button class="chip" data-symptom="Nausea">Nausea</button>
-              <button class="chip" data-symptom="Chest pain">Chest pain</button>
-              <button class="chip" data-symptom="Shortness of breath">Shortness of breath</button>
-              <button class="chip" data-symptom="Dizziness">Dizziness</button>
-            </div>
+    <!-- ── SYMPTOM CHECKER ── -->
+    <div class="section" id="section-symptom">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>🩺 Symptom Checker</h2>
+          <p>Describe your symptoms and get AI-powered health guidance</p>
+        </div>
+        <div class="form-card">
+          <label class="form-label">Symptoms <span>*</span></label>
+          <textarea class="form-textarea" id="symp-text" placeholder="Describe your symptoms in detail…"></textarea>
+          <div class="tag-group" id="sympTags">
+            <span class="tag" onclick="toggleTag(this)">Headache</span>
+            <span class="tag" onclick="toggleTag(this)">Fever</span>
+            <span class="tag" onclick="toggleTag(this)">Cough</span>
+            <span class="tag" onclick="toggleTag(this)">Fatigue</span>
+            <span class="tag" onclick="toggleTag(this)">Nausea</span>
+            <span class="tag" onclick="toggleTag(this)">Chest pain</span>
+            <span class="tag" onclick="toggleTag(this)">Shortness of breath</span>
+            <span class="tag" onclick="toggleTag(this)">Dizziness</span>
           </div>
+        </div>
+        <div class="form-card">
           <div class="form-row">
-            <div class="form-group">
-              <label>Body Area</label>
-              <select id="bodyArea">
-                <option value="">Select area...</option>
-                <option>Head & Neck</option>
+            <div>
+              <label class="form-label">Body Area</label>
+              <select class="form-select" id="symp-area">
+                <option value="">Select area…</option>
+                <option>Head &amp; Neck</option>
                 <option>Chest</option>
                 <option>Abdomen</option>
                 <option>Back</option>
-                <option>Arms & Hands</option>
-                <option>Legs & Feet</option>
+                <option>Arms &amp; Hands</option>
+                <option>Legs &amp; Feet</option>
                 <option>Skin</option>
                 <option>General / Whole body</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>Severity</label>
-              <select id="severity">
-                <option value="">Select severity...</option>
+            <div>
+              <label class="form-label">Severity</label>
+              <select class="form-select" id="symp-severity">
+                <option value="">Select severity…</option>
                 <option>Mild</option>
                 <option>Moderate</option>
                 <option>Severe</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>Duration</label>
-              <select id="duration">
-                <option value="">Select duration...</option>
+            <div>
+              <label class="form-label">Duration</label>
+              <select class="form-select" id="symp-duration">
+                <option value="">Select duration…</option>
                 <option>Less than 1 day</option>
                 <option>1–3 days</option>
                 <option>4–7 days</option>
@@ -163,256 +672,1047 @@
               </select>
             </div>
           </div>
-          <button class="btn-primary" id="analyzeBtn">🔍 Analyze Symptoms</button>
         </div>
-        <div class="symptom-result card hidden" id="symptomResult">
-          <h3>📋 Analysis Result</h3>
-          <div id="symptomResultContent"></div>
-          <p class="disclaimer mt-1">This is general information only. Please consult a healthcare professional for proper diagnosis.</p>
+        <button class="btn btn-primary btn-full" onclick="analyzeSymptoms()">🔍 Analyze Symptoms</button>
+        <div class="result-card" id="sympResult">
+          <div class="result-badge badge-warn" id="sympBadge">⚠️ General Guidance</div>
+          <h3 id="sympResultTitle">Analysis Result</h3>
+          <p id="sympResultText">This is general information only. Please consult a healthcare professional for proper diagnosis.</p>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- Calculators Page -->
-    <section class="page" id="page-calculators">
-      <div class="page-header">
-        <h2>🧮 Health Calculators</h2>
-        <p>Evidence-based tools to track your health metrics</p>
-      </div>
+    <!-- ── CALCULATORS ── -->
+    <div class="section" id="section-calc" style="flex-direction:column;">
       <div class="calc-tabs">
-        <button class="calc-tab active" data-calc="bmi">BMI</button>
-        <button class="calc-tab" data-calc="calories">Calories</button>
-        <button class="calc-tab" data-calc="water">Water</button>
-        <button class="calc-tab" data-calc="ideal">Ideal Weight</button>
+        <button class="calc-tab active" onclick="switchCalc('bmi',this)">BMI</button>
+        <button class="calc-tab" onclick="switchCalc('cal',this)">Calories</button>
+        <button class="calc-tab" onclick="switchCalc('water',this)">Water</button>
+        <button class="calc-tab" onclick="switchCalc('ibw',this)">Ideal Weight</button>
       </div>
 
       <!-- BMI -->
-      <div class="calc-panel active card" id="calc-bmi">
-        <h3>Body Mass Index</h3>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Unit</label>
-            <select id="bmiUnit">
-              <option value="metric">Metric (kg / cm)</option>
-              <option value="imperial">Imperial (lbs / cm)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Weight</label>
-            <input type="number" id="bmiWeight" placeholder="70" min="1" />
-          </div>
-          <div class="form-group">
-            <label>Height (cm)</label>
-            <input type="number" id="bmiHeight" placeholder="175" min="1" />
+      <div class="calc-panel active" id="calc-bmi">
+        <div class="panel-header"><h2>🏋️ Body Mass Index</h2><p>Calculate your BMI and understand your weight category</p></div>
+        <div class="form-card">
+          <label class="form-label">Unit</label>
+          <select class="form-select" id="bmi-unit" onchange="toggleBmiUnit()">
+            <option value="metric">Metric (kg / cm)</option>
+            <option value="imperial">Imperial (lbs / cm)</option>
+          </select>
+        </div>
+        <div class="form-card">
+          <div class="form-row">
+            <div>
+              <label class="form-label" id="bmi-wlabel">Weight (kg)</label>
+              <input class="form-input" type="number" id="bmi-w" placeholder="e.g. 70"/>
+            </div>
+            <div>
+              <label class="form-label">Height (cm)</label>
+              <input class="form-input" type="number" id="bmi-h" placeholder="e.g. 170"/>
+            </div>
           </div>
         </div>
-        <button class="btn-primary" onclick="calcBMI()">Calculate BMI</button>
-        <div class="calc-result hidden" id="bmiResult"></div>
+        <button class="btn btn-primary btn-full" onclick="calcBMI()">Calculate BMI</button>
+        <div class="result-display" id="bmi-result">
+          <div class="result-val" id="bmi-val">—</div>
+          <div class="result-label" id="bmi-cat">—</div>
+          <div class="bmi-gauge">
+            <div class="gauge-seg" style="background:#43d98c;"></div>
+            <div class="gauge-seg" style="background:#f9c74f;"></div>
+            <div class="gauge-seg" style="background:#ff9f1c;"></div>
+            <div class="gauge-seg" style="background:#ff6b6b;"></div>
+          </div>
+          <div class="result-meta">Underweight &lt;18.5 · Normal 18.5–24.9 · Overweight 25–29.9 · Obese ≥30</div>
+        </div>
       </div>
 
       <!-- Calories -->
-      <div class="calc-panel card" id="calc-calories">
-        <h3>Daily Calorie Needs</h3>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Age</label>
-            <input type="number" id="calAge" placeholder="25" min="1" max="120" />
+      <div class="calc-panel" id="calc-cal">
+        <div class="panel-header"><h2>🔥 Daily Calorie Needs</h2><p>Based on your profile and activity level</p></div>
+        <div class="form-card">
+          <div class="form-row">
+            <div>
+              <label class="form-label">Age</label>
+              <input class="form-input" type="number" id="cal-age" placeholder="e.g. 30"/>
+            </div>
+            <div>
+              <label class="form-label">Gender</label>
+              <select class="form-select" id="cal-gender">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Weight (kg)</label>
+              <input class="form-input" type="number" id="cal-w" placeholder="e.g. 70"/>
+            </div>
+            <div>
+              <label class="form-label">Height (cm)</label>
+              <input class="form-input" type="number" id="cal-h" placeholder="e.g. 170"/>
+            </div>
           </div>
-          <div class="form-group">
-            <label>Gender</label>
-            <select id="calGender">
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Weight (kg)</label>
-            <input type="number" id="calWeight" placeholder="70" min="1" />
-          </div>
-          <div class="form-group">
-            <label>Height (cm)</label>
-            <input type="number" id="calHeight" placeholder="175" min="1" />
-          </div>
+          <label class="form-label mt-12">Activity Level</label>
+          <select class="form-select" id="cal-activity">
+            <option value="1.2">Sedentary (little/no exercise)</option>
+            <option value="1.375">Light (1–3 days/week)</option>
+            <option value="1.55" selected>Moderate (3–5 days/week)</option>
+            <option value="1.725">Active (6–7 days/week)</option>
+            <option value="1.9">Very Active (hard exercise daily)</option>
+          </select>
+          <label class="form-label mt-12">Goal</label>
+          <select class="form-select" id="cal-goal">
+            <option value="-500">Lose weight</option>
+            <option value="0" selected>Maintain weight</option>
+            <option value="500">Gain weight</option>
+          </select>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Activity Level</label>
-            <select id="calActivity">
-              <option value="1.2">Sedentary (little/no exercise)</option>
-              <option value="1.375">Light (1–3 days/week)</option>
-              <option value="1.55" selected>Moderate (3–5 days/week)</option>
-              <option value="1.725">Active (6–7 days/week)</option>
-              <option value="1.9">Very Active (hard exercise daily)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Goal</label>
-            <select id="calGoal">
-              <option value="lose">Lose weight</option>
-              <option value="maintain" selected>Maintain weight</option>
-              <option value="gain">Gain weight</option>
-            </select>
-          </div>
+        <button class="btn btn-primary btn-full" onclick="calcCal()">Calculate Calories</button>
+        <div class="result-display" id="cal-result">
+          <div class="result-val" id="cal-val">—</div>
+          <div class="result-label">kcal / day</div>
+          <div class="result-meta" id="cal-meta"></div>
         </div>
-        <button class="btn-primary" onclick="calcCalories()">Calculate Calories</button>
-        <div class="calc-result hidden" id="caloriesResult"></div>
       </div>
 
       <!-- Water -->
-      <div class="calc-panel card" id="calc-water">
-        <h3>Daily Water Intake</h3>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Weight (kg)</label>
-            <input type="number" id="waterWeight" placeholder="70" min="1" />
-          </div>
-          <div class="form-group">
-            <label>Exercise (extra litres)</label>
-            <select id="waterActivity">
-              <option value="0">None</option>
-              <option value="0.35">Light (30 min)</option>
-              <option value="0.7">Moderate (1 hr)</option>
-              <option value="1.0">Intense (1.5+ hr)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Climate</label>
-            <select id="waterClimate">
-              <option value="0">Temperate</option>
-              <option value="0.3">Hot / Humid</option>
-              <option value="0.5">Very Hot</option>
-            </select>
-          </div>
+      <div class="calc-panel" id="calc-water">
+        <div class="panel-header"><h2>💧 Daily Water Intake</h2><p>Stay hydrated for optimal health</p></div>
+        <div class="form-card">
+          <label class="form-label">Weight (kg)</label>
+          <input class="form-input" type="number" id="water-w" placeholder="e.g. 70"/>
+          <label class="form-label mt-12">Exercise</label>
+          <select class="form-select" id="water-ex">
+            <option value="0">None</option>
+            <option value="0.3">Light (30 min)</option>
+            <option value="0.6">Moderate (1 hr)</option>
+            <option value="1">Intense (1.5+ hr)</option>
+          </select>
+          <label class="form-label mt-12">Climate</label>
+          <select class="form-select" id="water-climate">
+            <option value="0">Temperate</option>
+            <option value="0.3">Hot / Humid</option>
+            <option value="0.6">Very Hot</option>
+          </select>
         </div>
-        <button class="btn-primary" onclick="calcWater()">Calculate Water</button>
-        <div class="calc-result hidden" id="waterResult"></div>
+        <button class="btn btn-primary btn-full" onclick="calcWater()">Calculate Water</button>
+        <div class="result-display" id="water-result">
+          <div class="result-val" id="water-val">—</div>
+          <div class="result-label">litres / day</div>
+          <div class="result-meta" id="water-meta"></div>
+        </div>
       </div>
 
       <!-- Ideal Weight -->
-      <div class="calc-panel card" id="calc-ideal">
-        <h3>Ideal Body Weight</h3>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Height (cm)</label>
-            <input type="number" id="idealHeight" placeholder="175" min="100" max="250" />
-          </div>
-          <div class="form-group">
-            <label>Gender</label>
-            <select id="idealGender">
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-            </select>
-          </div>
-        </div>
-        <button class="btn-primary" onclick="calcIdeal()">Calculate Ideal Weight</button>
-        <div class="calc-result hidden" id="idealResult"></div>
-      </div>
-    </section>
-
-    <!-- Reminders Page -->
-    <section class="page" id="page-reminders">
-      <div class="page-header">
-        <h2>⏰ Medication Reminders</h2>
-        <p>Never miss a dose or health routine</p>
-      </div>
-      <div class="reminders-layout">
-        <div class="card reminder-form-card">
-          <h3>Add Reminder</h3>
-          <div class="form-group">
-            <label>Title</label>
-            <input type="text" id="remTitle" placeholder="e.g. Morning vitamins" maxlength="100" />
-          </div>
+      <div class="calc-panel" id="calc-ibw">
+        <div class="panel-header"><h2>⚖️ Ideal Body Weight</h2><p>Estimate your healthy weight range</p></div>
+        <div class="form-card">
           <div class="form-row">
-            <div class="form-group">
-              <label>Time</label>
-              <input type="time" id="remTime" value="08:00" />
+            <div>
+              <label class="form-label">Height (cm)</label>
+              <input class="form-input" type="number" id="ibw-h" placeholder="e.g. 170"/>
             </div>
-            <div class="form-group">
-              <label>Repeat</label>
-              <select id="remRepeat">
-                <option>Daily</option>
-                <option>Weekdays</option>
-                <option>Weekends</option>
-                <option>Weekly</option>
-                <option>Once</option>
+            <div>
+              <label class="form-label">Gender</label>
+              <select class="form-select" id="ibw-gender">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
               </select>
             </div>
           </div>
-          <div class="form-group">
-            <label>Notes</label>
-            <input type="text" id="remNotes" placeholder="e.g. Take with food" maxlength="200" />
-          </div>
-          <div class="form-group">
-            <label>Icon</label>
-            <div class="icon-picker" id="iconPicker">
-              <button class="icon-btn active" data-icon="💊">💊</button>
-              <button class="icon-btn" data-icon="💧">💧</button>
-              <button class="icon-btn" data-icon="🏃">🏃</button>
-              <button class="icon-btn" data-icon="🧘">🧘</button>
-              <button class="icon-btn" data-icon="🥗">🥗</button>
-              <button class="icon-btn" data-icon="😴">😴</button>
-              <button class="icon-btn" data-icon="🩺">🩺</button>
-              <button class="icon-btn" data-icon="🧪">🧪</button>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="calcIBW()">Calculate Ideal Weight</button>
+        <div class="result-display" id="ibw-result">
+          <div class="result-val" id="ibw-val">—</div>
+          <div class="result-label">kg (ideal body weight)</div>
+          <div class="result-meta" id="ibw-meta"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── REMINDERS ── -->
+    <div class="section" id="section-reminders">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>⏰ Medication Reminders</h2>
+          <p>Never miss a dose or health routine</p>
+        </div>
+        <div class="form-card">
+          <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px;">Add Reminder</h3>
+          <div class="form-row">
+            <div>
+              <label class="form-label">Title</label>
+              <input class="form-input" type="text" id="rem-title" placeholder="e.g. Take vitamin D"/>
+            </div>
+            <div>
+              <label class="form-label">Time</label>
+              <input class="form-input" type="time" id="rem-time"/>
             </div>
           </div>
-          <button class="btn-primary" id="addReminderBtn">+ Add Reminder</button>
+          <label class="form-label mt-12">Repeat</label>
+          <select class="form-select" id="rem-repeat">
+            <option>Daily</option>
+            <option>Weekdays</option>
+            <option>Weekends</option>
+            <option>Weekly</option>
+            <option>Once</option>
+          </select>
+          <label class="form-label mt-12">Icon</label>
+          <div class="tag-group" id="remIconGroup">
+            <span class="tag active" onclick="selectIcon(this)" data-icon="💊">💊</span>
+            <span class="tag" onclick="selectIcon(this)" data-icon="💧">💧</span>
+            <span class="tag" onclick="selectIcon(this)" data-icon="🏃">🏃</span>
+            <span class="tag" onclick="selectIcon(this)" data-icon="🧘">🧘</span>
+            <span class="tag" onclick="selectIcon(this)" data-icon="🥗">🥗</span>
+            <span class="tag" onclick="selectIcon(this)" data-icon="😴">😴</span>
+            <span class="tag" onclick="selectIcon(this)" data-icon="🩺">🩺</span>
+            <span class="tag" onclick="selectIcon(this)" data-icon="🧪">🧪</span>
+          </div>
+          <label class="form-label mt-12">Notes (optional)</label>
+          <input class="form-input" type="text" id="rem-notes" placeholder="e.g. After meals"/>
+          <button class="btn btn-primary btn-full mt-16" onclick="addReminder()">+ Add Reminder</button>
         </div>
-        <div class="reminders-list-card">
-          <div class="reminders-header">
-            <h3>Your Reminders</h3>
-            <button class="btn-sm btn-danger" id="clearDoneBtn">Clear Done</button>
-          </div>
-          <div id="remindersList"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;">Your Reminders</h3>
+          <button class="btn" style="padding:6px 12px;font-size:12px;border:1px solid var(--border2);color:var(--text2);background:none;border-radius:var(--radius-sm);" onclick="clearDoneReminders()">Clear Done</button>
         </div>
-      </div>
-    </section>
-
-    <!-- Health Records Page -->
-    <section class="page" id="page-records">
-      <div class="page-header">
-        <h2>📋 Health Records</h2>
-        <p>Track your health metrics over time</p>
-      </div>
-      <div class="records-layout">
-        <div class="card record-form-card">
-          <h3>Log Health Data</h3>
-          <div class="form-group">
-            <label>Type</label>
-            <select id="recType">
-              <option value="Blood Pressure">Blood Pressure</option>
-              <option value="Blood Sugar">Blood Sugar</option>
-              <option value="Weight">Weight</option>
-              <option value="Heart Rate">Heart Rate</option>
-              <option value="Temperature">Temperature</option>
-              <option value="Oxygen Level">Oxygen Level</option>
-              <option value="Sleep">Sleep</option>
-              <option value="Exercise">Exercise</option>
-              <option value="Mood">Mood</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Value / Data</label>
-            <input type="text" id="recData" placeholder="e.g. 120/80 mmHg" maxlength="200" />
-          </div>
-          <div class="form-group">
-            <label>Notes</label>
-            <input type="text" id="recNotes" placeholder="Optional notes" maxlength="300" />
-          </div>
-          <button class="btn-primary" id="addRecordBtn">+ Log Record</button>
-        </div>
-        <div class="records-list-card">
-          <h3>Recent Records</h3>
-          <div id="recordsList"></div>
+        <div class="reminder-grid" id="reminderList"></div>
+        <div class="empty-state" id="reminderEmpty">
+          <div class="es-icon">⏰</div>
+          <p>No reminders yet. Add one above!</p>
         </div>
       </div>
-    </section>
-  </main>
+    </div>
 
-  <!-- Toast -->
-  <div class="toast" id="toast"></div>
-  <div class="offline-banner" id="offlineBanner" hidden>Offline mode: cached app shell is available, AI features need internet.</div>
+    <!-- ── HEALTH RECORDS ── -->
+    <div class="section" id="section-records">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>📋 Health Records</h2>
+          <p>Track your health metrics over time</p>
+        </div>
+        <div class="form-card">
+          <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px;">Log Health Data</h3>
+          <label class="form-label">Type</label>
+          <select class="form-select" id="rec-type">
+            <option>Blood Pressure</option>
+            <option>Blood Sugar</option>
+            <option>Weight</option>
+            <option>Heart Rate</option>
+            <option>Temperature</option>
+            <option>Oxygen Level</option>
+            <option>Sleep</option>
+            <option>Exercise</option>
+            <option>Mood</option>
+            <option>Other</option>
+          </select>
+          <label class="form-label mt-12">Value / Data</label>
+          <input class="form-input" type="text" id="rec-val" placeholder="e.g. 120/80"/>
+          <label class="form-label mt-12">Notes (optional)</label>
+          <input class="form-input" type="text" id="rec-notes" placeholder="Any additional notes…"/>
+          <button class="btn btn-primary btn-full mt-16" onclick="addRecord()">+ Log Record</button>
+        </div>
+        <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:12px;">Recent Records</h3>
+        <div class="records-list" id="recordsList"></div>
+        <div class="empty-state" id="recordsEmpty">
+          <div class="es-icon">📋</div>
+          <p>No records yet. Log your first health metric!</p>
+        </div>
+      </div>
+    </div>
 
-  <script src="/static/js/app.js"></script>
+    <!-- ── SMART WATCH SECTION ── -->
+    <div class="section" id="section-watch" style="flex-direction:column;">
+      <div class="watch-connect-bar">
+        <div class="watch-status-dot" id="wsDot"></div>
+        <div class="watch-status-text"><strong id="wsName">No device connected</strong><br><span id="wsInfo" style="font-size:11px;">Connect your smartwatch via Bluetooth</span></div>
+        <span class="watch-live-badge" id="wsLiveBadge" style="display:none;"><div class="live-dot"></div>Live</span>
+        <button class="connect-btn" id="wsConnectBtn" onclick="toggleWatchConnect()">⌚ Connect Watch</button>
+      </div>
+      <div class="panel">
+        <div class="sim-note" id="simNote" style="display:none;">
+          ⚡ <div>Running in <strong>simulator mode</strong> — real data streams when a Bluetooth device is paired. Web Bluetooth requires Chrome on Android/desktop with Bluetooth enabled.</div>
+        </div>
+        <div id="alertContainer"></div>
+        <div class="watch-grid">
+          <div class="watch-metric" id="wm-hr">
+            <div class="wm-icon">❤️</div><div class="wm-label">Heart Rate</div>
+            <div class="wm-val" id="wv-hr">--</div><div class="wm-unit">bpm</div>
+            <div class="wm-status" id="ws-hr" style="color:var(--text3);">—</div>
+          </div>
+          <div class="watch-metric" id="wm-spo2">
+            <div class="wm-icon">🩸</div><div class="wm-label">SpO₂</div>
+            <div class="wm-val" id="wv-spo2">--</div><div class="wm-unit">%</div>
+            <div class="wm-status" id="ws-spo2" style="color:var(--text3);">—</div>
+          </div>
+          <div class="watch-metric" id="wm-steps">
+            <div class="wm-icon">🚶</div><div class="wm-label">Steps</div>
+            <div class="wm-val" id="wv-steps">--</div><div class="wm-unit">/ 10,000 goal</div>
+            <div class="wm-status" id="ws-steps" style="color:var(--text3);">—</div>
+          </div>
+          <div class="watch-metric" id="wm-cal">
+            <div class="wm-icon">🔥</div><div class="wm-label">Calories</div>
+            <div class="wm-val" id="wv-cal">--</div><div class="wm-unit">kcal burned</div>
+            <div class="wm-status" id="ws-cal" style="color:var(--text3);">—</div>
+          </div>
+          <div class="watch-metric" id="wm-sleep">
+            <div class="wm-icon">😴</div><div class="wm-label">Last Sleep</div>
+            <div class="wm-val" id="wv-sleep">--</div><div class="wm-unit">hours</div>
+            <div class="wm-status" id="ws-sleep" style="color:var(--text3);">—</div>
+          </div>
+          <div class="watch-metric" id="wm-stress">
+            <div class="wm-icon">🧠</div><div class="wm-label">Stress Level</div>
+            <div class="wm-val" id="wv-stress">--</div><div class="wm-unit">/ 100</div>
+            <div class="wm-status" id="ws-stress" style="color:var(--text3);">—</div>
+          </div>
+        </div>
+        <!-- HR Chart -->
+        <div class="watch-chart-wrap">
+          <div class="watch-chart-header">
+            <h3>📈 Live History</h3>
+            <div class="chart-tabs">
+              <button class="chart-tab active" onclick="switchWatchChart('hr',this)">Heart Rate</button>
+              <button class="chart-tab" onclick="switchWatchChart('spo2',this)">SpO₂</button>
+              <button class="chart-tab" onclick="switchWatchChart('steps',this)">Steps</button>
+            </div>
+          </div>
+          <canvas id="watchChart" style="width:100%;height:160px;"></canvas>
+        </div>
+        <!-- Activity Rings -->
+        <div class="watch-chart-wrap">
+          <div class="watch-chart-header"><h3>🏃 Activity Rings</h3></div>
+          <div class="activity-rings">
+            <svg class="ring-svg" width="130" height="130" viewBox="0 0 130 130">
+              <circle cx="65" cy="65" r="55" fill="none" stroke="rgba(255,107,107,0.15)" stroke-width="10"/>
+              <circle cx="65" cy="65" r="55" fill="none" stroke="#ff6b6b" stroke-width="10" stroke-dasharray="346" stroke-dashoffset="346" stroke-linecap="round" transform="rotate(-90 65 65)" id="ring-move" style="transition:stroke-dashoffset 1.2s ease;"/>
+              <circle cx="65" cy="65" r="42" fill="none" stroke="rgba(67,217,140,0.15)" stroke-width="10"/>
+              <circle cx="65" cy="65" r="42" fill="none" stroke="#43d98c" stroke-width="10" stroke-dasharray="264" stroke-dashoffset="264" stroke-linecap="round" transform="rotate(-90 65 65)" id="ring-exercise" style="transition:stroke-dashoffset 1.2s ease;"/>
+              <circle cx="65" cy="65" r="29" fill="none" stroke="rgba(79,156,249,0.15)" stroke-width="10"/>
+              <circle cx="65" cy="65" r="29" fill="none" stroke="#4f9cf9" stroke-width="10" stroke-dasharray="182" stroke-dashoffset="182" stroke-linecap="round" transform="rotate(-90 65 65)" id="ring-stand" style="transition:stroke-dashoffset 1.2s ease;"/>
+            </svg>
+            <div class="ring-legend">
+              <div class="ring-leg-item"><div class="ring-dot" style="background:#ff6b6b;"></div><div><div style="font-size:12px;color:var(--text2);">Move</div><div style="font-weight:600;" id="ring-move-label">-- kcal</div></div></div>
+              <div class="ring-leg-item"><div class="ring-dot" style="background:#43d98c;"></div><div><div style="font-size:12px;color:var(--text2);">Exercise</div><div style="font-weight:600;" id="ring-ex-label">-- min</div></div></div>
+              <div class="ring-leg-item"><div class="ring-dot" style="background:#4f9cf9;"></div><div><div style="font-size:12px;color:var(--text2);">Stand</div><div style="font-weight:600;" id="ring-stand-label">-- hrs</div></div></div>
+            </div>
+          </div>
+        </div>
+        <!-- Sleep -->
+        <div class="watch-chart-wrap">
+          <div class="watch-chart-header"><h3>😴 Sleep Analysis</h3></div>
+          <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:14px;">
+            <div>
+              <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Total</div>
+              <div style="font-family:'Syne',sans-serif;font-size:34px;font-weight:800;color:var(--accent3);" id="sleep-total">--</div>
+              <div style="font-size:12px;color:var(--text2);">hours last night</div>
+            </div>
+            <div style="flex:1;min-width:160px;">
+              <div style="height:10px;border-radius:5px;overflow:hidden;display:flex;margin-bottom:8px;" id="sleep-bar">
+                <div style="background:#7b61ff;width:20%;"></div>
+                <div style="background:#4f9cf9;width:50%;"></div>
+                <div style="background:#00d4aa;width:20%;"></div>
+                <div style="background:#8ca0c4;width:10%;"></div>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <span style="font-size:11px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#7b61ff;display:inline-block;"></span>Deep</span>
+                <span style="font-size:11px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#4f9cf9;display:inline-block;"></span>Light</span>
+                <span style="font-size:11px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#00d4aa;display:inline-block;"></span>REM</span>
+                <span style="font-size:11px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;background:#8ca0c4;display:inline-block;"></span>Awake</span>
+              </div>
+            </div>
+          </div>
+          <div class="sleep-breakdown">
+            <div class="sleep-stage"><div class="ss-label">Deep</div><div class="ss-val" id="sl-deep">--</div><div class="ss-bar" style="background:#7b61ff;"></div><div class="ss-label">hrs</div></div>
+            <div class="sleep-stage"><div class="ss-label">Light</div><div class="ss-val" id="sl-light">--</div><div class="ss-bar" style="background:#4f9cf9;"></div><div class="ss-label">hrs</div></div>
+            <div class="sleep-stage"><div class="ss-label">REM</div><div class="ss-val" id="sl-rem">--</div><div class="ss-bar" style="background:#00d4aa;"></div><div class="ss-label">hrs</div></div>
+            <div class="sleep-stage"><div class="ss-label">Awake</div><div class="ss-val" id="sl-awake">--</div><div class="ss-bar" style="background:#8ca0c4;"></div><div class="ss-label">hrs</div></div>
+          </div>
+        </div>
+        <div style="text-align:center;padding:12px 0 6px;font-size:11px;color:var(--text3);line-height:1.7;">
+          Smartwatch data is for wellness tracking only and does not constitute medical advice.<br>
+          Web Bluetooth works in Chrome on Android and desktop. Not supported on iOS Safari.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// ── NAVIGATION ──
+function switchSection(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  closeSidebar();
+}
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ── CALCULATORS ──
+function switchCalc(id, btn) {
+  document.querySelectorAll('.calc-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('calc-' + id).classList.add('active');
+  document.querySelectorAll('.calc-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+// ── CHAT ──
+const responses = {
+  default: [
+    "That's a great health question! Based on current medical guidelines, it's important to maintain a balanced diet, regular physical activity, and adequate sleep. For personalized advice, please consult your healthcare provider.",
+    "Thank you for your question. General health guidelines suggest staying hydrated (8+ glasses of water daily), getting 7-9 hours of sleep, and exercising at least 150 minutes per week. Always speak with a doctor for personal medical advice.",
+    "I understand your concern. While I can provide general health information, each person's situation is unique. I recommend consulting a qualified healthcare professional for a proper evaluation.",
+  ],
+  diabetes: ["Common symptoms of diabetes include increased thirst and urination, fatigue, blurred vision, slow healing wounds, and unexplained weight loss. If you experience these, please see a doctor promptly for blood glucose testing."],
+  sleep: ["For better sleep: maintain a consistent schedule, keep your room cool and dark, avoid screens 1 hour before bed, limit caffeine after 2pm, and try relaxation techniques. Adults typically need 7-9 hours per night."],
+  immune: ["To boost immunity: eat colorful fruits and vegetables, get adequate vitamin D and zinc, exercise regularly, manage stress, sleep well, and stay hydrated. Foods like citrus, berries, garlic, ginger, and leafy greens are particularly beneficial."],
+  stress: ["Effective stress management techniques include deep breathing, meditation, regular exercise, adequate sleep, journaling, spending time in nature, and connecting with loved ones. If stress is severe, consider speaking with a mental health professional."],
+  water: ["The general recommendation is 8 cups (2 litres) daily, but needs vary. Active individuals, those in hot climates, or pregnant/breastfeeding women may need more. A good indicator is light-yellow urine."],
+  heart: ["Heart health tips: eat a heart-healthy diet (Mediterranean style), exercise 150+ min/week, quit smoking, limit alcohol, manage blood pressure and cholesterol, maintain healthy weight, and manage stress. Regular check-ups are important."],
+  nutrition: ["A balanced diet includes plenty of fruits, vegetables, whole grains, lean proteins, and healthy fats. Limit processed foods, added sugars, and excess sodium. Try to eat mindfully and in appropriate portions."],
+  mental: ["Mental wellbeing involves regular self-care, strong social connections, engaging hobbies, mindfulness, adequate sleep, and exercise. Don't hesitate to seek professional help—therapy and counseling are very effective tools."],
+  routine: ["A healthy daily routine: wake up at a consistent time, hydrate with water first thing, eat a nutritious breakfast, exercise (morning or lunch works well), take breaks during work, eat regular meals, limit screen time, and wind down before bed."],
+};
+
+function getResponse(text) {
+  const t = text.toLowerCase();
+  if (t.includes('diabetes') || t.includes('blood sugar')) return responses.diabetes[0];
+  if (t.includes('sleep')) return responses.sleep[0];
+  if (t.includes('immune') || t.includes('immunity')) return responses.immune[0];
+  if (t.includes('stress')) return responses.stress[0];
+  if (t.includes('water') || t.includes('hydrat')) return responses.water[0];
+  if (t.includes('heart') || t.includes('cardio')) return responses.heart[0];
+  if (t.includes('nutrition') || t.includes('diet') || t.includes('food')) return responses.nutrition[0];
+  if (t.includes('mental') || t.includes('anxiety') || t.includes('depress')) return responses.mental[0];
+  if (t.includes('routine') || t.includes('daily')) return responses.routine[0];
+  return responses.default[Math.floor(Math.random() * responses.default.length)];
+}
+
+function addMsg(text, role) {
+  const wrap = document.getElementById('chatMessages');
+  const d = document.createElement('div');
+  d.className = 'msg ' + role;
+  const isBot = role === 'bot';
+  d.innerHTML = `
+    <div class="msg-avatar ${isBot?'bot-avatar':'user-avatar'}">${isBot?'🧬':'👤'}</div>
+    <div class="msg-bubble">${text}</div>`;
+  wrap.appendChild(d);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function showTyping() {
+  const wrap = document.getElementById('chatMessages');
+  const d = document.createElement('div');
+  d.className = 'msg bot'; d.id = 'typing-indicator';
+  d.innerHTML = `<div class="msg-avatar bot-avatar">🧬</div>
+    <div class="msg-bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  wrap.appendChild(d); wrap.scrollTop = wrap.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+function sendChat() {
+  const inp = document.getElementById('chatInput');
+  const text = inp.value.trim();
+  if (!text) return;
+  addMsg(text, 'user');
+  inp.value = ''; inp.style.height = 'auto';
+  showTyping();
+  setTimeout(() => {
+    removeTyping();
+    addMsg(getResponse(text), 'bot');
+  }, 800 + Math.random() * 600);
+}
+
+function sendQuick(el) {
+  const text = el.textContent.replace(/^[^\w\s]*\s*/, '').trim() || el.textContent.trim();
+  document.getElementById('chatInput').value = text;
+  sendChat();
+}
+
+function chatKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ── SYMPTOM CHECKER ──
+function toggleTag(el) { el.classList.toggle('active'); }
+
+function analyzeSymptoms() {
+  const text = document.getElementById('symp-text').value;
+  const tags = [...document.querySelectorAll('#sympTags .tag.active')].map(t => t.textContent).join(', ');
+  const severity = document.getElementById('symp-severity').value;
+  const duration = document.getElementById('symp-duration').value;
+  const area = document.getElementById('symp-area').value;
+
+  if (!text && !tags) { alert('Please describe your symptoms or select from the common symptoms.'); return; }
+
+  const result = document.getElementById('sympResult');
+  const badge = document.getElementById('sympBadge');
+  const title = document.getElementById('sympResultTitle');
+  const body = document.getElementById('sympResultText');
+
+  const syms = (text + ' ' + tags).toLowerCase();
+  let advice, badgeClass, titleText;
+
+  if (syms.includes('chest pain') || syms.includes('shortness of breath')) {
+    badgeClass = 'badge-warn'; titleText = '⚠️ Seek Medical Attention';
+    advice = 'Chest pain and shortness of breath can indicate serious conditions like heart attack or pulmonary embolism. Please seek emergency medical care immediately if symptoms are severe or sudden.';
+  } else if (severity === 'Severe') {
+    badgeClass = 'badge-warn'; titleText = '⚠️ Consult a Doctor';
+    advice = `Your symptoms (${tags || text}) are rated as severe${duration ? ' lasting ' + duration : ''}. We strongly recommend consulting a healthcare professional promptly. Do not attempt to self-diagnose or self-treat severe symptoms.`;
+  } else if (syms.includes('fever') || syms.includes('cough')) {
+    badgeClass = 'badge-info'; titleText = '💊 Possible Respiratory Issue';
+    advice = `Fever and cough are common with respiratory infections, including viral illnesses. Rest, stay hydrated, and take over-the-counter fever reducers as appropriate. See a doctor if fever exceeds 39°C (102°F), persists more than 3 days, or if breathing becomes difficult.`;
+  } else if (syms.includes('headache') || syms.includes('dizziness')) {
+    badgeClass = 'badge-info'; titleText = '💡 General Guidance';
+    advice = `Headaches and dizziness can result from dehydration, stress, lack of sleep, or muscle tension. Try resting, drinking water, and over-the-counter pain relief. If symptoms are sudden and severe ("thunderclap headache"), seek emergency care immediately.`;
+  } else if (syms.includes('fatigue') || syms.includes('nausea')) {
+    badgeClass = 'badge-info'; titleText = '💡 General Guidance';
+    advice = `Fatigue and nausea are common symptoms with many causes including viral infections, dietary issues, or stress. Ensure adequate rest and hydration. Consult a doctor if symptoms persist or worsen.`;
+  } else {
+    badgeClass = 'badge-info'; titleText = '💡 General Health Guidance';
+    advice = `Based on your reported symptoms${area ? ' in the ' + area + ' area' : ''}, these could relate to a variety of common conditions. Monitor your symptoms and stay hydrated. If they worsen or new symptoms appear, please consult a healthcare professional.`;
+  }
+
+  badge.className = 'result-badge ' + badgeClass;
+  badge.textContent = titleText;
+  title.textContent = 'Analysis Result';
+  body.textContent = advice + '\n\nThis is general information only. Always consult a licensed healthcare professional for proper diagnosis and treatment.';
+  result.classList.add('show');
+  result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── BMI ──
+function toggleBmiUnit() {
+  const u = document.getElementById('bmi-unit').value;
+  document.getElementById('bmi-wlabel').textContent = u === 'metric' ? 'Weight (kg)' : 'Weight (lbs)';
+}
+
+function calcBMI() {
+  const unit = document.getElementById('bmi-unit').value;
+  let w = parseFloat(document.getElementById('bmi-w').value);
+  let h = parseFloat(document.getElementById('bmi-h').value);
+  if (!w || !h) { alert('Please enter weight and height.'); return; }
+  if (unit === 'imperial') w = w * 0.453592;
+  const bmi = w / Math.pow(h / 100, 2);
+  let cat;
+  if (bmi < 18.5) cat = '🟢 Underweight';
+  else if (bmi < 25) cat = '✅ Normal weight';
+  else if (bmi < 30) cat = '🟡 Overweight';
+  else cat = '🔴 Obese';
+  document.getElementById('bmi-val').textContent = bmi.toFixed(1);
+  document.getElementById('bmi-cat').textContent = cat;
+  document.getElementById('bmi-result').classList.add('show');
+}
+
+// ── CALORIES ──
+function calcCal() {
+  const age = parseFloat(document.getElementById('cal-age').value);
+  const gender = document.getElementById('cal-gender').value;
+  const w = parseFloat(document.getElementById('cal-w').value);
+  const h = parseFloat(document.getElementById('cal-h').value);
+  const act = parseFloat(document.getElementById('cal-activity').value);
+  const goal = parseInt(document.getElementById('cal-goal').value);
+  if (!age || !w || !h) { alert('Please fill in all fields.'); return; }
+  let bmr = gender === 'male'
+    ? 88.362 + 13.397 * w + 4.799 * h - 5.677 * age
+    : 447.593 + 9.247 * w + 3.098 * h - 4.330 * age;
+  const tdee = Math.round(bmr * act + goal);
+  document.getElementById('cal-val').textContent = tdee.toLocaleString();
+  document.getElementById('cal-meta').textContent = goal < 0 ? 'For weight loss (500 kcal deficit)' : goal > 0 ? 'For weight gain (500 kcal surplus)' : 'For weight maintenance';
+  document.getElementById('cal-result').classList.add('show');
+}
+
+// ── WATER ──
+function calcWater() {
+  const w = parseFloat(document.getElementById('water-w').value);
+  const ex = parseFloat(document.getElementById('water-ex').value);
+  const climate = parseFloat(document.getElementById('water-climate').value);
+  if (!w) { alert('Please enter your weight.'); return; }
+  const base = w * 0.033;
+  const total = (base + ex + climate).toFixed(1);
+  document.getElementById('water-val').textContent = total;
+  document.getElementById('water-meta').textContent = `Base: ${base.toFixed(1)}L + Exercise: ${ex}L + Climate: ${climate}L`;
+  document.getElementById('water-result').classList.add('show');
+}
+
+// ── IDEAL BODY WEIGHT ──
+function calcIBW() {
+  const h = parseFloat(document.getElementById('ibw-h').value);
+  const gender = document.getElementById('ibw-gender').value;
+  if (!h) { alert('Please enter your height.'); return; }
+  const hIn = h / 2.54;
+  const base = gender === 'male' ? 50 : 45.5;
+  const ibw = Math.max(0, base + 2.3 * (hIn - 60));
+  const lo = (ibw * 0.9).toFixed(1), hi = (ibw * 1.1).toFixed(1);
+  document.getElementById('ibw-val').textContent = ibw.toFixed(1);
+  document.getElementById('ibw-meta').textContent = `Healthy range: ${lo}–${hi} kg (Devine formula)`;
+  document.getElementById('ibw-result').classList.add('show');
+}
+
+// ── REMINDERS ──
+let reminders = [];
+let selectedIcon = '💊';
+
+function selectIcon(el) {
+  document.querySelectorAll('#remIconGroup .tag').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  selectedIcon = el.dataset.icon;
+}
+
+function addReminder() {
+  const title = document.getElementById('rem-title').value.trim();
+  const time = document.getElementById('rem-time').value;
+  const repeat = document.getElementById('rem-repeat').value;
+  const notes = document.getElementById('rem-notes').value.trim();
+  if (!title || !time) { alert('Please enter a title and time.'); return; }
+  reminders.push({ id: Date.now(), title, time, repeat, notes, icon: selectedIcon, done: false });
+  document.getElementById('rem-title').value = '';
+  document.getElementById('rem-time').value = '';
+  document.getElementById('rem-notes').value = '';
+  renderReminders();
+}
+
+function renderReminders() {
+  const list = document.getElementById('reminderList');
+  const empty = document.getElementById('reminderEmpty');
+  const active = reminders.filter(r => !r.done);
+  empty.style.display = active.length ? 'none' : 'block';
+  list.innerHTML = active.map(r => `
+    <div class="reminder-item">
+      <div class="reminder-icon">${r.icon}</div>
+      <div class="reminder-info">
+        <h4>${r.title}</h4>
+        <p>${r.time} · ${r.repeat}${r.notes ? ' · ' + r.notes : ''}</p>
+      </div>
+      <div class="reminder-actions">
+        <button class="icon-btn" onclick="doneReminder(${r.id})" title="Mark done">✓</button>
+        <button class="icon-btn del" onclick="deleteReminder(${r.id})" title="Delete">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function doneReminder(id) {
+  const r = reminders.find(r => r.id === id);
+  if (r) r.done = true;
+  renderReminders();
+}
+function deleteReminder(id) {
+  reminders = reminders.filter(r => r.id !== id);
+  renderReminders();
+}
+function clearDoneReminders() {
+  reminders = reminders.filter(r => !r.done);
+  renderReminders();
+}
+
+// ── RECORDS ──
+let records = [];
+const recIcons = {
+  'Blood Pressure':'🩸','Blood Sugar':'🍬','Weight':'⚖️','Heart Rate':'❤️',
+  'Temperature':'🌡️','Oxygen Level':'💨','Sleep':'😴','Exercise':'🏃','Mood':'😊','Other':'📝'
+};
+
+function addRecord() {
+  const type = document.getElementById('rec-type').value;
+  const val = document.getElementById('rec-val').value.trim();
+  const notes = document.getElementById('rec-notes').value.trim();
+  if (!val) { alert('Please enter a value.'); return; }
+  records.unshift({ id: Date.now(), type, val, notes, time: new Date().toLocaleString() });
+  document.getElementById('rec-val').value = '';
+  document.getElementById('rec-notes').value = '';
+  renderRecords();
+}
+
+function renderRecords() {
+  const list = document.getElementById('recordsList');
+  const empty = document.getElementById('recordsEmpty');
+  empty.style.display = records.length ? 'none' : 'block';
+  list.innerHTML = records.map(r => `
+    <div class="record-item">
+      <span style="font-size:22px;">${recIcons[r.type]||'📝'}</span>
+      <div>
+        <div style="font-size:13px;font-weight:500;">${r.type}</div>
+        <div class="record-time">${r.time}${r.notes ? ' · ' + r.notes : ''}</div>
+      </div>
+      <div class="record-val">${r.val}</div>
+      <button class="icon-btn del" onclick="deleteRecord(${r.id})" style="margin-left:6px;">✕</button>
+    </div>`).join('');
+}
+
+function deleteRecord(id) {
+  records = records.filter(r => r.id !== id);
+  renderRecords();
+}
+
+// init
+renderReminders();
+renderRecords();
+
+// ── SMARTWATCH ──
+let wsConnected = false;
+let wsSimulating = false;
+let wsInterval = null;
+let btDevice = null;
+let btServer = null;
+
+// Chart data
+const MAX_POINTS = 20;
+const chartData = {
+  hr:    { labels:[], data:[], color:'#ff6b6b', label:'Heart Rate (bpm)', min:40, max:180 },
+  spo2:  { labels:[], data:[], color:'#4f9cf9', label:'SpO₂ (%)', min:85, max:100 },
+  steps: { labels:[], data:[], color:'#43d98c', label:'Steps', min:0, max:12000 },
+};
+let activeChart = 'hr';
+let watchChartInstance = null;
+
+// Simulated base values
+let sim = { hr:72, spo2:98, steps:3200, cal:280, stress:32 };
+
+function toggleWatchConnect() {
+  if (wsConnected || wsSimulating) {
+    disconnectWatch();
+  } else {
+    connectWatch();
+  }
+}
+
+async function connectWatch() {
+  const btn = document.getElementById('wsConnectBtn');
+  const dot = document.getElementById('wsDot');
+  const nameEl = document.getElementById('wsName');
+  const infoEl = document.getElementById('wsInfo');
+
+  // Try real Web Bluetooth first
+  if (navigator.bluetooth) {
+    try {
+      dot.className = 'watch-status-dot connecting';
+      nameEl.textContent = 'Searching…';
+      infoEl.textContent = 'Looking for Bluetooth devices…';
+      btn.textContent = 'Cancel';
+
+      btDevice = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: [
+          'heart_rate',
+          '0000180d-0000-1000-8000-00805f9b34fb',
+          '0000180a-0000-1000-8000-00805f9b34fb',
+        ]
+      });
+
+      btServer = await btDevice.gatt.connect();
+      dot.className = 'watch-status-dot connected';
+      nameEl.textContent = btDevice.name || 'Bluetooth Device';
+      infoEl.textContent = 'Connected via Web Bluetooth';
+      wsConnected = true;
+      wsSimulating = false;
+      document.getElementById('wsLiveBadge').style.display = 'inline-flex';
+      btn.textContent = '⏏ Disconnect';
+      btn.classList.add('danger');
+      document.getElementById('simNote').style.display = 'none';
+
+      // Try to read heart rate characteristic
+      try {
+        const hrService = await btServer.getPrimaryService('heart_rate');
+        const hrChar = await hrService.getCharacteristic('heart_rate_measurement');
+        await hrChar.startNotifications();
+        hrChar.addEventListener('characteristicvaluechanged', (e) => {
+          const val = e.target.value.getUint8(1);
+          updateMetric('hr', val);
+          pushChartPoint('hr', val);
+        });
+      } catch(e) {
+        // HR characteristic not available, fall to simulation for missing metrics
+        startSimInterval(true);
+      }
+
+      btDevice.addEventListener('gattserverdisconnected', () => disconnectWatch());
+      initWatchChart();
+      loadSleepData();
+      updateActivityRings();
+      return;
+
+    } catch(err) {
+      if (err.name === 'NotFoundError' || err.name === 'NotAllowedError' || err.message.includes('cancelled')) {
+        nameEl.textContent = 'No device connected';
+        infoEl.textContent = 'Connect your smartwatch via Bluetooth';
+        dot.className = 'watch-status-dot';
+        btn.textContent = '⌚ Connect Watch';
+        btn.classList.remove('danger');
+        return;
+      }
+      // Other errors — fall through to simulator
+    }
+  }
+
+  // Simulator fallback
+  startSimulator();
+}
+
+function startSimulator() {
+  wsSimulating = true;
+  wsConnected = false;
+  const dot = document.getElementById('wsDot');
+  const nameEl = document.getElementById('wsName');
+  const infoEl = document.getElementById('wsInfo');
+  const btn = document.getElementById('wsConnectBtn');
+
+  dot.className = 'watch-status-dot connected';
+  nameEl.textContent = 'Nexora Sim Watch';
+  infoEl.textContent = 'Simulator mode — Web Bluetooth not available';
+  document.getElementById('wsLiveBadge').style.display = 'inline-flex';
+  document.getElementById('simNote').style.display = 'flex';
+  btn.textContent = '⏏ Disconnect';
+  btn.classList.add('danger');
+
+  initWatchChart();
+  loadSleepData();
+  startSimInterval(false);
+  updateActivityRings();
+}
+
+function startSimInterval(partial) {
+  if (wsInterval) clearInterval(wsInterval);
+  wsInterval = setInterval(() => {
+    // Drift sim values naturally
+    sim.hr = Math.min(120, Math.max(50, sim.hr + (Math.random()-0.48)*3));
+    sim.spo2 = Math.min(100, Math.max(92, sim.spo2 + (Math.random()-0.5)*0.4));
+    sim.steps = Math.min(15000, sim.steps + Math.floor(Math.random()*12));
+    sim.cal = Math.round(sim.steps * 0.04 + 120);
+    sim.stress = Math.min(90, Math.max(10, sim.stress + (Math.random()-0.5)*4));
+
+    const hr = Math.round(sim.hr);
+    const spo2 = parseFloat(sim.spo2.toFixed(1));
+    const steps = sim.steps;
+
+    updateMetric('hr', hr);
+    updateMetric('spo2', spo2);
+    updateMetric('steps', steps.toLocaleString());
+    updateMetric('cal', sim.cal.toLocaleString());
+    updateMetric('stress', Math.round(sim.stress));
+    updateMetric('sleep', '7.4');
+
+    pushChartPoint('hr', hr);
+    pushChartPoint('spo2', spo2);
+    pushChartPoint('steps', steps);
+
+    checkAlerts(hr, spo2, Math.round(sim.stress));
+  }, 2000);
+}
+
+function disconnectWatch() {
+  if (btDevice && btDevice.gatt.connected) btDevice.gatt.disconnect();
+  if (wsInterval) clearInterval(wsInterval); wsInterval = null;
+  wsConnected = false; wsSimulating = false; btDevice = null; btServer = null;
+
+  const dot = document.getElementById('wsDot');
+  dot.className = 'watch-status-dot';
+  document.getElementById('wsName').textContent = 'No device connected';
+  document.getElementById('wsInfo').textContent = 'Connect your smartwatch via Bluetooth';
+  document.getElementById('wsLiveBadge').style.display = 'none';
+  document.getElementById('simNote').style.display = 'none';
+  const btn = document.getElementById('wsConnectBtn');
+  btn.textContent = '⌚ Connect Watch';
+  btn.classList.remove('danger');
+
+  // Reset metrics
+  ['hr','spo2','steps','cal','sleep','stress'].forEach(k => {
+    const v = document.getElementById('wv-'+k);
+    const s = document.getElementById('ws-'+k);
+    if(v) v.textContent='--';
+    if(s){ s.textContent='—'; s.style.color='var(--text3)'; }
+    const m = document.getElementById('wm-'+k);
+    if(m) m.className='watch-metric';
+  });
+  document.getElementById('alertContainer').innerHTML = '';
+}
+
+function updateMetric(key, val) {
+  const el = document.getElementById('wv-'+key);
+  const st = document.getElementById('ws-'+key);
+  const card = document.getElementById('wm-'+key);
+  if (!el) return;
+  el.textContent = val;
+
+  if (key === 'hr') {
+    const n = parseFloat(val);
+    let cls='good', msg='Normal', color='var(--success)';
+    if(n<50||n>100){cls='alert';msg=n<50?'Too low':'Elevated';color='var(--danger)';}
+    else if(n>90){cls='warn';msg='Slightly high';color='var(--warn)';}
+    card.className='watch-metric '+cls;
+    st.textContent=msg; st.style.color=color;
+  } else if (key === 'spo2') {
+    const n = parseFloat(val);
+    let cls='good',msg='Normal',color='var(--success)';
+    if(n<93){cls='alert';msg='Low — seek help';color='var(--danger)';}
+    else if(n<95){cls='warn';msg='Borderline';color='var(--warn)';}
+    card.className='watch-metric '+cls;
+    st.textContent=msg; st.style.color=color;
+  } else if (key === 'steps') {
+    const n = parseInt(String(val).replace(/,/g,''));
+    const pct = Math.min(100,Math.round(n/100));
+    let cls='good',msg=pct+'% of goal',color='var(--success)';
+    if(pct<30){cls='';msg='Keep moving!';color='var(--text2)';}
+    else if(pct<70){cls='warn';msg='Halfway there';color='var(--warn)';}
+    card.className='watch-metric '+cls;
+    st.textContent=msg; st.style.color=color;
+  } else if (key === 'stress') {
+    const n = parseFloat(val);
+    let cls='good',msg='Relaxed',color='var(--success)';
+    if(n>70){cls='alert';msg='High stress';color='var(--danger)';}
+    else if(n>45){cls='warn';msg='Moderate';color='var(--warn)';}
+    card.className='watch-metric '+cls;
+    st.textContent=msg; st.style.color=color;
+  } else if (key === 'sleep') {
+    const n = parseFloat(val);
+    let cls='good',msg='Well rested',color='var(--success)';
+    if(n<6){cls='alert';msg='Sleep debt';color='var(--danger)';}
+    else if(n<7){cls='warn';msg='Slightly low';color='var(--warn)';}
+    card.className='watch-metric '+cls;
+    st.textContent=msg; st.style.color=color;
+  } else if (key === 'cal') {
+    card.className='watch-metric good';
+    st.textContent='Active'; st.style.color='var(--success)';
+  }
+}
+
+const alertShown = new Set();
+function checkAlerts(hr, spo2, stress) {
+  const alerts = [];
+  if(hr>100 && !alertShown.has('hr-high')){ alerts.push({key:'hr-high',icon:'❤️',msg:`Heart rate elevated: ${hr} bpm`}); alertShown.add('hr-high'); }
+  if(hr<50 && !alertShown.has('hr-low')){ alerts.push({key:'hr-low',icon:'❤️',msg:`Heart rate too low: ${hr} bpm — rest and monitor`}); alertShown.add('hr-low'); }
+  if(spo2<95 && !alertShown.has('spo2-low')){ alerts.push({key:'spo2-low',icon:'🩸',msg:`SpO₂ low: ${spo2}% — consider breathing exercises or seek medical advice`}); alertShown.add('spo2-low'); }
+  if(stress>70 && !alertShown.has('stress-high')){ alerts.push({key:'stress-high',icon:'🧠',msg:'Stress level high — try a breathing exercise or short walk'}); alertShown.add('stress-high'); }
+  // Auto-clear old alerts after a few cycles
+  if(hr<=100) alertShown.delete('hr-high');
+  if(hr>=50) alertShown.delete('hr-low');
+  if(spo2>=95) alertShown.delete('spo2-low');
+  if(stress<=70) alertShown.delete('stress-high');
+
+  alerts.forEach(a => {
+    const c = document.getElementById('alertContainer');
+    const d = document.createElement('div');
+    d.className='alert-banner'; d.id='alert-'+a.key;
+    d.innerHTML=`<div class="ab-icon">${a.icon}</div><div>${a.msg}</div><button class="ab-close" onclick="this.parentElement.remove()">✕</button>`;
+    c.prepend(d);
+    setTimeout(()=>{const el=document.getElementById('alert-'+a.key);if(el)el.remove();},8000);
+  });
+}
+
+// ── CHART ──
+function initWatchChart() {
+  const canvas = document.getElementById('watchChart');
+  if (!canvas) return;
+  if (watchChartInstance) { watchChartInstance.destroy(); watchChartInstance = null; }
+  const cd = chartData[activeChart];
+  watchChartInstance = new Chart(canvas, {
+    type:'line',
+    data:{
+      labels: cd.labels,
+      datasets:[{
+        label: cd.label,
+        data: cd.data,
+        borderColor: cd.color,
+        backgroundColor: cd.color+'22',
+        borderWidth: 2,
+        pointRadius: 2,
+        tension: 0.4,
+        fill: true,
+      }]
+    },
+    options:{
+      animation:{duration:300},
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{
+        x:{ticks:{color:'#4a6080',font:{size:10}},grid:{color:'rgba(99,179,237,0.06)'}},
+        y:{ticks:{color:'#4a6080',font:{size:10}},grid:{color:'rgba(99,179,237,0.06)'},min:cd.min,max:cd.max}
+      }
+    }
+  });
+}
+
+function pushChartPoint(key, val) {
+  const cd = chartData[key];
+  const time = new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  cd.labels.push(time); cd.data.push(val);
+  if(cd.labels.length > MAX_POINTS){ cd.labels.shift(); cd.data.shift(); }
+  if(activeChart === key && watchChartInstance) {
+    watchChartInstance.update('none');
+  }
+}
+
+function switchWatchChart(key, btn) {
+  activeChart = key;
+  document.querySelectorAll('.chart-tab').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(watchChartInstance) watchChartInstance.destroy();
+  initWatchChart();
+}
+
+// ── SLEEP DATA ──
+function loadSleepData() {
+  const deep  = +(1.2 + Math.random()*0.8).toFixed(1);
+  const rem   = +(1.0 + Math.random()*0.6).toFixed(1);
+  const awake = +(0.3 + Math.random()*0.3).toFixed(1);
+  const light = +(7.4 - deep - rem - awake).toFixed(1);
+  const total = 7.4;
+  document.getElementById('sleep-total').textContent = total;
+  document.getElementById('sl-deep').textContent  = deep;
+  document.getElementById('sl-light').textContent = light;
+  document.getElementById('sl-rem').textContent   = rem;
+  document.getElementById('sl-awake').textContent = awake;
+
+  // Update bar proportions
+  const bar = document.getElementById('sleep-bar');
+  bar.innerHTML = `
+    <div style="background:#7b61ff;width:${(deep/total*100).toFixed(0)}%;height:100%;"></div>
+    <div style="background:#4f9cf9;width:${(light/total*100).toFixed(0)}%;height:100%;"></div>
+    <div style="background:#00d4aa;width:${(rem/total*100).toFixed(0)}%;height:100%;"></div>
+    <div style="background:#8ca0c4;width:${(awake/total*100).toFixed(0)}%;height:100%;"></div>`;
+}
+
+// ── ACTIVITY RINGS ──
+function updateActivityRings() {
+  const moveKcal = Math.round(200 + Math.random()*200);
+  const exMin    = Math.round(15 + Math.random()*45);
+  const standHrs = Math.round(6 + Math.random()*6);
+
+  const movePct  = Math.min(1, moveKcal/400);
+  const exPct    = Math.min(1, exMin/60);
+  const standPct = Math.min(1, standHrs/12);
+
+  // Circumferences: 346, 264, 182
+  document.getElementById('ring-move').style.strokeDashoffset     = 346 - 346*movePct;
+  document.getElementById('ring-exercise').style.strokeDashoffset = 264 - 264*exPct;
+  document.getElementById('ring-stand').style.strokeDashoffset    = 182 - 182*standPct;
+
+  document.getElementById('ring-move-label').textContent  = moveKcal+' / 400 kcal';
+  document.getElementById('ring-ex-label').textContent    = exMin+' / 60 min';
+  document.getElementById('ring-stand-label').textContent = standHrs+' / 12 hrs';
+}
+</script>
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
