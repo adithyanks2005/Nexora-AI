@@ -1,8 +1,14 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
 import httpx
 from fastapi import HTTPException
+
+# Load .env from project root regardless of which entry point is used
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_GROQ_MODEL = "llama-3.1-8b-instant"
