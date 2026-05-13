@@ -12,3 +12,4 @@ build/
 .vercel
 * - Copy*
 *- Copy*
+node_modules/
