@@ -1,20 +1,9 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "50mb",
-        "pythonVersion": "3.12"
-      }
-    }
-  ],
-  "routes": [
-    { "src": "/static/(.*)", "dest": "/frontend/static/$1" },
-    { "src": "/manifest.webmanifest", "dest": "/frontend/manifest.webmanifest" },
-    { "src": "/service-worker.js", "dest": "/frontend/service-worker.js" },
-    { "src": "/api/(.*)", "dest": "api/index.py" },
-    { "src": "/(.*)", "dest": "/frontend/index.html" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.py" },
+    { "source": "/static/(.*)", "destination": "/frontend/static/$1" },
+    { "source": "/manifest.webmanifest", "destination": "/frontend/manifest.webmanifest" },
+    { "source": "/service-worker.js", "destination": "/frontend/service-worker.js" },
+    { "source": "/(.*)", "destination": "/frontend/index.html" }
   ]
 }
