@@ -19,7 +19,7 @@ from backend.models import (
     IdealWeightRequest, ReminderIn, SessionCreate, SymptomRequest, WaterRequest,
 )
 
-load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=True)
 
 
 @asynccontextmanager
