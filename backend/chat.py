@@ -6,12 +6,12 @@ from backend.ai import call_ai, SYSTEM_PROMPT
 
 
 async def get_ai_reply(messages: list[dict]) -> str:
-    """Single-shot reply from the configured OpenRouter model."""
+    """Single-shot reply from the configured Groq model."""
     return await call_ai(messages, SYSTEM_PROMPT)
 
 
 async def stream_ai_reply(messages: list[dict]) -> AsyncIterator[str]:
-    """Compatibility stream helper; yields the OpenRouter reply as one chunk."""
+    """Compatibility stream helper; yields the Groq reply as one chunk."""
     yield await get_ai_reply(messages)
 
 

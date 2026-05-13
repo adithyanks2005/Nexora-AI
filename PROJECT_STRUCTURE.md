@@ -58,7 +58,7 @@ nexora-ai/
 | File | Purpose |
 |------|---------|
 | `backend/main.py` | FastAPI application root, route definitions |
-| `backend/ai.py` | OpenRouter API integration, LLM calls |
+| `backend/ai.py` | Groq API integration, LLM calls |
 | `backend/database.py` | SQLite database initialization and queries |
 | `frontend/index.html` | Single-page application entry point |
 | `frontend/static/js/app.js` | Main frontend logic |
@@ -89,8 +89,8 @@ pytest
 ## Environment Variables
 
 Required in `.env`:
-- `OPENROUTER_API_KEY` - API key from OpenRouter
-- `OPENROUTER_MODEL` - Model ID (default: `anthropic/claude-sonnet-4.6`)
+- `GROQ_API_KEY` - API key from Groq
+- `GROQ_MODEL` - Model ID (default: `llama-3.1-8b-instant`)
 
 ## Deployment
 

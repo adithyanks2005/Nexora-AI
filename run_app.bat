@@ -12,7 +12,7 @@ python -m pip install -r requirements.txt
 
 if not exist ".env" (
   copy ".env.example" ".env" >nul
-  echo Add your OPENROUTER_API_KEY to .env before using AI chat.
+  echo Add your GROQ_API_KEY to .env before using AI chat.
 )
 
 python desktop_app.py

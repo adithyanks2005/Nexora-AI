@@ -4,8 +4,8 @@ import os
 import httpx
 from fastapi import HTTPException
 
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-DEFAULT_OPENROUTER_MODEL = "gorqai/llama-3.1-8b-instant"
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+DEFAULT_GROQ_MODEL = "llama-3.1-8b-instant"
 
 SYSTEM_PROMPT = """You are Nexora AI, a friendly, supportive health companion. Your role is to listen to the user's description of symptoms, provide possible explanations, give practical self‑care suggestions, and reassure them, while never prescribing medication or making definitive diagnoses.
 
@@ -40,11 +40,11 @@ Examples of WRONG behavior:
 
 
 async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
-    api_key = os.getenv("OPENROUTER_API_KEY", "")
-    model = os.getenv("OPENROUTER_MODEL", DEFAULT_OPENROUTER_MODEL)
+    api_key = os.getenv("GROQ_API_KEY", "")
+    model = os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL)
 
     if not api_key:
-        raise HTTPException(status_code=500, detail="OPENROUTER_API_KEY not configured. Add it to your .env file.")
+        raise HTTPException(status_code=500, detail="GROQ_API_KEY not configured. Add it to your .env file.")
 
     chat_messages = [{"role": "system", "content": system}] + [
         {"role": msg.get("role", "user"), "content": msg.get("content", "")}
@@ -62,23 +62,21 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
     headers = {
         "Authorization": f"Bearer {api_key}",
         "content-type": "application/json",
-        "HTTP-Referer": "http://localhost:8001",
-        "X-Title": "Nexora AI",
     }
     async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.post(OPENROUTER_URL, json=payload, headers=headers)
+        resp = await client.post(GROQ_URL, json=payload, headers=headers)
     if resp.status_code != 200:
         raise HTTPException(status_code=resp.status_code, detail=resp.text)
     data  = resp.json()
     reply = data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
     if not reply:
-        raise HTTPException(status_code=502, detail="OpenRouter returned an empty response. Please try again.")
+        raise HTTPException(status_code=502, detail="Groq returned an empty response. Please try again.")
     return reply
 
 
 def get_ai_status() -> dict[str, str]:
     return {
-        "provider": "openrouter",
-        "model": os.getenv("OPENROUTER_MODEL", DEFAULT_OPENROUTER_MODEL),
-        "api_key": "configured" if os.getenv("OPENROUTER_API_KEY", "") else "missing",
+        "provider": "groq",
+        "model": os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL),
+        "api_key": "configured" if os.getenv("GROQ_API_KEY", "") else "missing",
     }

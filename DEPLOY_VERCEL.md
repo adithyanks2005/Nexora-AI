@@ -39,8 +39,8 @@ Click "Environment Variables" and add:
 
 | Key | Value |
 |-----|-------|
-| `OPENROUTER_API_KEY` | Your OpenRouter API key |
-| `OPENROUTER_MODEL` | `anthropic/claude-sonnet-4.6` |
+| `GROQ_API_KEY` | Your Groq API key |
+| `GROQ_MODEL` | `llama-3.1-8b-instant` |
 | `PYTHON_VERSION` | `3.12.10` |
 
 ### 5. Deploy

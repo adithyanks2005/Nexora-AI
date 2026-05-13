@@ -762,9 +762,9 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
           </select>
           <label class="form-label mt-12">Goal</label>
           <select class="form-select" id="cal-goal">
-            <option value="-500">Lose weight</option>
-            <option value="0" selected>Maintain weight</option>
-            <option value="500">Gain weight</option>
+            <option value="lose">Lose weight</option>
+            <option value="maintain" selected>Maintain weight</option>
+            <option value="gain">Gain weight</option>
           </select>
         </div>
         <button class="btn btn-primary btn-full" onclick="calcCal()">Calculate Calories</button>
@@ -1067,45 +1067,59 @@ function switchCalc(id, btn) {
 }
 
 // ── CHAT ──
-const responses = {
-  default: [
-    "That's a great health question! Based on current medical guidelines, it's important to maintain a balanced diet, regular physical activity, and adequate sleep. For personalized advice, please consult your healthcare provider.",
-    "Thank you for your question. General health guidelines suggest staying hydrated (8+ glasses of water daily), getting 7-9 hours of sleep, and exercising at least 150 minutes per week. Always speak with a doctor for personal medical advice.",
-    "I understand your concern. While I can provide general health information, each person's situation is unique. I recommend consulting a qualified healthcare professional for a proper evaluation.",
-  ],
-  diabetes: ["Common symptoms of diabetes include increased thirst and urination, fatigue, blurred vision, slow healing wounds, and unexplained weight loss. If you experience these, please see a doctor promptly for blood glucose testing."],
-  sleep: ["For better sleep: maintain a consistent schedule, keep your room cool and dark, avoid screens 1 hour before bed, limit caffeine after 2pm, and try relaxation techniques. Adults typically need 7-9 hours per night."],
-  immune: ["To boost immunity: eat colorful fruits and vegetables, get adequate vitamin D and zinc, exercise regularly, manage stress, sleep well, and stay hydrated. Foods like citrus, berries, garlic, ginger, and leafy greens are particularly beneficial."],
-  stress: ["Effective stress management techniques include deep breathing, meditation, regular exercise, adequate sleep, journaling, spending time in nature, and connecting with loved ones. If stress is severe, consider speaking with a mental health professional."],
-  water: ["The general recommendation is 8 cups (2 litres) daily, but needs vary. Active individuals, those in hot climates, or pregnant/breastfeeding women may need more. A good indicator is light-yellow urine."],
-  heart: ["Heart health tips: eat a heart-healthy diet (Mediterranean style), exercise 150+ min/week, quit smoking, limit alcohol, manage blood pressure and cholesterol, maintain healthy weight, and manage stress. Regular check-ups are important."],
-  nutrition: ["A balanced diet includes plenty of fruits, vegetables, whole grains, lean proteins, and healthy fats. Limit processed foods, added sugars, and excess sodium. Try to eat mindfully and in appropriate portions."],
-  mental: ["Mental wellbeing involves regular self-care, strong social connections, engaging hobbies, mindfulness, adequate sleep, and exercise. Don't hesitate to seek professional help—therapy and counseling are very effective tools."],
-  routine: ["A healthy daily routine: wake up at a consistent time, hydrate with water first thing, eat a nutritious breakfast, exercise (morning or lunch works well), take breaks during work, eat regular meals, limit screen time, and wind down before bed."],
-};
-
-function getResponse(text) {
-  const t = text.toLowerCase();
-  if (t.includes('diabetes') || t.includes('blood sugar')) return responses.diabetes[0];
-  if (t.includes('sleep')) return responses.sleep[0];
-  if (t.includes('immune') || t.includes('immunity')) return responses.immune[0];
-  if (t.includes('stress')) return responses.stress[0];
-  if (t.includes('water') || t.includes('hydrat')) return responses.water[0];
-  if (t.includes('heart') || t.includes('cardio')) return responses.heart[0];
-  if (t.includes('nutrition') || t.includes('diet') || t.includes('food')) return responses.nutrition[0];
-  if (t.includes('mental') || t.includes('anxiety') || t.includes('depress')) return responses.mental[0];
-  if (t.includes('routine') || t.includes('daily')) return responses.routine[0];
-  return responses.default[Math.floor(Math.random() * responses.default.length)];
+// ── CHAT ──
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
 }
 
-function addMsg(text, role) {
+let currentSessionId = localStorage.getItem('nexora_session_id') || generateUUID();
+localStorage.setItem('nexora_session_id', currentSessionId);
+let chatHistory = [];
+
+function renderMarkdown(text) {
+  if (!text) return '';
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/^#{1,3} (.+)$/gm, '<strong style="font-size:15px;display:block;margin:6px 0 2px;">$1</strong>')
+    .replace(/^[-•] (.+)$/gm, '<div style="display:flex;gap:6px;margin:3px 0;"><span style="color:var(--accent);flex-shrink:0;">•</span><span>$1</span></div>')
+    .replace(/^\d+\. (.+)$/gm, '<div style="display:flex;gap:6px;margin:3px 0;"><span style="color:var(--accent);flex-shrink:0;">›</span><span>$1</span></div>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+async function loadChatHistory() {
+  try {
+    const resp = await fetch(`/api/sessions/${currentSessionId}/messages`);
+    if (resp.ok) {
+      const msgs = await resp.json();
+      msgs.forEach(m => {
+        chatHistory.push({role: m.role, content: m.content});
+        addMsg(m.role === 'assistant' ? renderMarkdown(m.content) : m.content,
+               m.role === 'assistant' ? 'bot' : 'user',
+               m.role === 'assistant');
+      });
+    }
+  } catch(e) { /* fresh start */ }
+}
+
+function addMsg(text, role, isHtml = false) {
   const wrap = document.getElementById('chatMessages');
   const d = document.createElement('div');
   d.className = 'msg ' + role;
   const isBot = role === 'bot';
-  d.innerHTML = `
-    <div class="msg-avatar ${isBot?'bot-avatar':'user-avatar'}">${isBot?'🧬':'👤'}</div>
-    <div class="msg-bubble">${text}</div>`;
+  const avatar = document.createElement('div');
+  avatar.className = 'msg-avatar ' + (isBot ? 'bot-avatar' : 'user-avatar');
+  avatar.textContent = isBot ? '🧬' : '👤';
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  if (isHtml) bubble.innerHTML = text;
+  else bubble.textContent = text;
+  d.appendChild(avatar);
+  d.appendChild(bubble);
   wrap.appendChild(d);
   wrap.scrollTop = wrap.scrollHeight;
 }
@@ -1114,8 +1128,7 @@ function showTyping() {
   const wrap = document.getElementById('chatMessages');
   const d = document.createElement('div');
   d.className = 'msg bot'; d.id = 'typing-indicator';
-  d.innerHTML = `<div class="msg-avatar bot-avatar">🧬</div>
-    <div class="msg-bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  d.innerHTML = `<div class="msg-avatar bot-avatar">🧬</div><div class="msg-bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
   wrap.appendChild(d); wrap.scrollTop = wrap.scrollHeight;
 }
 
@@ -1124,21 +1137,50 @@ function removeTyping() {
   if (t) t.remove();
 }
 
-function sendChat() {
+async function sendChat() {
   const inp = document.getElementById('chatInput');
   const text = inp.value.trim();
   if (!text) return;
   addMsg(text, 'user');
+  chatHistory.push({role: 'user', content: text});
   inp.value = ''; inp.style.height = 'auto';
+  const btn = document.querySelector('.send-btn');
+  btn.disabled = true; btn.style.opacity = '0.5';
   showTyping();
-  setTimeout(() => {
+  try {
+    const resp = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({session_id: currentSessionId, messages: chatHistory})
+    });
     removeTyping();
-    addMsg(getResponse(text), 'bot');
-  }, 800 + Math.random() * 600);
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      const detail = err.detail || `Error ${resp.status}`;
+      if (detail.includes('GROQ_API_KEY') || resp.status === 500) {
+        addMsg('⚠️ AI service needs a valid API key. Please update your GROQ_API_KEY in the .env file and restart the server.', 'bot');
+      } else if (resp.status === 401) {
+        addMsg('⚠️ Invalid Groq API key. Please go to console.groq.com, generate a new key, and update your .env file.', 'bot');
+      } else {
+        addMsg(`⚠️ Something went wrong: ${detail}`, 'bot');
+      }
+      return;
+    }
+    const data = await resp.json();
+    const reply = data.reply;
+    chatHistory.push({role: 'assistant', content: reply});
+    addMsg(renderMarkdown(reply), 'bot', true);
+  } catch(e) {
+    removeTyping();
+    addMsg('⚠️ Could not reach the server. Make sure the backend is running on port 8001.', 'bot');
+  } finally {
+    btn.disabled = false; btn.style.opacity = '';
+  }
 }
 
 function sendQuick(el) {
-  const text = el.textContent.replace(/^[^\w\s]*\s*/, '').trim() || el.textContent.trim();
+  const raw = el.textContent.trim();
+  const text = raw.replace(/^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\s]+/gu, '').trim() || raw;
   document.getElementById('chatInput').value = text;
   sendChat();
 }
@@ -1155,49 +1197,49 @@ function autoResize(el) {
 // ── SYMPTOM CHECKER ──
 function toggleTag(el) { el.classList.toggle('active'); }
 
-function analyzeSymptoms() {
-  const text = document.getElementById('symp-text').value;
-  const tags = [...document.querySelectorAll('#sympTags .tag.active')].map(t => t.textContent).join(', ');
+async function analyzeSymptoms() {
+  const text = document.getElementById('symp-text').value.trim();
+  const tags = [...document.querySelectorAll('#sympTags .tag.active')].map(t => t.textContent.trim());
   const severity = document.getElementById('symp-severity').value;
   const duration = document.getElementById('symp-duration').value;
   const area = document.getElementById('symp-area').value;
-
-  if (!text && !tags) { alert('Please describe your symptoms or select from the common symptoms.'); return; }
-
+  const symptoms = [...tags];
+  if (text) symptoms.unshift(text);
+  if (symptoms.length === 0) { alert('Please describe your symptoms or select from the list.'); return; }
+  const btn = document.querySelector('[onclick="analyzeSymptoms()"]');
+  btn.disabled = true; btn.textContent = '⏳ Analyzing...';
   const result = document.getElementById('sympResult');
   const badge = document.getElementById('sympBadge');
   const title = document.getElementById('sympResultTitle');
   const body = document.getElementById('sympResultText');
-
-  const syms = (text + ' ' + tags).toLowerCase();
-  let advice, badgeClass, titleText;
-
-  if (syms.includes('chest pain') || syms.includes('shortness of breath')) {
-    badgeClass = 'badge-warn'; titleText = '⚠️ Seek Medical Attention';
-    advice = 'Chest pain and shortness of breath can indicate serious conditions like heart attack or pulmonary embolism. Please seek emergency medical care immediately if symptoms are severe or sudden.';
-  } else if (severity === 'Severe') {
-    badgeClass = 'badge-warn'; titleText = '⚠️ Consult a Doctor';
-    advice = `Your symptoms (${tags || text}) are rated as severe${duration ? ' lasting ' + duration : ''}. We strongly recommend consulting a healthcare professional promptly. Do not attempt to self-diagnose or self-treat severe symptoms.`;
-  } else if (syms.includes('fever') || syms.includes('cough')) {
-    badgeClass = 'badge-info'; titleText = '💊 Possible Respiratory Issue';
-    advice = `Fever and cough are common with respiratory infections, including viral illnesses. Rest, stay hydrated, and take over-the-counter fever reducers as appropriate. See a doctor if fever exceeds 39°C (102°F), persists more than 3 days, or if breathing becomes difficult.`;
-  } else if (syms.includes('headache') || syms.includes('dizziness')) {
-    badgeClass = 'badge-info'; titleText = '💡 General Guidance';
-    advice = `Headaches and dizziness can result from dehydration, stress, lack of sleep, or muscle tension. Try resting, drinking water, and over-the-counter pain relief. If symptoms are sudden and severe ("thunderclap headache"), seek emergency care immediately.`;
-  } else if (syms.includes('fatigue') || syms.includes('nausea')) {
-    badgeClass = 'badge-info'; titleText = '💡 General Guidance';
-    advice = `Fatigue and nausea are common symptoms with many causes including viral infections, dietary issues, or stress. Ensure adequate rest and hydration. Consult a doctor if symptoms persist or worsen.`;
-  } else {
-    badgeClass = 'badge-info'; titleText = '💡 General Health Guidance';
-    advice = `Based on your reported symptoms${area ? ' in the ' + area + ' area' : ''}, these could relate to a variety of common conditions. Monitor your symptoms and stay hydrated. If they worsen or new symptoms appear, please consult a healthcare professional.`;
+  try {
+    const resp = await fetch('/api/symptoms', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({symptoms, body_area: area, severity, duration})
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail || 'Analysis failed');
+    }
+    const data = await resp.json();
+    badge.className = 'result-badge badge-info';
+    badge.textContent = '🩺 AI Analysis';
+    title.textContent = 'Symptom Analysis';
+    body.innerHTML = renderMarkdown(data.reply);
+    result.classList.add('show');
+    result.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  } catch(e) {
+    badge.className = 'result-badge badge-warn';
+    badge.textContent = '⚠️ Error';
+    title.textContent = 'Analysis Failed';
+    body.textContent = e.message.includes('GROQ_API_KEY') || e.message.includes('401')
+      ? 'AI service unavailable — please update your GROQ_API_KEY in .env and restart the server.'
+      : (e.message || 'Could not analyze symptoms. Make sure the backend is running.');
+    result.classList.add('show');
+  } finally {
+    btn.disabled = false; btn.textContent = '🔍 Analyze Symptoms';
   }
-
-  badge.className = 'result-badge ' + badgeClass;
-  badge.textContent = titleText;
-  title.textContent = 'Analysis Result';
-  body.textContent = advice + '\n\nThis is general information only. Always consult a licensed healthcare professional for proper diagnosis and treatment.';
-  result.classList.add('show');
-  result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // ── BMI ──
@@ -1206,70 +1248,92 @@ function toggleBmiUnit() {
   document.getElementById('bmi-wlabel').textContent = u === 'metric' ? 'Weight (kg)' : 'Weight (lbs)';
 }
 
-function calcBMI() {
+async function calcBMI() {
   const unit = document.getElementById('bmi-unit').value;
-  let w = parseFloat(document.getElementById('bmi-w').value);
-  let h = parseFloat(document.getElementById('bmi-h').value);
+  const w = parseFloat(document.getElementById('bmi-w').value);
+  const h = parseFloat(document.getElementById('bmi-h').value);
   if (!w || !h) { alert('Please enter weight and height.'); return; }
-  if (unit === 'imperial') w = w * 0.453592;
-  const bmi = w / Math.pow(h / 100, 2);
-  let cat;
-  if (bmi < 18.5) cat = '🟢 Underweight';
-  else if (bmi < 25) cat = '✅ Normal weight';
-  else if (bmi < 30) cat = '🟡 Overweight';
-  else cat = '🔴 Obese';
-  document.getElementById('bmi-val').textContent = bmi.toFixed(1);
-  document.getElementById('bmi-cat').textContent = cat;
-  document.getElementById('bmi-result').classList.add('show');
+  try {
+    const resp = await fetch('/api/calc/bmi', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({weight: w, height: h, unit})
+    });
+    if (!resp.ok) throw new Error('Calculation failed');
+    const d = await resp.json();
+    const res = document.getElementById('bmi-result');
+    document.getElementById('bmi-val').textContent = d.bmi;
+    document.getElementById('bmi-val').style.color = d.color;
+    document.getElementById('bmi-cat').textContent = d.category;
+    document.getElementById('bmi-cat').style.color = d.color;
+    res.style.borderColor = d.color + '55';
+    const meta = res.querySelector('.result-meta');
+    if (meta) meta.innerHTML = `<span style="color:${d.color};font-weight:500;">${d.advice}</span><br><small style="color:var(--text3);">Underweight &lt;18.5 · Normal 18.5–24.9 · Overweight 25–29.9 · Obese ≥30</small>`;
+    res.classList.add('show');
+  } catch(e) { alert('Failed to calculate BMI. Make sure the backend is running.'); }
 }
 
 // ── CALORIES ──
-function calcCal() {
+async function calcCal() {
   const age = parseFloat(document.getElementById('cal-age').value);
   const gender = document.getElementById('cal-gender').value;
   const w = parseFloat(document.getElementById('cal-w').value);
   const h = parseFloat(document.getElementById('cal-h').value);
   const act = parseFloat(document.getElementById('cal-activity').value);
-  const goal = parseInt(document.getElementById('cal-goal').value);
+  const goal = document.getElementById('cal-goal').value;
   if (!age || !w || !h) { alert('Please fill in all fields.'); return; }
-  let bmr = gender === 'male'
-    ? 88.362 + 13.397 * w + 4.799 * h - 5.677 * age
-    : 447.593 + 9.247 * w + 3.098 * h - 4.330 * age;
-  const tdee = Math.round(bmr * act + goal);
-  document.getElementById('cal-val').textContent = tdee.toLocaleString();
-  document.getElementById('cal-meta').textContent = goal < 0 ? 'For weight loss (500 kcal deficit)' : goal > 0 ? 'For weight gain (500 kcal surplus)' : 'For weight maintenance';
-  document.getElementById('cal-result').classList.add('show');
+  try {
+    const resp = await fetch('/api/calc/calories', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({age, gender, weight: w, height: h, activity: act, goal})
+    });
+    if (!resp.ok) throw new Error('Calculation failed');
+    const d = await resp.json();
+    document.getElementById('cal-val').textContent = d.target.toLocaleString();
+    document.getElementById('cal-meta').innerHTML =
+      `BMR: <strong>${d.bmr}</strong> kcal &nbsp;·&nbsp; TDEE: <strong>${d.tdee}</strong> kcal<br>
+       Protein: <strong>${d.protein_g}g</strong> &nbsp;·&nbsp; Carbs: <strong>${d.carbs_g}g</strong> &nbsp;·&nbsp; Fat: <strong>${d.fat_g}g</strong>`;
+    document.getElementById('cal-result').classList.add('show');
+  } catch(e) { alert('Failed to calculate calories. Make sure the backend is running.'); }
 }
 
 // ── WATER ──
-function calcWater() {
+async function calcWater() {
   const w = parseFloat(document.getElementById('water-w').value);
   const ex = parseFloat(document.getElementById('water-ex').value);
   const climate = parseFloat(document.getElementById('water-climate').value);
   if (!w) { alert('Please enter your weight.'); return; }
-  const base = w * 0.033;
-  const total = (base + ex + climate).toFixed(1);
-  document.getElementById('water-val').textContent = total;
-  document.getElementById('water-meta').textContent = `Base: ${base.toFixed(1)}L + Exercise: ${ex}L + Climate: ${climate}L`;
-  document.getElementById('water-result').classList.add('show');
+  try {
+    const resp = await fetch('/api/calc/water', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({weight: w, activity: ex, climate})
+    });
+    if (!resp.ok) throw new Error('Calculation failed');
+    const d = await resp.json();
+    document.getElementById('water-val').textContent = d.litres;
+    document.getElementById('water-meta').textContent = `${d.ml} ml  ·  ${d.cups} cups per day`;
+    document.getElementById('water-result').classList.add('show');
+  } catch(e) { alert('Failed to calculate water intake. Make sure the backend is running.'); }
 }
 
 // ── IDEAL BODY WEIGHT ──
-function calcIBW() {
+async function calcIBW() {
   const h = parseFloat(document.getElementById('ibw-h').value);
   const gender = document.getElementById('ibw-gender').value;
   if (!h) { alert('Please enter your height.'); return; }
-  const hIn = h / 2.54;
-  const base = gender === 'male' ? 50 : 45.5;
-  const ibw = Math.max(0, base + 2.3 * (hIn - 60));
-  const lo = (ibw * 0.9).toFixed(1), hi = (ibw * 1.1).toFixed(1);
-  document.getElementById('ibw-val').textContent = ibw.toFixed(1);
-  document.getElementById('ibw-meta').textContent = `Healthy range: ${lo}–${hi} kg (Devine formula)`;
-  document.getElementById('ibw-result').classList.add('show');
+  try {
+    const resp = await fetch('/api/calc/ideal-weight', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({height: h, gender})
+    });
+    if (!resp.ok) throw new Error('Calculation failed');
+    const d = await resp.json();
+    document.getElementById('ibw-val').textContent = d.ideal;
+    document.getElementById('ibw-meta').textContent = `Healthy range: ${d.low} – ${d.high} kg (Devine formula)`;
+    document.getElementById('ibw-result').classList.add('show');
+  } catch(e) { alert('Failed to calculate ideal weight. Make sure the backend is running.'); }
 }
 
 // ── REMINDERS ──
-let reminders = [];
 let selectedIcon = '💊';
 
 function selectIcon(el) {
@@ -1278,31 +1342,42 @@ function selectIcon(el) {
   selectedIcon = el.dataset.icon;
 }
 
-function addReminder() {
+async function loadReminders() {
+  try {
+    const resp = await fetch('/api/reminders');
+    if (!resp.ok) throw new Error();
+    renderReminders(await resp.json());
+  } catch(e) { renderReminders([]); }
+}
+
+async function addReminder() {
   const title = document.getElementById('rem-title').value.trim();
   const time = document.getElementById('rem-time').value;
   const repeat = document.getElementById('rem-repeat').value;
   const notes = document.getElementById('rem-notes').value.trim();
   if (!title || !time) { alert('Please enter a title and time.'); return; }
-  reminders.push({ id: Date.now(), title, time, repeat, notes, icon: selectedIcon, done: false });
-  document.getElementById('rem-title').value = '';
-  document.getElementById('rem-time').value = '';
-  document.getElementById('rem-notes').value = '';
-  renderReminders();
+  try {
+    const resp = await fetch('/api/reminders', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({title, time, repeat, notes, icon: selectedIcon, color: '#E6F1FB'})
+    });
+    if (!resp.ok) throw new Error('Failed to add');
+    document.getElementById('rem-title').value = '';
+    document.getElementById('rem-time').value = '';
+    document.getElementById('rem-notes').value = '';
+    loadReminders();
+  } catch(e) { alert('Failed to add reminder. Make sure the backend is running.'); }
 }
 
-function renderReminders() {
+function renderReminders(data) {
   const list = document.getElementById('reminderList');
   const empty = document.getElementById('reminderEmpty');
-  const active = reminders.filter(r => !r.done);
+  const active = data.filter(r => !r.done);
   empty.style.display = active.length ? 'none' : 'block';
   list.innerHTML = active.map(r => `
     <div class="reminder-item">
       <div class="reminder-icon">${r.icon}</div>
-      <div class="reminder-info">
-        <h4>${r.title}</h4>
-        <p>${r.time} · ${r.repeat}${r.notes ? ' · ' + r.notes : ''}</p>
-      </div>
+      <div class="reminder-info"><h4>${r.title}</h4><p>${r.time} · ${r.repeat}${r.notes ? ' · ' + r.notes : ''}</p></div>
       <div class="reminder-actions">
         <button class="icon-btn" onclick="doneReminder(${r.id})" title="Mark done">✓</button>
         <button class="icon-btn del" onclick="deleteReminder(${r.id})" title="Delete">✕</button>
@@ -1310,62 +1385,76 @@ function renderReminders() {
     </div>`).join('');
 }
 
-function doneReminder(id) {
-  const r = reminders.find(r => r.id === id);
-  if (r) r.done = true;
-  renderReminders();
+async function doneReminder(id) {
+  await fetch(`/api/reminders/${id}/toggle`, {method: 'PATCH'});
+  loadReminders();
 }
-function deleteReminder(id) {
-  reminders = reminders.filter(r => r.id !== id);
-  renderReminders();
+async function deleteReminder(id) {
+  await fetch(`/api/reminders/${id}`, {method: 'DELETE'});
+  loadReminders();
 }
-function clearDoneReminders() {
-  reminders = reminders.filter(r => !r.done);
-  renderReminders();
+async function clearDoneReminders() {
+  await fetch('/api/reminders/done/clear', {method: 'DELETE'});
+  loadReminders();
 }
 
 // ── RECORDS ──
-let records = [];
 const recIcons = {
   'Blood Pressure':'🩸','Blood Sugar':'🍬','Weight':'⚖️','Heart Rate':'❤️',
   'Temperature':'🌡️','Oxygen Level':'💨','Sleep':'😴','Exercise':'🏃','Mood':'😊','Other':'📝'
 };
 
-function addRecord() {
+async function loadRecords() {
+  try {
+    const resp = await fetch('/api/records');
+    if (!resp.ok) throw new Error();
+    renderRecords(await resp.json());
+  } catch(e) { renderRecords([]); }
+}
+
+async function addRecord() {
   const type = document.getElementById('rec-type').value;
   const val = document.getElementById('rec-val').value.trim();
   const notes = document.getElementById('rec-notes').value.trim();
   if (!val) { alert('Please enter a value.'); return; }
-  records.unshift({ id: Date.now(), type, val, notes, time: new Date().toLocaleString() });
-  document.getElementById('rec-val').value = '';
-  document.getElementById('rec-notes').value = '';
-  renderRecords();
+  try {
+    const resp = await fetch('/api/records', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({type, data: val, notes})
+    });
+    if (!resp.ok) throw new Error('Failed to add');
+    document.getElementById('rec-val').value = '';
+    document.getElementById('rec-notes').value = '';
+    loadRecords();
+  } catch(e) { alert('Failed to add health record. Make sure the backend is running.'); }
 }
 
-function renderRecords() {
+function renderRecords(data) {
   const list = document.getElementById('recordsList');
   const empty = document.getElementById('recordsEmpty');
-  empty.style.display = records.length ? 'none' : 'block';
-  list.innerHTML = records.map(r => `
+  empty.style.display = data.length ? 'none' : 'block';
+  list.innerHTML = data.map(r => `
     <div class="record-item">
       <span style="font-size:22px;">${recIcons[r.type]||'📝'}</span>
       <div>
         <div style="font-size:13px;font-weight:500;">${r.type}</div>
-        <div class="record-time">${r.time}${r.notes ? ' · ' + r.notes : ''}</div>
+        <div class="record-time">${r.recorded_at ? new Date(r.recorded_at + 'Z').toLocaleString() : ''}${r.notes ? ' · ' + r.notes : ''}</div>
       </div>
-      <div class="record-val">${r.val}</div>
+      <div class="record-val">${r.data}</div>
       <button class="icon-btn del" onclick="deleteRecord(${r.id})" style="margin-left:6px;">✕</button>
     </div>`).join('');
 }
 
-function deleteRecord(id) {
-  records = records.filter(r => r.id !== id);
-  renderRecords();
+async function deleteRecord(id) {
+  await fetch(`/api/records/${id}`, {method: 'DELETE'});
+  loadRecords();
 }
 
-// init
-renderReminders();
-renderRecords();
+// Init
+loadReminders();
+loadRecords();
+loadChatHistory();
+
 
 // ── SMARTWATCH ──
 let wsConnected = false;
