@@ -1,25 +1,14 @@
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
-import sys
 import os
+import sys
+from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add project root to sys.path
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
-from backend.main import app as backend_app
+# Import the main app from backend
+from backend.main import app
 
-# Re-export for Vercel
-app = backend_app
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Serve static files from frontend
-app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
+# Re-export for Vercel (both 'app' and 'application' work)
+application = app

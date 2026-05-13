@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+import os
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -8,8 +10,11 @@ from typing import Any
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+
+# Add project root to sys.path to ensure 'backend' package is findable
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from backend.ai import call_ai, SYSTEM_PROMPT
 from backend.calculators import calc_bmi, calc_calories, calc_water, calc_ideal_weight
@@ -19,16 +24,20 @@ from backend.models import (
     IdealWeightRequest, ReminderIn, SessionCreate, SymptomRequest, WaterRequest,
 )
 
-load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=True)
+# Load .env if it exists
+DOTENV_PATH = ROOT_DIR / ".env"
+if DOTENV_PATH.exists():
+    load_dotenv(DOTENV_PATH, override=True)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize database in writable /tmp directory on Vercel
     init_db()
     yield
 
 
-app = FastAPI(title="Nexora AI — Healthcare Chatbot", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="Nexora AI - Healthcare Chatbot", version="2.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,7 +47,7 @@ app.add_middleware(
 )
 
 
-# ── Health check ──────────────────────────────────────────────────────────────
+# -- Health check --------------------------------------------------------------
 @app.get("/api/health")
 def health() -> dict[str, str]:
     from backend.ai import get_ai_status
@@ -48,7 +57,7 @@ def health() -> dict[str, str]:
     }
 
 
-# ── Chat sessions ─────────────────────────────────────────────────────────────
+# -- Chat sessions -------------------------------------------------------------
 @app.get("/api/sessions")
 def list_sessions() -> list[dict[str, Any]]:
     with get_connection() as conn:
@@ -85,7 +94,7 @@ def get_messages(sid: str) -> list[dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
-# ── Chat ──────────────────────────────────────────────────────────────────────
+# -- Chat ----------------------------------------------------------------------
 @app.post("/api/chat")
 async def chat(req: ChatRequest) -> dict[str, str]:
     # ensure session exists
@@ -123,7 +132,7 @@ async def chat(req: ChatRequest) -> dict[str, str]:
     return {"reply": reply, "session_id": req.session_id}
 
 
-# ── Symptom checker ───────────────────────────────────────────────────────────
+# -- Symptom checker -----------------------------------------------------------
 @app.post("/api/symptoms")
 async def analyze_symptoms(req: SymptomRequest) -> dict[str, str]:
     prompt = (
@@ -138,7 +147,7 @@ async def analyze_symptoms(req: SymptomRequest) -> dict[str, str]:
     return {"reply": reply}
 
 
-# ── Calculators ───────────────────────────────────────────────────────────────
+# -- Calculators ---------------------------------------------------------------
 @app.post("/api/calc/bmi")
 def bmi(req: BMIRequest) -> dict[str, Any]:
     return calc_bmi(req)
@@ -159,7 +168,7 @@ def ideal_weight(req: IdealWeightRequest) -> dict[str, Any]:
     return calc_ideal_weight(req)
 
 
-# ── Reminders ─────────────────────────────────────────────────────────────────
+# -- Reminders -----------------------------------------------------------------
 @app.get("/api/reminders")
 def get_reminders() -> list[dict[str, Any]]:
     with get_connection() as conn:
@@ -208,7 +217,7 @@ def clear_done_reminders() -> dict[str, str]:
     return {"message": "cleared"}
 
 
-# ── Health records ────────────────────────────────────────────────────────────
+# -- Health records ------------------------------------------------------------
 @app.get("/api/records")
 def get_records() -> list[dict[str, Any]]:
     with get_connection() as conn:
@@ -236,26 +245,3 @@ def delete_record(rid: int) -> dict[str, str]:
     with get_connection() as conn:
         conn.execute("DELETE FROM health_records WHERE id = ?", (rid,))
     return {"message": "deleted"}
-
-
-# ── Serve frontend ────────────────────────────────────────────────────────────
-_static = Path(__file__).resolve().parents[1] / "frontend" / "static"
-_static.mkdir(parents=True, exist_ok=True)
-app.mount("/static", StaticFiles(directory=str(_static)), name="static")
-
-_frontend = _static.parent
-
-
-@app.get("/manifest.webmanifest")
-def manifest() -> FileResponse:
-    return FileResponse(str(_frontend / "manifest.webmanifest"), media_type="application/manifest+json")
-
-
-@app.get("/service-worker.js")
-def service_worker() -> FileResponse:
-    return FileResponse(str(_frontend / "service-worker.js"), media_type="application/javascript")
-
-
-@app.get("/")
-def index() -> FileResponse:
-    return FileResponse(str(_frontend / "index.html"))
