@@ -5,7 +5,7 @@ import httpx
 from fastapi import HTTPException
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-DEFAULT_OPENROUTER_MODEL = "anthropic/claude-sonnet-4.6"
+DEFAULT_OPENROUTER_MODEL = "gorqai/llama-3.1-8b-instant"
 
 SYSTEM_PROMPT = """You are Nexora AI, an advanced, empathetic healthcare assistant.
 

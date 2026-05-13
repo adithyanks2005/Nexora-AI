@@ -1,14 +1,47 @@
+# Environment
 .env
+.env.local
+.env.*.local
+
+# Python
 __pycache__/
-*.pyc
-*.pyo
-.venv/
-venv/
-*.db
-.pytest_cache/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
 dist/
 build/
-*.egg-info/
-.vercel
-* - Copy*
-*- Copy*
+wheels/
+.Python
+env/
+venv/
+.venv/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Database
+*.db
+*.sqlite3
+
+# Vercel
+.vercel/
+.vercelignore
+
+# Data
+data/
+
+# Dependencies
+node_modules/
+.npm
