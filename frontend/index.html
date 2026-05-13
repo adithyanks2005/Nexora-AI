@@ -32,6 +32,20 @@
   --glow2:0 0 40px rgba(123,97,255,0.12);
 }
 
+:root[data-theme="light"] {
+  --bg: #f4f7fb;
+  --surface: #ffffff;
+  --surface2: #f0f4f8;
+  --border: rgba(79, 156, 249, 0.15);
+  --border2: rgba(79, 156, 249, 0.25);
+  --accent: #4f9cf9;
+  --accent2: #7b61ff;
+  --accent3: #00d4aa;
+  --text: #1a202c;
+  --text2: #4a5568;
+  --text3: #718096;
+}
+
 body{
   font-family:'DM Sans',sans-serif;
   background:var(--bg);
@@ -564,7 +578,11 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
       </button>
     </nav>
     <div class="sidebar-footer">
-      Nexora AI provides general health information only. Always consult a doctor for medical advice.
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size:12px; font-weight:600; color:var(--text2);">v3.0.0</span>
+        <button id="themeToggle" style="padding:4px 8px; font-size:16px; background:none; border:none; cursor:pointer;" title="Toggle theme">🌙</button>
+      </div>
+      <div style="font-size: 11px; color: var(--text3); line-height: 1.4;">Nexora AI provides general health information only.</div>
     </div>
   </aside>
 
@@ -607,6 +625,7 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
       </div>
       <div class="chat-input-bar">
         <div class="chat-input-row">
+          <button id="voiceBtn" title="Voice input" style="width:44px;height:44px;border-radius:12px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:18px;cursor:pointer;flex-shrink:0;transition:all 0.15s;">🎤</button>
           <textarea class="chat-input" id="chatInput" placeholder="Ask about your health…" rows="1" onkeydown="chatKeydown(event)" oninput="autoResize(this)"></textarea>
           <button class="send-btn" onclick="sendChat()">➤</button>
         </div>
@@ -1454,6 +1473,73 @@ async function deleteRecord(id) {
 loadReminders();
 loadRecords();
 loadChatHistory();
+
+// ── THEME TOGGLE ──
+const themeToggle = document.getElementById('themeToggle');
+const root = document.documentElement;
+let isDark = localStorage.getItem('nexora_theme') !== 'light';
+
+function applyTheme() {
+  if (isDark) {
+    root.removeAttribute('data-theme');
+    themeToggle.textContent = '🌙';
+  } else {
+    root.setAttribute('data-theme', 'light');
+    themeToggle.textContent = '☀️';
+  }
+}
+applyTheme(); // apply on load
+
+themeToggle.addEventListener('click', () => {
+  isDark = !isDark;
+  localStorage.setItem('nexora_theme', isDark ? 'dark' : 'light');
+  applyTheme();
+});
+
+// ── VOICE INPUT ──
+const voiceBtn = document.getElementById('voiceBtn');
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+  const recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  let isRecording = false;
+  
+  recognition.onstart = () => {
+    isRecording = true;
+    voiceBtn.textContent = '🔴';
+    voiceBtn.style.color = 'var(--danger)';
+    voiceBtn.style.borderColor = 'var(--danger)';
+  };
+  
+  recognition.onresult = (event) => {
+    let transcript = '';
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      transcript += event.results[i][0].transcript;
+    }
+    document.getElementById('chatInput').value = transcript;
+    autoResize(document.getElementById('chatInput'));
+  };
+  
+  recognition.onend = () => {
+    isRecording = false;
+    voiceBtn.textContent = '🎤';
+    voiceBtn.style.color = 'var(--text)';
+    voiceBtn.style.borderColor = 'var(--border2)';
+  };
+  
+  voiceBtn.addEventListener('click', () => {
+    if (isRecording) {
+      recognition.stop();
+    } else {
+      document.getElementById('chatInput').value = '';
+      recognition.start();
+    }
+  });
+} else {
+  voiceBtn.style.display = 'none';
+}
 
 
 // ── SMARTWATCH ──
