@@ -1,11 +1,14 @@
 {
-  "buildCommand": "echo 'build skipped'",
-  "installCommand": null,
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.py" },
-    { "source": "/static/(.*)", "destination": "/frontend/static/$1" },
+  "version": 2,
+  "builds": [
+    { "src": "api/index.py", "use": "@vercel/python" },
+    { "src": "frontend/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "api/index.py" },
+    { "src": "/static/(.*)", "dest": "/frontend/static/$1" },
     { "source": "/manifest.webmanifest", "destination": "/frontend/manifest.webmanifest" },
     { "source": "/service-worker.js", "destination": "/frontend/service-worker.js" },
-    { "source": "/(.*)", "destination": "/frontend/index.html" }
+    { "src": "/(.*)", "dest": "/frontend/index.html" }
   ]
 }

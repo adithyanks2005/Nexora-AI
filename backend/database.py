@@ -11,7 +11,10 @@ DB_PATH  = DATA_DIR / "nexora.db"
 
 
 def get_connection() -> sqlite3.Connection:
-    DATA_DIR.mkdir(exist_ok=True)
+    if not DATA_DIR.exists():
+        print(f"Creating data directory at: {DATA_DIR}")
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+    
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn

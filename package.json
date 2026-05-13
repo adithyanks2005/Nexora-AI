@@ -23,5 +23,9 @@
   "homepage": "https://github.com/adithyanks2005/Nexora-AI#readme",
   "dependencies": {
     "@vercel/analytics": "^2.0.1"
+  },
+  "engines": {
+    "node": "20.x",
+    "python": "3.12"
   }
 }
