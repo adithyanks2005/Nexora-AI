@@ -1,5 +1,5 @@
 {
-  "buildCommand": null,
+  "buildCommand": "echo 'build skipped'",
   "installCommand": null,
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.py" },
