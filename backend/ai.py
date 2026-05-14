@@ -48,8 +48,8 @@ Examples of WRONG behavior:
 
 
 async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
-    api_key = os.getenv("GROQ_API_KEY", "")
-    model = os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL)
+    api_key = os.getenv("GROQ_API_KEY", "").strip()
+    model = os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL).strip()
 
     if not api_key:
         raise HTTPException(
