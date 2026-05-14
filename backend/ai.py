@@ -75,12 +75,20 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
         "content-type": "application/json",
     }
     async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.post(GROQ_URL, json=payload, headers=headers)
+        try:
+            resp = await client.post(GROQ_URL, json=payload, headers=headers)
+        except Exception as e:
+            print(f"ERROR: Groq request failed: {e}")
+            raise HTTPException(status_code=503, detail=f"Failed to connect to AI service: {str(e)}")
+
     if resp.status_code != 200:
-        raise HTTPException(status_code=resp.status_code, detail=resp.text)
+        print(f"ERROR: Groq returned {resp.status_code}: {resp.text}")
+        raise HTTPException(status_code=resp.status_code, detail=f"AI service error: {resp.text}")
+    
     data  = resp.json()
     reply = data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
     if not reply:
+        print("ERROR: Groq returned empty response")
         raise HTTPException(status_code=502, detail="Groq returned an empty response. Please try again.")
     return reply
 

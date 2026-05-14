@@ -16,20 +16,25 @@ def get_data_dir() -> Path:
     # Priority 1: Use /tmp on Vercel
     if is_vercel():
         tmp_dir = Path(tempfile.gettempdir()) / "nexora-data"
+        print(f"DEBUG: Vercel environment detected. Using {tmp_dir}")
         return tmp_dir
     
     # Priority 2: Use local 'data' directory if writable
     local_data = BASE_DIR / "data"
+    print(f"DEBUG: Checking local data directory: {local_data}")
     try:
         local_data.mkdir(parents=True, exist_ok=True)
         # Test writability
-        test_file = local_data / ".write_test"
+        test_file = local_data / f".write_test_{os.getpid()}"
         test_file.touch()
         test_file.unlink()
+        print(f"DEBUG: Local data directory is writable: {local_data}")
         return local_data
-    except (PermissionError, OSError):
+    except Exception as e:
         # Priority 3: Fallback to /tmp if local is read-only
-        return Path(tempfile.gettempdir()) / "nexora-data"
+        tmp_dir = Path(tempfile.gettempdir()) / "nexora-data"
+        print(f"DEBUG: Local data directory is NOT writable ({e}). Falling back to {tmp_dir}")
+        return tmp_dir
 
 DATA_DIR = get_data_dir()
 DB_PATH  = DATA_DIR / "nexora.db"

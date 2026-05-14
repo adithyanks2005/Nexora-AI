@@ -15,7 +15,9 @@ DOTENV_PATH = ROOT_DIR / ".env"
 if DOTENV_PATH.exists():
     load_dotenv(DOTENV_PATH, override=True)
 
-from fastapi import FastAPI, HTTPException, status
+import traceback
+from fastapi import FastAPI, HTTPException, status, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 # Add project root to sys.path to ensure 'backend' package is findable
@@ -52,6 +54,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print(f"ERROR: Unhandled exception during {request.method} {request.url.path}")
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal Server Error: {str(exc)}", "traceback": traceback.format_exc().splitlines()[-1]}
+    )
 
 
 # -- Health check --------------------------------------------------------------
