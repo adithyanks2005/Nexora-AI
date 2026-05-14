@@ -8,6 +8,13 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
+
+# Load .env as early as possible
+ROOT_DIR = Path(__file__).resolve().parents[1]
+DOTENV_PATH = ROOT_DIR / ".env"
+if DOTENV_PATH.exists():
+    load_dotenv(DOTENV_PATH, override=True)
+
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -24,16 +31,16 @@ from backend.models import (
     IdealWeightRequest, ReminderIn, SessionCreate, SymptomRequest, WaterRequest,
 )
 
-# Load .env if it exists
-DOTENV_PATH = ROOT_DIR / ".env"
-if DOTENV_PATH.exists():
-    load_dotenv(DOTENV_PATH, override=True)
+# (Already loaded above)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize database in writable /tmp directory on Vercel
-    init_db()
+    # Initialize database in writable directory
+    try:
+        init_db()
+    except Exception as e:
+        print(f"CRITICAL: Database initialization failed: {e}")
     yield
 
 

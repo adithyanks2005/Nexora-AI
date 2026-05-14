@@ -6,14 +6,46 @@ import tempfile
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-DATA_DIR = Path(tempfile.gettempdir()) / "nexora-data" if os.getenv("VERCEL") else BASE_DIR / "data"
+
+def is_vercel() -> bool:
+    """Check if we are running in a Vercel environment."""
+    return any(os.getenv(k) for k in ["VERCEL", "VERCEL_ENV", "NOW_REGION", "AWS_LAMBDA_FUNCTION_NAME"])
+
+def get_data_dir() -> Path:
+    """Determine the best directory for storing data, falling back to /tmp if needed."""
+    # Priority 1: Use /tmp on Vercel
+    if is_vercel():
+        tmp_dir = Path(tempfile.gettempdir()) / "nexora-data"
+        return tmp_dir
+    
+    # Priority 2: Use local 'data' directory if writable
+    local_data = BASE_DIR / "data"
+    try:
+        local_data.mkdir(parents=True, exist_ok=True)
+        # Test writability
+        test_file = local_data / ".write_test"
+        test_file.touch()
+        test_file.unlink()
+        return local_data
+    except (PermissionError, OSError):
+        # Priority 3: Fallback to /tmp if local is read-only
+        return Path(tempfile.gettempdir()) / "nexora-data"
+
+DATA_DIR = get_data_dir()
 DB_PATH  = DATA_DIR / "nexora.db"
 
 
 def get_connection() -> sqlite3.Connection:
     if not DATA_DIR.exists():
-        print(f"Creating data directory at: {DATA_DIR}")
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        try:
+            print(f"Creating data directory at: {DATA_DIR}")
+            DATA_DIR.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            # Final fallback if even get_data_dir's choice fails
+            print(f"Failed to create {DATA_DIR}: {e}. Falling back to system temp.")
+            fallback = Path(tempfile.gettempdir()) / "nexora-fallback"
+            fallback.mkdir(parents=True, exist_ok=True)
+            return sqlite3.connect(fallback / "nexora.db")
     
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
