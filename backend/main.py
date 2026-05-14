@@ -108,7 +108,7 @@ async def chat(req: ChatRequest) -> dict[str, str]:
                 (req.session_id, req.messages[0].content[:40] if req.messages else "New Chat"),
             )
 
-    messages = [m.dict() for m in req.messages]
+    messages = [m.model_dump() for m in req.messages]
     reply    = await call_ai(messages)
 
     with get_connection() as conn:

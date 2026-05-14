@@ -52,7 +52,10 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
     model = os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL)
 
     if not api_key:
-        raise HTTPException(status_code=500, detail="GROQ_API_KEY not configured. Add it to your Vercel project settings.")
+        raise HTTPException(
+            status_code=500,
+            detail="GROQ_API_KEY not configured. 🛠️ LOCAL: Add it to your .env file and restart. 🚀 VERCEL: Add it to Project Settings > Environment Variables."
+        )
 
     chat_messages = [{"role": "system", "content": system}] + [
         {"role": msg.get("role", "user"), "content": msg.get("content", "")}
