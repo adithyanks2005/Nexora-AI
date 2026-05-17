@@ -947,10 +947,11 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
         <div class="watch-status-text"><strong id="wsName">No device connected</strong><br><span id="wsInfo" style="font-size:11px;">Connect your smartwatch via Bluetooth</span></div>
         <span class="watch-live-badge" id="wsLiveBadge" style="display:none;"><div class="live-dot"></div>Live</span>
         <button class="connect-btn" id="wsConnectBtn" onclick="toggleWatchConnect()">⌚ Connect Watch</button>
+        <button class="connect-btn" id="wsSimBtn" onclick="startSimulatorManual()" style="margin-left:4px;border-color:rgba(123,97,255,0.4);background:rgba(123,97,255,0.1);color:var(--accent2);">🧪 Demo Mode</button>
       </div>
       <div class="panel">
         <div class="sim-note" id="simNote" style="display:none;">
-          ⚡ <div>Running in <strong>simulator mode</strong> — real data streams when a Bluetooth device is paired. Web Bluetooth requires Chrome on Android/desktop with Bluetooth enabled.</div>
+          🧪 <div>Running in <strong>demo mode</strong> — all data shown is simulated and <strong>not real health data</strong>. Connect a real Bluetooth device for actual readings.</div>
         </div>
         <div id="alertContainer"></div>
         <div class="watch-grid">
@@ -1603,6 +1604,7 @@ async function connectWatch() {
       btn.textContent = '⏏ Disconnect';
       btn.classList.add('danger');
       document.getElementById('simNote').style.display = 'none';
+      document.getElementById('wsSimBtn').style.display = 'none';
 
       // Try to read heart rate characteristic
       try {
@@ -1638,7 +1640,16 @@ async function connectWatch() {
     }
   }
 
-  // Simulator fallback
+  // No Bluetooth available — inform user, do NOT auto-start simulator
+  nameEl.textContent = 'No device connected';
+  infoEl.textContent = 'Web Bluetooth not available. Use Demo Mode to preview features.';
+  dot.className = 'watch-status-dot';
+  btn.textContent = '⌚ Connect Watch';
+  btn.classList.remove('danger');
+}
+
+function startSimulatorManual() {
+  if (wsConnected || wsSimulating) return;
   startSimulator();
 }
 
@@ -1652,11 +1663,12 @@ function startSimulator() {
 
   dot.className = 'watch-status-dot connected';
   nameEl.textContent = 'Nexora Sim Watch';
-  infoEl.textContent = 'Simulator mode — Web Bluetooth not available';
+  infoEl.textContent = 'Demo mode — simulated data only, not real health data';
   document.getElementById('wsLiveBadge').style.display = 'inline-flex';
   document.getElementById('simNote').style.display = 'flex';
   btn.textContent = '⏏ Disconnect';
   btn.classList.add('danger');
+  document.getElementById('wsSimBtn').style.display = 'none';
 
   initWatchChart();
   loadSleepData();
@@ -1707,6 +1719,7 @@ function disconnectWatch() {
   const btn = document.getElementById('wsConnectBtn');
   btn.textContent = '⌚ Connect Watch';
   btn.classList.remove('danger');
+  document.getElementById('wsSimBtn').style.display = '';
 
   // Reset metrics
   ['hr','spo2','steps','cal','sleep','stress'].forEach(k => {
@@ -1848,8 +1861,8 @@ function loadSleepData() {
   const deep  = +(1.2 + Math.random()*0.8).toFixed(1);
   const rem   = +(1.0 + Math.random()*0.6).toFixed(1);
   const awake = +(0.3 + Math.random()*0.3).toFixed(1);
-  const light = +(7.4 - deep - rem - awake).toFixed(1);
-  const total = 7.4;
+  const light = +(Math.max(0.5, 7.4 - deep - rem - awake)).toFixed(1);
+  const total = +(deep + light + rem + awake).toFixed(1);
   document.getElementById('sleep-total').textContent = total;
   document.getElementById('sl-deep').textContent  = deep;
   document.getElementById('sl-light').textContent = light;
@@ -1863,6 +1876,9 @@ function loadSleepData() {
     <div style="background:#4f9cf9;width:${(light/total*100).toFixed(0)}%;height:100%;"></div>
     <div style="background:#00d4aa;width:${(rem/total*100).toFixed(0)}%;height:100%;"></div>
     <div style="background:#8ca0c4;width:${(awake/total*100).toFixed(0)}%;height:100%;"></div>`;
+
+  // Also update the sleep metric card
+  updateMetric('sleep', total);
 }
 
 // ── ACTIVITY RINGS ──
