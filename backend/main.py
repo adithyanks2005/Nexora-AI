@@ -16,29 +16,32 @@ if DOTENV_PATH.exists():
     load_dotenv(DOTENV_PATH, override=True)
 
 import traceback
-from fastapi import FastAPI, HTTPException, status, Request
-from fastapi.responses import JSONResponse
+from fastapi import Depends, FastAPI, HTTPException, status, Request
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-# Add project root to sys.path to ensure 'backend' package is findable
-ROOT_DIR = Path(__file__).resolve().parents[1]
+# Add project root to sys.path
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from backend.ai import call_ai, SYSTEM_PROMPT
+from backend.auth import (
+    create_jwt,
+    get_current_user,
+    upsert_user,
+    verify_google_token,
+)
 from backend.calculators import calc_bmi, calc_calories, calc_water, calc_ideal_weight
 from backend.database import get_connection, init_db
 from backend.models import (
-    BMIRequest, CalorieRequest, ChatRequest, HealthRecordIn,
+    BMIRequest, CalorieRequest, ChatRequest, GoogleAuthRequest, HealthRecordIn,
     IdealWeightRequest, ReminderIn, SessionCreate, SymptomRequest, WaterRequest,
 )
-
-# (Already loaded above)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize database in writable directory
     try:
         init_db()
     except Exception as e:
@@ -55,56 +58,131 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     print(f"ERROR: Unhandled exception during {request.method} {request.url.path}")
     traceback.print_exc()
     return JSONResponse(
         status_code=500,
-        content={"detail": f"Internal Server Error: {str(exc)}", "traceback": traceback.format_exc().splitlines()[-1]}
+        content={"detail": f"Internal Server Error: {str(exc)}",
+                 "traceback": traceback.format_exc().splitlines()[-1]},
     )
 
 
-# -- Health check --------------------------------------------------------------
+# ── Health check ──────────────────────────────────────────────────────────────
 @app.get("/api/health")
 def health() -> dict[str, str]:
     from backend.ai import get_ai_status
+    return {"status": "ok", **get_ai_status()}
+
+
+# ── Serve frontend with injected config ───────────────────────────────────────
+FRONTEND_DIR = ROOT_DIR / "frontend"
+STATIC_DIR   = FRONTEND_DIR / "static"
+
+# Mount static files
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/{full_path:path}", response_class=HTMLResponse, include_in_schema=False)
+async def serve_frontend(full_path: str = "") -> HTMLResponse:
+    # Don't intercept API routes
+    if full_path.startswith("api/") or full_path.startswith("static/"):
+        raise HTTPException(status_code=404)
+    html_path = FRONTEND_DIR / "index.html"
+    if not html_path.exists():
+        raise HTTPException(status_code=404, detail="Frontend not found")
+    html = html_path.read_text(encoding="utf-8")
+    # Inject Google Client ID
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+    html = html.replace(
+        "window.__GOOGLE_CLIENT_ID__ || ''",
+        f"'{client_id}'"
+    )
+    return HTMLResponse(content=html)
+
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+@app.post("/api/auth/google")
+def google_login(body: GoogleAuthRequest) -> dict[str, Any]:
+    """Verify a Google ID token and return a Nexora JWT."""
+    google_info = verify_google_token(body.id_token)
+    user = upsert_user(google_info)
+    token = create_jwt(user["id"], user["email"])
     return {
-        "status": "ok",
-        **get_ai_status(),
+        "token": token,
+        "user": {
+            "id":      user["id"],
+            "email":   user["email"],
+            "name":    user["name"],
+            "picture": user["picture"],
+        },
     }
 
 
-# -- Chat sessions -------------------------------------------------------------
+@app.get("/api/auth/me")
+def me(current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
+    return {
+        "id":      current_user["id"],
+        "email":   current_user["email"],
+        "name":    current_user["name"],
+        "picture": current_user["picture"],
+    }
+
+
+# ── Chat sessions ─────────────────────────────────────────────────────────────
 @app.get("/api/sessions")
-def list_sessions() -> list[dict[str, Any]]:
+def list_sessions(current_user: dict = Depends(get_current_user)) -> list[dict[str, Any]]:
     with get_connection() as conn:
         rows = conn.execute(
-            "SELECT * FROM chat_sessions ORDER BY updated_at DESC"
+            "SELECT * FROM chat_sessions WHERE user_id = ? ORDER BY updated_at DESC",
+            (current_user["id"],),
         ).fetchall()
     return [dict(r) for r in rows]
 
 
 @app.post("/api/sessions", status_code=201)
-def create_session(body: SessionCreate) -> dict[str, Any]:
+def create_session(
+    body: SessionCreate,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, Any]:
     sid = str(uuid.uuid4())
     with get_connection() as conn:
         conn.execute(
-            "INSERT INTO chat_sessions (id, title) VALUES (?, ?)", (sid, body.title)
+            "INSERT INTO chat_sessions (id, user_id, title) VALUES (?, ?, ?)",
+            (sid, current_user["id"], body.title),
         )
     return {"id": sid, "title": body.title}
 
 
 @app.delete("/api/sessions/{sid}")
-def delete_session(sid: str) -> dict[str, str]:
+def delete_session(
+    sid: str,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, str]:
     with get_connection() as conn:
-        conn.execute("DELETE FROM chat_sessions WHERE id = ?", (sid,))
+        conn.execute(
+            "DELETE FROM chat_sessions WHERE id = ? AND user_id = ?",
+            (sid, current_user["id"]),
+        )
     return {"message": "deleted"}
 
 
 @app.get("/api/sessions/{sid}/messages")
-def get_messages(sid: str) -> list[dict[str, Any]]:
+def get_messages(
+    sid: str,
+    current_user: dict = Depends(get_current_user),
+) -> list[dict[str, Any]]:
+    # Verify session belongs to user
     with get_connection() as conn:
+        session = conn.execute(
+            "SELECT id FROM chat_sessions WHERE id = ? AND user_id = ?",
+            (sid, current_user["id"]),
+        ).fetchone()
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found.")
         rows = conn.execute(
             "SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at",
             (sid,),
@@ -112,25 +190,29 @@ def get_messages(sid: str) -> list[dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
-# -- Chat ----------------------------------------------------------------------
+# ── Chat ──────────────────────────────────────────────────────────────────────
 @app.post("/api/chat")
-async def chat(req: ChatRequest) -> dict[str, str]:
-    # ensure session exists
+async def chat(
+    req: ChatRequest,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, str]:
+    uid = current_user["id"]
     with get_connection() as conn:
         row = conn.execute(
-            "SELECT id FROM chat_sessions WHERE id = ?", (req.session_id,)
+            "SELECT id FROM chat_sessions WHERE id = ? AND user_id = ?",
+            (req.session_id, uid),
         ).fetchone()
         if not row:
             conn.execute(
-                "INSERT INTO chat_sessions (id, title) VALUES (?, ?)",
-                (req.session_id, req.messages[0].content[:40] if req.messages else "New Chat"),
+                "INSERT INTO chat_sessions (id, user_id, title) VALUES (?, ?, ?)",
+                (req.session_id, uid,
+                 req.messages[0].content[:40] if req.messages else "New Chat"),
             )
 
     messages = [m.model_dump() for m in req.messages]
     reply    = await call_ai(messages)
 
     with get_connection() as conn:
-        # save last user message + assistant reply
         last_user = next((m for m in reversed(req.messages) if m.role == "user"), None)
         if last_user:
             conn.execute(
@@ -150,9 +232,12 @@ async def chat(req: ChatRequest) -> dict[str, str]:
     return {"reply": reply, "session_id": req.session_id}
 
 
-# -- Symptom checker -----------------------------------------------------------
+# ── Symptom checker ───────────────────────────────────────────────────────────
 @app.post("/api/symptoms")
-async def analyze_symptoms(req: SymptomRequest) -> dict[str, str]:
+async def analyze_symptoms(
+    req: SymptomRequest,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, str]:
     prompt = (
         f"Patient symptoms: {', '.join(req.symptoms)}. "
         f"Body area: {req.body_area or 'unspecified'}. "
@@ -165,7 +250,7 @@ async def analyze_symptoms(req: SymptomRequest) -> dict[str, str]:
     return {"reply": reply}
 
 
-# -- Calculators ---------------------------------------------------------------
+# ── Calculators (public — no auth needed) ─────────────────────────────────────
 @app.post("/api/calc/bmi")
 def bmi(req: BMIRequest) -> dict[str, Any]:
     return calc_bmi(req)
@@ -186,22 +271,26 @@ def ideal_weight(req: IdealWeightRequest) -> dict[str, Any]:
     return calc_ideal_weight(req)
 
 
-# -- Reminders -----------------------------------------------------------------
+# ── Reminders ─────────────────────────────────────────────────────────────────
 @app.get("/api/reminders")
-def get_reminders() -> list[dict[str, Any]]:
+def get_reminders(current_user: dict = Depends(get_current_user)) -> list[dict[str, Any]]:
     with get_connection() as conn:
         rows = conn.execute(
-            "SELECT * FROM reminders ORDER BY created_at DESC"
+            "SELECT * FROM reminders WHERE user_id = ? ORDER BY created_at DESC",
+            (current_user["id"],),
         ).fetchall()
     return [dict(r) for r in rows]
 
 
 @app.post("/api/reminders", status_code=201)
-def add_reminder(rem: ReminderIn) -> dict[str, Any]:
+def add_reminder(
+    rem: ReminderIn,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, Any]:
     with get_connection() as conn:
         cur = conn.execute(
-            "INSERT INTO reminders (title,time,repeat,notes,icon,color) VALUES (?,?,?,?,?,?)",
-            (rem.title, rem.time, rem.repeat, rem.notes, rem.icon, rem.color),
+            "INSERT INTO reminders (user_id,title,time,repeat,notes,icon,color) VALUES (?,?,?,?,?,?,?)",
+            (current_user["id"], rem.title, rem.time, rem.repeat, rem.notes, rem.icon, rem.color),
         )
         row = conn.execute(
             "SELECT * FROM reminders WHERE id = ?", (cur.lastrowid,)
@@ -210,10 +299,14 @@ def add_reminder(rem: ReminderIn) -> dict[str, Any]:
 
 
 @app.patch("/api/reminders/{rid}/toggle")
-def toggle_reminder(rid: int) -> dict[str, Any]:
+def toggle_reminder(
+    rid: int,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, Any]:
     with get_connection() as conn:
         conn.execute(
-            "UPDATE reminders SET done = NOT done WHERE id = ?", (rid,)
+            "UPDATE reminders SET done = NOT done WHERE id = ? AND user_id = ?",
+            (rid, current_user["id"]),
         )
         row = conn.execute("SELECT * FROM reminders WHERE id = ?", (rid,)).fetchone()
     if not row:
@@ -222,35 +315,48 @@ def toggle_reminder(rid: int) -> dict[str, Any]:
 
 
 @app.delete("/api/reminders/{rid}")
-def delete_reminder(rid: int) -> dict[str, str]:
+def delete_reminder(
+    rid: int,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, str]:
     with get_connection() as conn:
-        conn.execute("DELETE FROM reminders WHERE id = ?", (rid,))
+        conn.execute(
+            "DELETE FROM reminders WHERE id = ? AND user_id = ?",
+            (rid, current_user["id"]),
+        )
     return {"message": "deleted"}
 
 
 @app.delete("/api/reminders/done/clear")
-def clear_done_reminders() -> dict[str, str]:
+def clear_done_reminders(current_user: dict = Depends(get_current_user)) -> dict[str, str]:
     with get_connection() as conn:
-        conn.execute("DELETE FROM reminders WHERE done = 1")
+        conn.execute(
+            "DELETE FROM reminders WHERE done = 1 AND user_id = ?",
+            (current_user["id"],),
+        )
     return {"message": "cleared"}
 
 
-# -- Health records ------------------------------------------------------------
+# ── Health records ────────────────────────────────────────────────────────────
 @app.get("/api/records")
-def get_records() -> list[dict[str, Any]]:
+def get_records(current_user: dict = Depends(get_current_user)) -> list[dict[str, Any]]:
     with get_connection() as conn:
         rows = conn.execute(
-            "SELECT * FROM health_records ORDER BY recorded_at DESC LIMIT 100"
+            "SELECT * FROM health_records WHERE user_id = ? ORDER BY recorded_at DESC LIMIT 100",
+            (current_user["id"],),
         ).fetchall()
     return [dict(r) for r in rows]
 
 
 @app.post("/api/records", status_code=201)
-def add_record(rec: HealthRecordIn) -> dict[str, Any]:
+def add_record(
+    rec: HealthRecordIn,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, Any]:
     with get_connection() as conn:
         cur = conn.execute(
-            "INSERT INTO health_records (type, data, notes) VALUES (?,?,?)",
-            (rec.type, rec.data, rec.notes),
+            "INSERT INTO health_records (user_id, type, data, notes) VALUES (?,?,?,?)",
+            (current_user["id"], rec.type, rec.data, rec.notes),
         )
         row = conn.execute(
             "SELECT * FROM health_records WHERE id = ?", (cur.lastrowid,)
@@ -259,7 +365,13 @@ def add_record(rec: HealthRecordIn) -> dict[str, Any]:
 
 
 @app.delete("/api/records/{rid}")
-def delete_record(rid: int) -> dict[str, str]:
+def delete_record(
+    rid: int,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, str]:
     with get_connection() as conn:
-        conn.execute("DELETE FROM health_records WHERE id = ?", (rid,))
+        conn.execute(
+            "DELETE FROM health_records WHERE id = ? AND user_id = ?",
+            (rid, current_user["id"]),
+        )
     return {"message": "deleted"}

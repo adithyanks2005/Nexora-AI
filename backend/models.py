@@ -63,3 +63,8 @@ class SymptomRequest(BaseModel):
     body_area: str = ""
     severity:  str = ""
     duration:  str = ""
+
+
+# ── Auth models ───────────────────────────────────────────────────────────────
+class GoogleAuthRequest(BaseModel):
+    id_token: str

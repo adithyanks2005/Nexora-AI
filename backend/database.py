@@ -60,8 +60,17 @@ def get_connection() -> sqlite3.Connection:
 def init_db() -> None:
     with get_connection() as conn:
         conn.executescript("""
+            CREATE TABLE IF NOT EXISTS users (
+                id          TEXT PRIMARY KEY,
+                email       TEXT NOT NULL UNIQUE,
+                name        TEXT NOT NULL DEFAULT '',
+                picture     TEXT NOT NULL DEFAULT '',
+                created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+
             CREATE TABLE IF NOT EXISTS chat_sessions (
                 id          TEXT PRIMARY KEY,
+                user_id     TEXT NOT NULL DEFAULT '',
                 title       TEXT NOT NULL DEFAULT 'New Chat',
                 created_at  TEXT NOT NULL DEFAULT (datetime('now')),
                 updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
@@ -77,6 +86,7 @@ def init_db() -> None:
 
             CREATE TABLE IF NOT EXISTS reminders (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id     TEXT NOT NULL DEFAULT '',
                 title       TEXT NOT NULL,
                 time        TEXT NOT NULL,
                 repeat      TEXT NOT NULL DEFAULT 'Daily',
@@ -89,20 +99,10 @@ def init_db() -> None:
 
             CREATE TABLE IF NOT EXISTS health_records (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id     TEXT NOT NULL DEFAULT '',
                 type        TEXT NOT NULL,
                 data        TEXT NOT NULL,
                 notes       TEXT DEFAULT '',
                 recorded_at TEXT NOT NULL DEFAULT (datetime('now'))
             );
         """)
-        # seed default reminders if empty
-        count = conn.execute("SELECT COUNT(*) FROM reminders").fetchone()[0]
-        if count == 0:
-            conn.executemany(
-                "INSERT INTO reminders (title,time,repeat,notes,icon,color) VALUES (?,?,?,?,?,?)",
-                [
-                    ("Morning vitamins",  "08:00", "Daily", "With breakfast", "💊", "#E6F1FB"),
-                    ("Drink water",       "10:00", "Daily", "500 ml",         "💧", "#E1F5EE"),
-                    ("Evening walk",      "18:30", "Daily", "30 minutes",     "🏃", "#FAEEDA"),
-                ],
-            )

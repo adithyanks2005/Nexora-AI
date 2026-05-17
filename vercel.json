@@ -1,14 +1,9 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/index.py", "use": "@vercel/python" },
-    { "src": "frontend/**", "use": "@vercel/static" }
+    { "src": "api/index.py", "use": "@vercel/python" }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "api/index.py" },
-    { "src": "/static/(.*)", "dest": "/frontend/static/$1" },
-    { "source": "/manifest.webmanifest", "destination": "/frontend/manifest.webmanifest" },
-    { "source": "/service-worker.js", "destination": "/frontend/service-worker.js" },
-    { "src": "/(.*)", "dest": "/frontend/index.html" }
+    { "src": "/(.*)", "dest": "api/index.py" }
   ]
 }

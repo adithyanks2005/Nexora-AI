@@ -8,6 +8,8 @@
 <title>Nexora AI — Healthcare Assistant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -422,6 +424,7 @@ body{
 .watch-status-dot.connected{background:var(--success);box-shadow:0 0 8px rgba(67,217,140,0.5);}
 .watch-status-dot.connecting{background:var(--warn);animation:pulse 1s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 .watch-status-text{font-size:13px;color:var(--text2);}
 .watch-status-text strong{color:var(--text);font-weight:600;}
 .connect-btn{
@@ -541,9 +544,118 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
   .watch-grid{grid-template-columns:1fr 1fr;}
   .wm-val{font-size:22px;}
 }
+
+/* ── LOGIN SCREEN ── */
+#loginScreen{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:0;
+}
+.login-card{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:20px;
+  padding:48px 40px 40px;
+  max-width:420px;width:calc(100% - 32px);
+  text-align:center;
+  box-shadow:0 24px 80px rgba(0,0,0,0.4);
+}
+.login-logo{
+  width:64px;height:64px;border-radius:18px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;margin:0 auto 20px;
+}
+.login-title{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;margin-bottom:8px;}
+.login-title span{color:var(--accent);}
+.login-sub{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:32px;}
+.login-features{
+  display:flex;flex-direction:column;gap:10px;
+  margin-bottom:32px;text-align:left;
+}
+.login-feat{
+  display:flex;align-items:center;gap:12px;
+  font-size:13px;color:var(--text2);
+}
+.login-feat-icon{
+  width:32px;height:32px;border-radius:8px;
+  background:rgba(79,156,249,0.1);border:1px solid rgba(79,156,249,0.2);
+  display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;
+}
+.google-btn{
+  width:100%;padding:13px 20px;
+  border-radius:12px;border:1px solid var(--border2);
+  background:var(--surface2);
+  color:var(--text);font-family:inherit;font-size:15px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;
+  transition:all 0.18s;
+}
+.google-btn:hover{background:rgba(79,156,249,0.08);border-color:rgba(79,156,249,0.4);}
+.google-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.google-btn svg{width:20px;height:20px;flex-shrink:0;}
+.login-disclaimer{font-size:11px;color:var(--text3);margin-top:16px;line-height:1.5;}
+.login-error{
+  margin-top:12px;padding:10px 14px;border-radius:8px;
+  background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.3);
+  color:var(--danger);font-size:13px;display:none;
+}
+
+/* User avatar in sidebar */
+.user-info{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;border-radius:var(--radius-sm);
+  background:var(--surface2);border:1px solid var(--border);
+  margin:0 10px 8px;
+}
+.user-avatar{
+  width:32px;height:32px;border-radius:50%;
+  object-fit:cover;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+}
+.user-avatar-fallback{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;color:#fff;
+}
+.user-name{font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.user-email{font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.signout-btn{
+  background:none;border:none;cursor:pointer;
+  color:var(--text3);font-size:16px;padding:4px;
+  border-radius:4px;transition:color 0.15s;flex-shrink:0;
+}
+.signout-btn:hover{color:var(--danger);}
 </style>
 </head>
 <body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">🧬</div>
+    <div class="login-title">Nexora<span>AI</span></div>
+    <p class="login-sub">Your intelligent healthcare companion.<br>Sign in to save your data across devices.</p>
+    <div class="login-features">
+      <div class="login-feat"><div class="login-feat-icon">💬</div><span>AI health chat with full history</span></div>
+      <div class="login-feat"><div class="login-feat-icon">⏰</div><span>Medication reminders synced to your account</span></div>
+      <div class="login-feat"><div class="login-feat-icon">📋</div><span>Health records stored securely</span></div>
+      <div class="login-feat"><div class="login-feat-icon">🔒</div><span>Your data is private and never shared</span></div>
+    </div>
+    <button class="google-btn" id="googleSignInBtn" onclick="signInWithGoogle()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Continue with Google
+    </button>
+    <div class="login-error" id="loginError"></div>
+    <p class="login-disclaimer">By signing in you agree to use this app for personal wellness only.<br>Nexora AI is not a substitute for professional medical advice.</p>
+  </div>
+</div>
 
 <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
@@ -577,6 +689,16 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
         <span class="nav-icon">⌚</span> Smart Watch
       </button>
     </nav>
+    <!-- User info -->
+    <div class="user-info" id="sidebarUser" style="display:none;">
+      <div class="user-avatar-fallback" id="userAvatarFallback">?</div>
+      <img class="user-avatar" id="userAvatarImg" src="" alt="" style="display:none;" onerror="this.style.display='none';document.getElementById('userAvatarFallback').style.display='flex'"/>
+      <div style="flex:1;min-width:0;">
+        <div class="user-name" id="sidebarUserName">—</div>
+        <div class="user-email" id="sidebarUserEmail">—</div>
+      </div>
+      <button class="signout-btn" onclick="signOut()" title="Sign out">⏏</button>
+    </div>
     <div class="sidebar-footer">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <span style="font-size:12px; font-weight:600; color:var(--text2);">v3.0.0</span>
@@ -1061,6 +1183,188 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+const GOOGLE_CLIENT_ID = window.__GOOGLE_CLIENT_ID__ || '';
+let currentUser = null;
+
+function getToken() { return localStorage.getItem('nexora_jwt'); }
+function setToken(t) { localStorage.setItem('nexora_jwt', t); }
+function clearToken() { localStorage.removeItem('nexora_jwt'); }
+
+async function authFetch(path, method = 'GET', body = null) {
+  const token = getToken();
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  if (body) opts.body = JSON.stringify(body);
+  let res;
+  try { res = await fetch(path, opts); }
+  catch { throw new Error('You are offline.'); }
+  if (res.status === 401) { signOut(); return null; }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || 'Request failed');
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+function signInWithGoogle() {
+  const btn = document.getElementById('googleSignInBtn');
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  if (!window.google || !window.google.accounts) {
+    showLoginError('Google Sign-In failed to load. Check your internet connection.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = `<span style="font-size:18px;animation:spin 1s linear infinite;display:inline-block;">⏳</span> Signing in…`;
+
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential,
+    auto_select: false,
+    cancel_on_tap_outside: true,
+  });
+  google.accounts.id.prompt((notification) => {
+    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+      // One Tap not shown — open popup flow
+      google.accounts.id.renderButton(
+        document.createElement('div'),
+        { theme: 'outline', size: 'large' }
+      );
+      // Fallback: use OAuth popup
+      openGoogleOAuthPopup();
+    }
+  });
+}
+
+function openGoogleOAuthPopup() {
+  if (!GOOGLE_CLIENT_ID) {
+    showLoginError('GOOGLE_CLIENT_ID is not configured. See setup instructions.');
+    resetSignInBtn();
+    return;
+  }
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: window.location.origin,
+    response_type: 'token id_token',
+    scope: 'openid email profile',
+    nonce: Math.random().toString(36).slice(2),
+    prompt: 'select_account',
+  });
+  const popup = window.open(
+    'https://accounts.google.com/o/oauth2/v2/auth?' + params,
+    'google_login',
+    'width=500,height=600,left=' + (screen.width/2 - 250) + ',top=' + (screen.height/2 - 300)
+  );
+  const timer = setInterval(async () => {
+    try {
+      if (!popup || popup.closed) { clearInterval(timer); resetSignInBtn(); return; }
+      const url = popup.location.href;
+      if (url.startsWith(window.location.origin)) {
+        clearInterval(timer);
+        popup.close();
+        const hash = new URLSearchParams(url.split('#')[1] || '');
+        const idToken = hash.get('id_token');
+        if (idToken) await handleGoogleCredential({ credential: idToken });
+        else { showLoginError('Sign-in cancelled or failed.'); resetSignInBtn(); }
+      }
+    } catch { /* cross-origin — still loading */ }
+  }, 300);
+}
+
+async function handleGoogleCredential(response) {
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+  try {
+    const data = await authFetch('/api/auth/google', 'POST', { id_token: response.credential });
+    if (!data) { showLoginError('Authentication failed. Please try again.'); resetSignInBtn(); return; }
+    setToken(data.token);
+    currentUser = data.user;
+    showApp();
+  } catch (e) {
+    showLoginError(e.message || 'Sign-in failed. Please try again.');
+    resetSignInBtn();
+  }
+}
+
+function resetSignInBtn() {
+  const btn = document.getElementById('googleSignInBtn');
+  btn.disabled = false;
+  btn.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;flex-shrink:0;">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+  </svg> Continue with Google`;
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = '⚠️ ' + msg;
+  el.style.display = 'block';
+}
+
+async function checkAuth() {
+  const token = getToken();
+  if (!token) { showLoginScreen(); return; }
+  try {
+    const user = await authFetch('/api/auth/me');
+    if (!user) { showLoginScreen(); return; }
+    currentUser = user;
+    showApp();
+  } catch {
+    showLoginScreen();
+  }
+}
+
+function showLoginScreen() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.querySelector('.app').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.querySelector('.app').style.display = 'flex';
+  updateUserUI();
+  loadReminders();
+  loadRecords();
+  loadChatHistory();
+}
+
+function updateUserUI() {
+  if (!currentUser) return;
+  const panel = document.getElementById('sidebarUser');
+  panel.style.display = 'flex';
+  document.getElementById('sidebarUserName').textContent = currentUser.name || currentUser.email;
+  document.getElementById('sidebarUserEmail').textContent = currentUser.email;
+  if (currentUser.picture) {
+    const img = document.getElementById('userAvatarImg');
+    img.src = currentUser.picture;
+    img.style.display = 'block';
+    document.getElementById('userAvatarFallback').style.display = 'none';
+  } else {
+    document.getElementById('userAvatarFallback').textContent =
+      (currentUser.name || currentUser.email || '?')[0].toUpperCase();
+  }
+}
+
+function signOut() {
+  clearToken();
+  currentUser = null;
+  if (window.google && window.google.accounts) {
+    google.accounts.id.disableAutoSelect();
+  }
+  // Reset UI state
+  document.getElementById('chatMessages').innerHTML = '';
+  document.getElementById('reminderList').innerHTML = '';
+  document.getElementById('recordsList').innerHTML = '';
+  document.getElementById('sidebarUser').style.display = 'none';
+  showLoginScreen();
+}
+
 // ── NAVIGATION ──
 function switchSection(id, btn) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -1113,16 +1417,14 @@ function renderMarkdown(text) {
 
 async function loadChatHistory() {
   try {
-    const resp = await fetch(`/api/sessions/${currentSessionId}/messages`);
-    if (resp.ok) {
-      const msgs = await resp.json();
-      msgs.forEach(m => {
-        chatHistory.push({role: m.role, content: m.content});
-        addMsg(m.role === 'assistant' ? renderMarkdown(m.content) : m.content,
-               m.role === 'assistant' ? 'bot' : 'user',
-               m.role === 'assistant');
-      });
-    }
+    const msgs = await authFetch(`/api/sessions/${currentSessionId}/messages`);
+    if (!msgs) return;
+    msgs.forEach(m => {
+      chatHistory.push({role: m.role, content: m.content});
+      addMsg(m.role === 'assistant' ? renderMarkdown(m.content) : m.content,
+             m.role === 'assistant' ? 'bot' : 'user',
+             m.role === 'assistant');
+    });
   } catch(e) { /* fresh start */ }
 }
 
@@ -1168,31 +1470,15 @@ async function sendChat() {
   btn.disabled = true; btn.style.opacity = '0.5';
   showTyping();
   try {
-    const resp = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({session_id: currentSessionId, messages: chatHistory})
-    });
+    const data = await authFetch('/api/chat', 'POST', {session_id: currentSessionId, messages: chatHistory});
     removeTyping();
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      const detail = err.detail || `Error ${resp.status}`;
-      if (detail.includes('GROQ_API_KEY') || resp.status === 500) {
-        addMsg('⚠️ AI service needs a valid API key. Please update your GROQ_API_KEY in the .env file and restart the server.', 'bot');
-      } else if (resp.status === 401) {
-        addMsg('⚠️ Invalid Groq API key. Please go to console.groq.com, generate a new key, and update your .env file.', 'bot');
-      } else {
-        addMsg(`⚠️ Something went wrong: ${detail}`, 'bot');
-      }
-      return;
-    }
-    const data = await resp.json();
+    if (!data) { addMsg('⚠️ Session expired. Please sign in again.', 'bot'); return; }
     const reply = data.reply;
     chatHistory.push({role: 'assistant', content: reply});
     addMsg(renderMarkdown(reply), 'bot', true);
   } catch(e) {
     removeTyping();
-    addMsg('⚠️ Could not reach the server. Make sure the backend is running on port 8001.', 'bot');
+    addMsg('⚠️ ' + (e.message || 'Could not reach the server.'), 'bot');
   } finally {
     btn.disabled = false; btn.style.opacity = '';
   }
@@ -1233,16 +1519,8 @@ async function analyzeSymptoms() {
   const title = document.getElementById('sympResultTitle');
   const body = document.getElementById('sympResultText');
   try {
-    const resp = await fetch('/api/symptoms', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({symptoms, body_area: area, severity, duration})
-    });
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.detail || 'Analysis failed');
-    }
-    const data = await resp.json();
+    const data = await authFetch('/api/symptoms', 'POST', {symptoms, body_area: area, severity, duration});
+    if (!data) throw new Error('Request failed');
     badge.className = 'result-badge badge-info';
     badge.textContent = '🩺 AI Analysis';
     title.textContent = 'Symptom Analysis';
@@ -1274,12 +1552,8 @@ async function calcBMI() {
   const h = parseFloat(document.getElementById('bmi-h').value);
   if (!w || !h) { alert('Please enter weight and height.'); return; }
   try {
-    const resp = await fetch('/api/calc/bmi', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({weight: w, height: h, unit})
-    });
-    if (!resp.ok) throw new Error('Calculation failed');
-    const d = await resp.json();
+    const d = await authFetch('/api/calc/bmi', 'POST', {weight: w, height: h, unit});
+    if (!d) throw new Error('Calculation failed');
     const res = document.getElementById('bmi-result');
     document.getElementById('bmi-val').textContent = d.bmi;
     document.getElementById('bmi-val').style.color = d.color;
@@ -1302,12 +1576,8 @@ async function calcCal() {
   const goal = document.getElementById('cal-goal').value;
   if (!age || !w || !h) { alert('Please fill in all fields.'); return; }
   try {
-    const resp = await fetch('/api/calc/calories', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({age, gender, weight: w, height: h, activity: act, goal})
-    });
-    if (!resp.ok) throw new Error('Calculation failed');
-    const d = await resp.json();
+    const d = await authFetch('/api/calc/calories', 'POST', {age, gender, weight: w, height: h, activity: act, goal});
+    if (!d) throw new Error('Calculation failed');
     document.getElementById('cal-val').textContent = d.target.toLocaleString();
     document.getElementById('cal-meta').innerHTML =
       `BMR: <strong>${d.bmr}</strong> kcal &nbsp;·&nbsp; TDEE: <strong>${d.tdee}</strong> kcal<br>
@@ -1323,12 +1593,8 @@ async function calcWater() {
   const climate = parseFloat(document.getElementById('water-climate').value);
   if (!w) { alert('Please enter your weight.'); return; }
   try {
-    const resp = await fetch('/api/calc/water', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({weight: w, activity: ex, climate})
-    });
-    if (!resp.ok) throw new Error('Calculation failed');
-    const d = await resp.json();
+    const d = await authFetch('/api/calc/water', 'POST', {weight: w, activity: ex, climate});
+    if (!d) throw new Error('Calculation failed');
     document.getElementById('water-val').textContent = d.litres;
     document.getElementById('water-meta').textContent = `${d.ml} ml  ·  ${d.cups} cups per day`;
     document.getElementById('water-result').classList.add('show');
@@ -1341,12 +1607,8 @@ async function calcIBW() {
   const gender = document.getElementById('ibw-gender').value;
   if (!h) { alert('Please enter your height.'); return; }
   try {
-    const resp = await fetch('/api/calc/ideal-weight', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({height: h, gender})
-    });
-    if (!resp.ok) throw new Error('Calculation failed');
-    const d = await resp.json();
+    const d = await authFetch('/api/calc/ideal-weight', 'POST', {height: h, gender});
+    if (!d) throw new Error('Calculation failed');
     document.getElementById('ibw-val').textContent = d.ideal;
     document.getElementById('ibw-meta').textContent = `Healthy range: ${d.low} – ${d.high} kg (Devine formula)`;
     document.getElementById('ibw-result').classList.add('show');
@@ -1364,9 +1626,8 @@ function selectIcon(el) {
 
 async function loadReminders() {
   try {
-    const resp = await fetch('/api/reminders');
-    if (!resp.ok) throw new Error();
-    renderReminders(await resp.json());
+    const data = await authFetch('/api/reminders');
+    renderReminders(data || []);
   } catch(e) { renderReminders([]); }
 }
 
@@ -1377,11 +1638,8 @@ async function addReminder() {
   const notes = document.getElementById('rem-notes').value.trim();
   if (!title || !time) { alert('Please enter a title and time.'); return; }
   try {
-    const resp = await fetch('/api/reminders', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({title, time, repeat, notes, icon: selectedIcon, color: '#E6F1FB'})
-    });
-    if (!resp.ok) throw new Error('Failed to add');
+    const data = await authFetch('/api/reminders', 'POST', {title, time, repeat, notes, icon: selectedIcon, color: '#E6F1FB'});
+    if (!data) throw new Error('Failed to add');
     document.getElementById('rem-title').value = '';
     document.getElementById('rem-time').value = '';
     document.getElementById('rem-notes').value = '';
@@ -1406,15 +1664,15 @@ function renderReminders(data) {
 }
 
 async function doneReminder(id) {
-  await fetch(`/api/reminders/${id}/toggle`, {method: 'PATCH'});
+  await authFetch(`/api/reminders/${id}/toggle`, 'PATCH');
   loadReminders();
 }
 async function deleteReminder(id) {
-  await fetch(`/api/reminders/${id}`, {method: 'DELETE'});
+  await authFetch(`/api/reminders/${id}`, 'DELETE');
   loadReminders();
 }
 async function clearDoneReminders() {
-  await fetch('/api/reminders/done/clear', {method: 'DELETE'});
+  await authFetch('/api/reminders/done/clear', 'DELETE');
   loadReminders();
 }
 
@@ -1426,9 +1684,8 @@ const recIcons = {
 
 async function loadRecords() {
   try {
-    const resp = await fetch('/api/records');
-    if (!resp.ok) throw new Error();
-    renderRecords(await resp.json());
+    const data = await authFetch('/api/records');
+    renderRecords(data || []);
   } catch(e) { renderRecords([]); }
 }
 
@@ -1438,11 +1695,8 @@ async function addRecord() {
   const notes = document.getElementById('rec-notes').value.trim();
   if (!val) { alert('Please enter a value.'); return; }
   try {
-    const resp = await fetch('/api/records', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({type, data: val, notes})
-    });
-    if (!resp.ok) throw new Error('Failed to add');
+    const data = await authFetch('/api/records', 'POST', {type, data: val, notes});
+    if (!data) throw new Error('Failed to add');
     document.getElementById('rec-val').value = '';
     document.getElementById('rec-notes').value = '';
     loadRecords();
@@ -1466,14 +1720,13 @@ function renderRecords(data) {
 }
 
 async function deleteRecord(id) {
-  await fetch(`/api/records/${id}`, {method: 'DELETE'});
+  await authFetch(`/api/records/${id}`, 'DELETE');
   loadRecords();
 }
 
-// Init
-loadReminders();
-loadRecords();
-loadChatHistory();
+// Init — check auth first, then load data
+document.querySelector('.app').style.display = 'none';
+checkAuth();
 
 // ── THEME TOGGLE ──
 const themeToggle = document.getElementById('themeToggle');
