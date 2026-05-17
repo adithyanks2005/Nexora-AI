@@ -122,6 +122,21 @@ def google_login(body: GoogleAuthRequest) -> dict[str, Any]:
     }
 
 
+@app.post("/api/auth/guest")
+def guest_login() -> dict[str, Any]:
+    """Create a local guest account when Google OAuth is not configured."""
+    user_id = str(uuid.uuid4())
+    email = f"guest-{user_id}@nexora.local"
+    user = {"id": user_id, "email": email, "name": "Guest", "picture": ""}
+    with get_connection() as conn:
+        conn.execute(
+            "INSERT INTO users (id, email, name, picture) VALUES (?, ?, ?, ?)",
+            (user["id"], user["email"], user["name"], user["picture"]),
+        )
+    token = create_jwt(user["id"], user["email"])
+    return {"token": token, "user": user}
+
+
 @app.get("/api/auth/me")
 def me(current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
     return {
