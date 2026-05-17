@@ -1069,12 +1069,8 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
         <div class="watch-status-text"><strong id="wsName">No device connected</strong><br><span id="wsInfo" style="font-size:11px;">Connect your smartwatch via Bluetooth</span></div>
         <span class="watch-live-badge" id="wsLiveBadge" style="display:none;"><div class="live-dot"></div>Live</span>
         <button class="connect-btn" id="wsConnectBtn" onclick="toggleWatchConnect()">⌚ Connect Watch</button>
-        <button class="connect-btn" id="wsSimBtn" onclick="startSimulatorManual()" style="margin-left:4px;border-color:rgba(123,97,255,0.4);background:rgba(123,97,255,0.1);color:var(--accent2);">🧪 Demo Mode</button>
       </div>
       <div class="panel">
-        <div class="sim-note" id="simNote" style="display:none;">
-          🧪 <div>Running in <strong>demo mode</strong> — all data shown is simulated and <strong>not real health data</strong>. Connect a real Bluetooth device for actual readings.</div>
-        </div>
         <div id="alertContainer"></div>
         <div class="watch-grid">
           <div class="watch-metric" id="wm-hr">
@@ -1798,7 +1794,6 @@ if (SpeechRecognition) {
 
 // ── SMARTWATCH ──
 let wsConnected = false;
-let wsSimulating = false;
 let wsInterval = null;
 let btDevice = null;
 let btServer = null;
@@ -1813,11 +1808,8 @@ const chartData = {
 let activeChart = 'hr';
 let watchChartInstance = null;
 
-// Simulated base values
-let sim = { hr:72, spo2:98, steps:3200, cal:280, stress:32 };
-
 function toggleWatchConnect() {
-  if (wsConnected || wsSimulating) {
+  if (wsConnected) {
     disconnectWatch();
   } else {
     connectWatch();
@@ -1852,12 +1844,9 @@ async function connectWatch() {
       nameEl.textContent = btDevice.name || 'Bluetooth Device';
       infoEl.textContent = 'Connected via Web Bluetooth';
       wsConnected = true;
-      wsSimulating = false;
       document.getElementById('wsLiveBadge').style.display = 'inline-flex';
       btn.textContent = '⏏ Disconnect';
       btn.classList.add('danger');
-      document.getElementById('simNote').style.display = 'none';
-      document.getElementById('wsSimBtn').style.display = 'none';
 
       // Try to read heart rate characteristic
       try {
@@ -1870,14 +1859,13 @@ async function connectWatch() {
           pushChartPoint('hr', val);
         });
       } catch(e) {
-        // HR characteristic not available, fall to simulation for missing metrics
-        startSimInterval(true);
+        // HR characteristic not available on this device. Do not synthesize readings.
+        document.getElementById('wv-hr').textContent = 'N/A';
+        document.getElementById('ws-hr').textContent = 'Not supported';
       }
 
       btDevice.addEventListener('gattserverdisconnected', () => disconnectWatch());
       initWatchChart();
-      loadSleepData();
-      updateActivityRings();
       return;
 
     } catch(err) {
@@ -1889,90 +1877,36 @@ async function connectWatch() {
         btn.classList.remove('danger');
         return;
       }
-      // Other errors — fall through to simulator
+      nameEl.textContent = 'No device connected';
+      infoEl.textContent = 'Could not connect to device. Make sure it is nearby and try again.';
+      dot.className = 'watch-status-dot';
+      btn.textContent = 'Connect Watch';
+      btn.classList.remove('danger');
+      return;
     }
   }
 
   // No Bluetooth available — inform user, do NOT auto-start simulator
   nameEl.textContent = 'No device connected';
-  infoEl.textContent = 'Web Bluetooth not available. Use Demo Mode to preview features.';
+  infoEl.textContent = 'Web Bluetooth is not supported in this browser. No watch data is available.';
   dot.className = 'watch-status-dot';
   btn.textContent = '⌚ Connect Watch';
   btn.classList.remove('danger');
 }
 
-function startSimulatorManual() {
-  if (wsConnected || wsSimulating) return;
-  startSimulator();
-}
-
-function startSimulator() {
-  wsSimulating = true;
-  wsConnected = false;
-  const dot = document.getElementById('wsDot');
-  const nameEl = document.getElementById('wsName');
-  const infoEl = document.getElementById('wsInfo');
-  const btn = document.getElementById('wsConnectBtn');
-
-  dot.className = 'watch-status-dot connected';
-  nameEl.textContent = 'Nexora Sim Watch';
-  infoEl.textContent = 'Demo mode — simulated data only, not real health data';
-  document.getElementById('wsLiveBadge').style.display = 'inline-flex';
-  document.getElementById('simNote').style.display = 'flex';
-  btn.textContent = '⏏ Disconnect';
-  btn.classList.add('danger');
-  document.getElementById('wsSimBtn').style.display = 'none';
-
-  initWatchChart();
-  loadSleepData();
-  startSimInterval(false);
-  updateActivityRings();
-}
-
-function startSimInterval(partial) {
-  if (wsInterval) clearInterval(wsInterval);
-  wsInterval = setInterval(() => {
-    // Drift sim values naturally
-    sim.hr = Math.min(120, Math.max(50, sim.hr + (Math.random()-0.48)*3));
-    sim.spo2 = Math.min(100, Math.max(92, sim.spo2 + (Math.random()-0.5)*0.4));
-    sim.steps = Math.min(15000, sim.steps + Math.floor(Math.random()*12));
-    sim.cal = Math.round(sim.steps * 0.04 + 120);
-    sim.stress = Math.min(90, Math.max(10, sim.stress + (Math.random()-0.5)*4));
-
-    const hr = Math.round(sim.hr);
-    const spo2 = parseFloat(sim.spo2.toFixed(1));
-    const steps = sim.steps;
-
-    updateMetric('hr', hr);
-    updateMetric('spo2', spo2);
-    updateMetric('steps', steps.toLocaleString());
-    updateMetric('cal', sim.cal.toLocaleString());
-    updateMetric('stress', Math.round(sim.stress));
-    updateMetric('sleep', '7.4');
-
-    pushChartPoint('hr', hr);
-    pushChartPoint('spo2', spo2);
-    pushChartPoint('steps', steps);
-
-    checkAlerts(hr, spo2, Math.round(sim.stress));
-  }, 2000);
-}
-
 function disconnectWatch() {
   if (btDevice && btDevice.gatt.connected) btDevice.gatt.disconnect();
   if (wsInterval) clearInterval(wsInterval); wsInterval = null;
-  wsConnected = false; wsSimulating = false; btDevice = null; btServer = null;
+  wsConnected = false; btDevice = null; btServer = null;
 
   const dot = document.getElementById('wsDot');
   dot.className = 'watch-status-dot';
   document.getElementById('wsName').textContent = 'No device connected';
   document.getElementById('wsInfo').textContent = 'Connect your smartwatch via Bluetooth';
   document.getElementById('wsLiveBadge').style.display = 'none';
-  document.getElementById('simNote').style.display = 'none';
   const btn = document.getElementById('wsConnectBtn');
   btn.textContent = '⌚ Connect Watch';
   btn.classList.remove('danger');
-  document.getElementById('wsSimBtn').style.display = '';
 
   // Reset metrics
   ['hr','spo2','steps','cal','sleep','stress'].forEach(k => {
@@ -2111,48 +2045,35 @@ function switchWatchChart(key, btn) {
 
 // ── SLEEP DATA ──
 function loadSleepData() {
-  const deep  = +(1.2 + Math.random()*0.8).toFixed(1);
-  const rem   = +(1.0 + Math.random()*0.6).toFixed(1);
-  const awake = +(0.3 + Math.random()*0.3).toFixed(1);
-  const light = +(Math.max(0.5, 7.4 - deep - rem - awake)).toFixed(1);
-  const total = +(deep + light + rem + awake).toFixed(1);
-  document.getElementById('sleep-total').textContent = total;
-  document.getElementById('sl-deep').textContent  = deep;
-  document.getElementById('sl-light').textContent = light;
-  document.getElementById('sl-rem').textContent   = rem;
-  document.getElementById('sl-awake').textContent = awake;
-
-  // Update bar proportions
+  // Browser Bluetooth does not provide sleep data here; never synthesize it.
+  ['sleep-total','sl-deep','sl-light','sl-rem','sl-awake'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '--';
+  });
   const bar = document.getElementById('sleep-bar');
-  bar.innerHTML = `
-    <div style="background:#7b61ff;width:${(deep/total*100).toFixed(0)}%;height:100%;"></div>
-    <div style="background:#4f9cf9;width:${(light/total*100).toFixed(0)}%;height:100%;"></div>
-    <div style="background:#00d4aa;width:${(rem/total*100).toFixed(0)}%;height:100%;"></div>
-    <div style="background:#8ca0c4;width:${(awake/total*100).toFixed(0)}%;height:100%;"></div>`;
-
-  // Also update the sleep metric card
-  updateMetric('sleep', total);
+  if (bar) {
+    bar.innerHTML = '<div style="background:rgba(140,160,196,0.35);width:100%;height:100%;"></div>';
+  }
 }
 
-// ── ACTIVITY RINGS ──
+// ACTIVITY RINGS
 function updateActivityRings() {
-  const moveKcal = Math.round(200 + Math.random()*200);
-  const exMin    = Math.round(15 + Math.random()*45);
-  const standHrs = Math.round(6 + Math.random()*6);
-
-  const movePct  = Math.min(1, moveKcal/400);
-  const exPct    = Math.min(1, exMin/60);
-  const standPct = Math.min(1, standHrs/12);
-
-  // Circumferences: 346, 264, 182
-  document.getElementById('ring-move').style.strokeDashoffset     = 346 - 346*movePct;
-  document.getElementById('ring-exercise').style.strokeDashoffset = 264 - 264*exPct;
-  document.getElementById('ring-stand').style.strokeDashoffset    = 182 - 182*standPct;
-
-  document.getElementById('ring-move-label').textContent  = moveKcal+' / 400 kcal';
-  document.getElementById('ring-ex-label').textContent    = exMin+' / 60 min';
-  document.getElementById('ring-stand-label').textContent = standHrs+' / 12 hrs';
+  // Browser Bluetooth does not provide activity-ring data here; never synthesize it.
+  ['ring-move','ring-exercise','ring-stand'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.strokeDashoffset = el.getAttribute('stroke-dasharray') || '0';
+  });
+  const labels = {
+    'ring-move-label': '-- kcal',
+    'ring-ex-label': '-- min',
+    'ring-stand-label': '-- hrs',
+  };
+  Object.entries(labels).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  });
 }
+
 </script>
 <script>
   window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
