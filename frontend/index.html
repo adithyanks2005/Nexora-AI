@@ -1238,7 +1238,7 @@ function signInWithGoogle() {
 
 function openGoogleOAuthPopup() {
   if (!GOOGLE_CLIENT_ID) {
-    showLoginError('GOOGLE_CLIENT_ID is not configured. See setup instructions.');
+    showLoginError('Google login is not configured. Add GOOGLE_CLIENT_ID in Vercel Project Settings > Environment Variables, then redeploy.');
     resetSignInBtn();
     return;
   }
