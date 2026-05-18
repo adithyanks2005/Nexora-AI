@@ -85,24 +85,6 @@ STATIC_DIR   = FRONTEND_DIR / "static"
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-@app.get("/", response_class=HTMLResponse, include_in_schema=False)
-@app.get("/{full_path:path}", response_class=HTMLResponse, include_in_schema=False)
-async def serve_frontend(full_path: str = "") -> HTMLResponse:
-    # Don't intercept API routes
-    if full_path.startswith("api/") or full_path.startswith("static/"):
-        raise HTTPException(status_code=404)
-    html_path = FRONTEND_DIR / "index.html"
-    if not html_path.exists():
-        raise HTTPException(status_code=404, detail="Frontend not found")
-    html = html_path.read_text(encoding="utf-8")
-    # Inject Google Client ID
-    client_id = os.getenv("GOOGLE_CLIENT_ID", "")
-    html = html.replace(
-        "window.__GOOGLE_CLIENT_ID__ || ''",
-        f"'{client_id}'"
-    )
-    return HTMLResponse(content=html)
-
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 @app.post("/api/auth/google")
@@ -390,3 +372,23 @@ def delete_record(
             (rid, current_user["id"]),
         )
     return {"message": "deleted"}
+
+
+# ── Serve frontend with injected config (Catch-all fallback) ───────────────────
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/{full_path:path}", response_class=HTMLResponse, include_in_schema=False)
+async def serve_frontend(full_path: str = "") -> HTMLResponse:
+    # Don't intercept API routes
+    if full_path.startswith("api/") or full_path.startswith("static/"):
+        raise HTTPException(status_code=404)
+    html_path = FRONTEND_DIR / "index.html"
+    if not html_path.exists():
+        raise HTTPException(status_code=404, detail="Frontend not found")
+    html = html_path.read_text(encoding="utf-8")
+    # Inject Google Client ID
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+    html = html.replace(
+        "window.__GOOGLE_CLIENT_ID__ || ''",
+        f"'{client_id}'"
+    )
+    return HTMLResponse(content=html)
