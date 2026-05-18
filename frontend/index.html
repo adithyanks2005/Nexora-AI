@@ -607,24 +607,7 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
 .google-btn:hover{background:rgba(79,156,249,0.08);border-color:rgba(79,156,249,0.4);}
 .google-btn:disabled{opacity:0.5;cursor:not-allowed;}
 .google-btn svg{width:20px;height:20px;flex-shrink:0;}
-#googleBtnOverlay{
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.01;
-  z-index: 10;
-  overflow: hidden;
-  pointer-events: none;
-}
-#googleBtnOverlay iframe{
-  width: 100% !important;
-  height: 100% !important;
-  transform: scale(1.6);
-  transform-origin: center;
-  cursor: pointer;
-}
+
 .guest-btn{margin-top:12px;border-color:rgba(67,217,140,0.35);color:var(--success);}
 .guest-btn:hover{background:rgba(67,217,140,0.08);border-color:rgba(67,217,140,0.55);}
 .login-disclaimer{font-size:11px;color:var(--text3);margin-top:16px;line-height:1.5;}
@@ -722,7 +705,6 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
       </svg>
       Continue with Google
     </button>
-      <div id="googleBtnOverlay"></div>
     </div>
     <button class="google-btn guest-btn" id="guestSignInBtn" onclick="continueAsGuest()">Continue as Guest</button>
     <div class="login-error" id="loginError"></div>
@@ -1398,33 +1380,6 @@ function configureLoginOptions() {
   errEl.style.display = 'none';
   resetAuthButtons();
 
-  const overlay = document.getElementById('googleBtnOverlay');
-  if (overlay) {
-    if (GOOGLE_CLIENT_ID) {
-      overlay.style.pointerEvents = 'auto';
-      if (window.google && window.google.accounts) {
-        google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: handleGoogleCredential,
-          auto_select: false,
-          cancel_on_tap_outside: true,
-        });
-        google.accounts.id.renderButton(
-          overlay,
-          { 
-            theme: 'outline', 
-            size: 'large', 
-            width: googleBtn.offsetWidth || 340,
-            text: 'continue_with'
-          }
-        );
-      } else {
-        setTimeout(configureLoginOptions, 1000);
-      }
-    } else {
-      overlay.style.pointerEvents = 'none';
-    }
-  }
 }
 
 async function continueAsGuest() {
