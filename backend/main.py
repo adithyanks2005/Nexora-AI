@@ -385,10 +385,4 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
     if not html_path.exists():
         raise HTTPException(status_code=404, detail="Frontend not found")
     html = html_path.read_text(encoding="utf-8")
-    # Inject Google Client ID
-    client_id = os.getenv("GOOGLE_CLIENT_ID", "")
-    html = html.replace(
-        "window.__GOOGLE_CLIENT_ID__ || ''",
-        f"'{client_id}'"
-    )
     return HTMLResponse(content=html)
