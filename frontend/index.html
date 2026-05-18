@@ -551,13 +551,16 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
   background:var(--bg);
   display:flex;align-items:center;justify-content:center;
   flex-direction:column;gap:0;
+  min-height:100dvh;
+  overflow-y:auto;
+  padding:20px 0;
 }
 .login-card{
   background:var(--surface);
   border:1px solid var(--border2);
   border-radius:20px;
-  padding:48px 40px 40px;
-  max-width:420px;width:calc(100% - 32px);
+  padding:36px 40px 32px;
+  max-width:420px;width:min(420px,calc(100% - 32px));
   text-align:center;
   box-shadow:0 24px 80px rgba(0,0,0,0.4);
 }
@@ -565,7 +568,7 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
   width:64px;height:64px;border-radius:18px;
   background:linear-gradient(135deg,var(--accent),var(--accent2));
   display:flex;align-items:center;justify-content:center;
-  font-size:32px;margin:0 auto 20px;
+  font-size:32px;margin:0 auto 16px;
 }
 .login-title{
   font-family:'Syne',sans-serif;
@@ -578,10 +581,10 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
   text-shadow:none;
 }
 .login-title span{color:var(--accent);}
-.login-sub{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:32px;}
+.login-sub{font-size:14px;color:var(--text2);line-height:1.55;margin-bottom:24px;}
 .login-features{
   display:flex;flex-direction:column;gap:10px;
-  margin-bottom:32px;text-align:left;
+  margin-bottom:24px;text-align:left;
 }
 .login-feat{
   display:flex;align-items:center;gap:12px;
@@ -610,7 +613,43 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
 .login-error{
   margin-top:12px;padding:10px 14px;border-radius:8px;
   background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.3);
-  color:var(--danger);font-size:13px;display:none;
+  color:var(--danger);font-size:13px;display:none;line-height:1.45;
+}
+.login-error.info{
+  background:rgba(79,156,249,0.08);
+  border-color:rgba(79,156,249,0.28);
+  color:var(--accent);
+}
+
+@media(max-width:520px){
+  #loginScreen{align-items:stretch;padding:12px 0;}
+  .login-card{
+    width:calc(100% - 24px);
+    max-width:none;
+    margin:auto 12px;
+    padding:30px 18px 24px;
+    border-radius:16px;
+  }
+  .login-logo{
+    width:56px;height:56px;border-radius:16px;
+    font-size:28px;margin-bottom:18px;
+  }
+  .login-title{font-size:clamp(30px,10vw,36px);margin-bottom:10px;}
+  .login-sub{font-size:13px;margin-bottom:22px;}
+  .login-features{gap:8px;margin-bottom:24px;}
+  .login-feat{font-size:12.5px;gap:10px;}
+  .login-feat-icon{width:30px;height:30px;font-size:14px;}
+  .google-btn{min-height:46px;padding:12px 14px;font-size:14px;}
+  .guest-btn{margin-top:10px;}
+  .login-disclaimer{font-size:10.5px;margin-top:14px;}
+}
+
+@media(max-height:680px){
+  #loginScreen{justify-content:flex-start;}
+  .login-card{padding-top:24px;padding-bottom:22px;}
+  .login-logo{margin-bottom:14px;}
+  .login-sub{margin-bottom:18px;}
+  .login-features{margin-bottom:20px;}
 }
 
 /* User avatar in sidebar */
@@ -1223,7 +1262,7 @@ function signInWithGoogle() {
   errEl.style.display = 'none';
 
   if (!GOOGLE_CLIENT_ID) {
-    showLoginError('Google login is not configured yet. You can continue as a guest for now.');
+    showLoginError('Google sign-in needs a free OAuth Client ID in GOOGLE_CLIENT_ID. Guest login is ready now.', 'info');
     resetAuthButtons();
     return;
   }
@@ -1356,9 +1395,10 @@ async function continueAsGuest() {
   }
 }
 
-function showLoginError(msg) {
+function showLoginError(msg, type = 'error') {
   const el = document.getElementById('loginError');
   el.textContent = '⚠️ ' + msg;
+  el.className = 'login-error' + (type === 'info' ? ' info' : '');
   el.style.display = 'block';
 }
 
