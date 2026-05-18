@@ -14,7 +14,6 @@ from google.oauth2 import id_token
 from backend.database import get_connection
 
 # ── Config ────────────────────────────────────────────────────────────────────
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 JWT_SECRET       = os.getenv("JWT_SECRET", "nexora-dev-secret-change-in-prod")
 JWT_ALGORITHM    = "HS256"
 JWT_EXPIRE_DAYS  = 30
@@ -76,7 +75,8 @@ def verify_google_token(id_token_str: str) -> dict[str, Any]:
             "sub": f"google_mock_{email}"
         }
 
-    if not GOOGLE_CLIENT_ID:
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+    if not client_id:
         raise HTTPException(
             status_code=500,
             detail="GOOGLE_CLIENT_ID is not configured on the server.",
@@ -85,7 +85,7 @@ def verify_google_token(id_token_str: str) -> dict[str, Any]:
         info = id_token.verify_oauth2_token(
             id_token_str,
             google_requests.Request(),
-            GOOGLE_CLIENT_ID,
+            client_id,
             clock_skew_in_seconds=120,
         )
         return info
