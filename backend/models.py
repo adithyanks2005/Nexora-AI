@@ -68,3 +68,9 @@ class SymptomRequest(BaseModel):
 # ── Auth models ───────────────────────────────────────────────────────────────
 class GoogleAuthRequest(BaseModel):
     id_token: str
+    workplace_id: str = "default"
+
+
+class SupabaseAuthRequest(BaseModel):
+    access_token: str
+    workplace_id: str = "default"

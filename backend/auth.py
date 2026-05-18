@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -11,7 +10,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
-from backend.database import get_connection
+from backend.database import get_user, normalize_workplace_id, upsert_user as db_upsert_user
 
 # ── Config ────────────────────────────────────────────────────────────────────
 JWT_SECRET       = os.getenv("JWT_SECRET", "nexora-dev-secret-change-in-prod")
@@ -22,10 +21,12 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 # ── JWT helpers ───────────────────────────────────────────────────────────────
-def create_jwt(user_id: str, email: str) -> str:
+def create_jwt(user_id: str, email: str, workplace_id: str = "default") -> str:
+    workplace_id = normalize_workplace_id(workplace_id)
     payload = {
         "sub": user_id,
         "email": email,
+        "workplace_id": workplace_id,
         "exp": datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRE_DAYS),
         "iat": datetime.now(timezone.utc),
     }
@@ -53,14 +54,14 @@ def get_current_user(
         )
     payload = decode_jwt(credentials.credentials)
     user_id = payload.get("sub")
+    workplace_id = normalize_workplace_id(payload.get("workplace_id"))
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token payload.")
 
-    with get_connection() as conn:
-        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-    if not row:
+    user = get_user(user_id, workplace_id)
+    if not user:
         raise HTTPException(status_code=401, detail="User not found. Please sign in again.")
-    return dict(row)
+    return user
 
 
 # ── Google token verification ─────────────────────────────────────────────────
@@ -93,25 +94,48 @@ def verify_google_token(id_token_str: str) -> dict[str, Any]:
         raise HTTPException(status_code=401, detail=f"Invalid Google token: {e}")
 
 
+# ── Supabase token verification (placeholder) ────────────────────────────────
+def verify_supabase_token(access_token: str) -> dict[str, Any]:
+    """
+    TODO: Implement Supabase OAuth token verification.
+
+    This function will:
+    1. Validate the JWT token from Supabase
+    2. Retrieve user info from Supabase Auth API
+    3. Return user data (email, name, picture, sub)
+
+    Placeholder implementation returns mock data for testing.
+    """
+    if access_token.startswith("mock_supabase_"):
+        email = access_token.replace("mock_supabase_", "")
+        name = email.split("@")[0].replace(".", " ").title()
+        return {
+            "email": email,
+            "name": name,
+            "picture": f"https://api.dicebear.com/7.x/initials/svg?seed={name}",
+            "sub": f"supabase_{email}"
+        }
+
+    # TODO: Implement actual Supabase OAuth verification
+    supabase_url = os.getenv("SUPABASE_URL", "")
+    supabase_anon_key = os.getenv("SUPABASE_ANON_KEY", "")
+
+    if not supabase_url or not supabase_anon_key:
+        raise HTTPException(
+            status_code=500,
+            detail="Supabase configuration is not set up on the server.",
+        )
+
+    # Placeholder: Raise error until implementation is complete
+    raise HTTPException(
+        status_code=501,
+        detail="Supabase OAuth verification is not yet implemented. Please use Google OAuth for now.",
+    )
+
+
 # ── Upsert user ───────────────────────────────────────────────────────────────
-def upsert_user(google_info: dict[str, Any]) -> dict[str, Any]:
+def upsert_user(google_info: dict[str, Any], workplace_id: str = "default") -> dict[str, Any]:
     email   = google_info["email"]
     name    = google_info.get("name", "")
     picture = google_info.get("picture", "")
-
-    with get_connection() as conn:
-        row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-        if row:
-            # Update name/picture in case they changed
-            conn.execute(
-                "UPDATE users SET name = ?, picture = ? WHERE email = ?",
-                (name, picture, email),
-            )
-            return dict(row)
-        else:
-            user_id = str(uuid.uuid4())
-            conn.execute(
-                "INSERT INTO users (id, email, name, picture) VALUES (?, ?, ?, ?)",
-                (user_id, email, name, picture),
-            )
-            return {"id": user_id, "email": email, "name": name, "picture": picture}
+    return db_upsert_user(email, name, picture, workplace_id)

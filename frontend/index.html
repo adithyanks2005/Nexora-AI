@@ -1243,10 +1243,24 @@ let currentUser = null;
 function getToken() { return localStorage.getItem('nexora_jwt'); }
 function setToken(t) { localStorage.setItem('nexora_jwt', t); }
 function clearToken() { localStorage.removeItem('nexora_jwt'); }
+function getWorkplaceId() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get('workplace_id') || params.get('workplace');
+  if (fromUrl) localStorage.setItem('nexora_workplace_id', fromUrl);
+  return localStorage.getItem('nexora_workplace_id') || 'default';
+}
+
+function normalizeLocalOAuthOrigin() {
+  if (window.location.hostname !== '0.0.0.0') return false;
+  const url = new URL(window.location.href);
+  url.hostname = 'localhost';
+  window.location.replace(url.toString());
+  return true;
+}
 
 async function authFetch(path, method = 'GET', body = null) {
   const token = getToken();
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  const opts = { method, headers: { 'Content-Type': 'application/json', 'X-Workplace-ID': getWorkplaceId() } };
   if (token) opts.headers['Authorization'] = 'Bearer ' + token;
   if (body) opts.body = JSON.stringify(body);
   let res;
@@ -1305,12 +1319,12 @@ function openGoogleOAuthPopup() {
     resetAuthButtons();
     return;
   }
-  const origin = window.location.origin !== 'null' ? window.location.origin : window.location.href;
   if (window.location.protocol === 'file:') {
     showLoginError('Google Login does not support opening directly from a file. Please use the run.bat script to start the local server, and access it via http://localhost:8000');
     resetAuthButtons();
     return;
   }
+  if (normalizeLocalOAuthOrigin()) return;
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: window.location.origin,
@@ -1344,7 +1358,10 @@ async function handleGoogleCredential(response) {
   const errEl = document.getElementById('loginError');
   errEl.style.display = 'none';
   try {
-    const data = await authFetch('/api/auth/google', 'POST', { id_token: response.credential });
+    const data = await authFetch('/api/auth/google', 'POST', {
+      id_token: response.credential,
+      workplace_id: getWorkplaceId(),
+    });
     if (!data) { showLoginError('Authentication failed. Please try again.'); resetAuthButtons(); return; }
     setToken(data.token);
     currentUser = data.user;
@@ -1833,7 +1850,7 @@ async function deleteRecord(id) {
 
 // Init — check auth first, then load data
 document.querySelector('.app').style.display = 'none';
-checkAuth();
+if (!normalizeLocalOAuthOrigin()) checkAuth();
 
 // ── THEME TOGGLE ──
 const themeToggle = document.getElementById('themeToggle');

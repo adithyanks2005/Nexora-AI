@@ -31,12 +31,32 @@ from backend.auth import (
     get_current_user,
     upsert_user,
     verify_google_token,
+    verify_supabase_token,
 )
 from backend.calculators import calc_bmi, calc_calories, calc_water, calc_ideal_weight
-from backend.database import get_connection, init_db
+from backend.database import (
+    add_chat_message,
+    clear_done_reminders as db_clear_done_reminders,
+    create_chat_session,
+    create_health_record,
+    create_reminder,
+    create_user,
+    delete_chat_session,
+    delete_health_record,
+    delete_reminder as db_delete_reminder,
+    get_chat_session,
+    init_db,
+    list_chat_messages,
+    list_chat_sessions,
+    list_health_records,
+    list_reminders,
+    normalize_workplace_id,
+    toggle_reminder_done,
+    touch_chat_session,
+)
 from backend.models import (
     BMIRequest, CalorieRequest, ChatRequest, GoogleAuthRequest, HealthRecordIn,
-    IdealWeightRequest, ReminderIn, SessionCreate, SymptomRequest, WaterRequest,
+    IdealWeightRequest, ReminderIn, SessionCreate, SupabaseAuthRequest, SymptomRequest, WaterRequest,
 )
 
 
@@ -90,13 +110,34 @@ if STATIC_DIR.exists():
 @app.post("/api/auth/google")
 def google_login(body: GoogleAuthRequest) -> dict[str, Any]:
     """Verify a Google ID token and return a Nexora JWT."""
+    workplace_id = normalize_workplace_id(body.workplace_id)
     google_info = verify_google_token(body.id_token)
-    user = upsert_user(google_info)
-    token = create_jwt(user["id"], user["email"])
+    user = upsert_user(google_info, workplace_id)
+    token = create_jwt(user["id"], user["email"], user["workplace_id"])
     return {
         "token": token,
         "user": {
             "id":      user["id"],
+            "workplace_id": user["workplace_id"],
+            "email":   user["email"],
+            "name":    user["name"],
+            "picture": user["picture"],
+        },
+    }
+
+
+@app.post("/api/auth/supabase")
+def supabase_login(body: SupabaseAuthRequest) -> dict[str, Any]:
+    """Verify a Supabase OAuth token and return a Nexora JWT."""
+    workplace_id = normalize_workplace_id(body.workplace_id)
+    supabase_info = verify_supabase_token(body.access_token)
+    user = upsert_user(supabase_info, workplace_id)
+    token = create_jwt(user["id"], user["email"], user["workplace_id"])
+    return {
+        "token": token,
+        "user": {
+            "id":      user["id"],
+            "workplace_id": user["workplace_id"],
             "email":   user["email"],
             "name":    user["name"],
             "picture": user["picture"],
@@ -105,17 +146,15 @@ def google_login(body: GoogleAuthRequest) -> dict[str, Any]:
 
 
 @app.post("/api/auth/guest")
-def guest_login() -> dict[str, Any]:
+def guest_login(request: Request) -> dict[str, Any]:
     """Create a local guest account when Google OAuth is not configured."""
+    workplace_id = normalize_workplace_id(request.headers.get("X-Workplace-ID"))
     user_id = str(uuid.uuid4())
     email = f"guest-{user_id}@nexora.local"
-    user = {"id": user_id, "email": email, "name": "Guest", "picture": ""}
-    with get_connection() as conn:
-        conn.execute(
-            "INSERT INTO users (id, email, name, picture) VALUES (?, ?, ?, ?)",
-            (user["id"], user["email"], user["name"], user["picture"]),
-        )
-    token = create_jwt(user["id"], user["email"])
+    user = create_user(
+        {"id": user_id, "workplace_id": workplace_id, "email": email, "name": "Guest", "picture": ""}
+    )
+    token = create_jwt(user["id"], user["email"], user["workplace_id"])
     return {"token": token, "user": user}
 
 
@@ -123,6 +162,7 @@ def guest_login() -> dict[str, Any]:
 def me(current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
     return {
         "id":      current_user["id"],
+        "workplace_id": current_user["workplace_id"],
         "email":   current_user["email"],
         "name":    current_user["name"],
         "picture": current_user["picture"],
@@ -132,12 +172,7 @@ def me(current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
 # ── Chat sessions ─────────────────────────────────────────────────────────────
 @app.get("/api/sessions")
 def list_sessions(current_user: dict = Depends(get_current_user)) -> list[dict[str, Any]]:
-    with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT * FROM chat_sessions WHERE user_id = ? ORDER BY updated_at DESC",
-            (current_user["id"],),
-        ).fetchall()
-    return [dict(r) for r in rows]
+    return list_chat_sessions(current_user["id"], current_user["workplace_id"])
 
 
 @app.post("/api/sessions", status_code=201)
@@ -146,12 +181,7 @@ def create_session(
     current_user: dict = Depends(get_current_user),
 ) -> dict[str, Any]:
     sid = str(uuid.uuid4())
-    with get_connection() as conn:
-        conn.execute(
-            "INSERT INTO chat_sessions (id, user_id, title) VALUES (?, ?, ?)",
-            (sid, current_user["id"], body.title),
-        )
-    return {"id": sid, "title": body.title}
+    return create_chat_session(sid, current_user["id"], current_user["workplace_id"], body.title)
 
 
 @app.delete("/api/sessions/{sid}")
@@ -159,11 +189,7 @@ def delete_session(
     sid: str,
     current_user: dict = Depends(get_current_user),
 ) -> dict[str, str]:
-    with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM chat_sessions WHERE id = ? AND user_id = ?",
-            (sid, current_user["id"]),
-        )
+    delete_chat_session(sid, current_user["id"], current_user["workplace_id"])
     return {"message": "deleted"}
 
 
@@ -172,19 +198,10 @@ def get_messages(
     sid: str,
     current_user: dict = Depends(get_current_user),
 ) -> list[dict[str, Any]]:
-    # Verify session belongs to user
-    with get_connection() as conn:
-        session = conn.execute(
-            "SELECT id FROM chat_sessions WHERE id = ? AND user_id = ?",
-            (sid, current_user["id"]),
-        ).fetchone()
-        if not session:
-            raise HTTPException(status_code=404, detail="Session not found.")
-        rows = conn.execute(
-            "SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at",
-            (sid,),
-        ).fetchall()
-    return [dict(r) for r in rows]
+    session = get_chat_session(sid, current_user["id"], current_user["workplace_id"])
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found.")
+    return list_chat_messages(sid, current_user["workplace_id"])
 
 
 # ── Chat ──────────────────────────────────────────────────────────────────────
@@ -194,37 +211,24 @@ async def chat(
     current_user: dict = Depends(get_current_user),
 ) -> dict[str, str]:
     uid = current_user["id"]
-    with get_connection() as conn:
-        row = conn.execute(
-            "SELECT id FROM chat_sessions WHERE id = ? AND user_id = ?",
-            (req.session_id, uid),
-        ).fetchone()
-        if not row:
-            conn.execute(
-                "INSERT INTO chat_sessions (id, user_id, title) VALUES (?, ?, ?)",
-                (req.session_id, uid,
-                 req.messages[0].content[:40] if req.messages else "New Chat"),
-            )
+    workplace_id = current_user["workplace_id"]
+    row = get_chat_session(req.session_id, uid, workplace_id)
+    if not row:
+        create_chat_session(
+            req.session_id,
+            uid,
+            workplace_id,
+            req.messages[0].content[:40] if req.messages else "New Chat",
+        )
 
     messages = [m.model_dump() for m in req.messages]
     reply    = await call_ai(messages)
 
-    with get_connection() as conn:
-        last_user = next((m for m in reversed(req.messages) if m.role == "user"), None)
-        if last_user:
-            conn.execute(
-                "INSERT INTO chat_messages (session_id, role, content) VALUES (?,?,?)",
-                (req.session_id, "user", last_user.content),
-            )
-        conn.execute(
-            "INSERT INTO chat_messages (session_id, role, content) VALUES (?,?,?)",
-            (req.session_id, "assistant", reply),
-        )
-        conn.execute(
-            "UPDATE chat_sessions SET updated_at = datetime('now'), title = CASE "
-            "WHEN title = 'New Chat' THEN ? ELSE title END WHERE id = ?",
-            (last_user.content[:40] if last_user else "Chat", req.session_id),
-        )
+    last_user = next((m for m in reversed(req.messages) if m.role == "user"), None)
+    if last_user:
+        add_chat_message(req.session_id, workplace_id, "user", last_user.content)
+    add_chat_message(req.session_id, workplace_id, "assistant", reply)
+    touch_chat_session(req.session_id, uid, workplace_id, last_user.content[:40] if last_user else "Chat")
 
     return {"reply": reply, "session_id": req.session_id}
 
@@ -271,12 +275,7 @@ def ideal_weight(req: IdealWeightRequest) -> dict[str, Any]:
 # ── Reminders ─────────────────────────────────────────────────────────────────
 @app.get("/api/reminders")
 def get_reminders(current_user: dict = Depends(get_current_user)) -> list[dict[str, Any]]:
-    with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT * FROM reminders WHERE user_id = ? ORDER BY created_at DESC",
-            (current_user["id"],),
-        ).fetchall()
-    return [dict(r) for r in rows]
+    return list_reminders(current_user["id"], current_user["workplace_id"])
 
 
 @app.post("/api/reminders", status_code=201)
@@ -284,15 +283,7 @@ def add_reminder(
     rem: ReminderIn,
     current_user: dict = Depends(get_current_user),
 ) -> dict[str, Any]:
-    with get_connection() as conn:
-        cur = conn.execute(
-            "INSERT INTO reminders (user_id,title,time,repeat,notes,icon,color) VALUES (?,?,?,?,?,?,?)",
-            (current_user["id"], rem.title, rem.time, rem.repeat, rem.notes, rem.icon, rem.color),
-        )
-        row = conn.execute(
-            "SELECT * FROM reminders WHERE id = ?", (cur.lastrowid,)
-        ).fetchone()
-    return dict(row)
+    return create_reminder(current_user["id"], current_user["workplace_id"], rem.model_dump())
 
 
 @app.patch("/api/reminders/{rid}/toggle")
@@ -300,15 +291,10 @@ def toggle_reminder(
     rid: int,
     current_user: dict = Depends(get_current_user),
 ) -> dict[str, Any]:
-    with get_connection() as conn:
-        conn.execute(
-            "UPDATE reminders SET done = NOT done WHERE id = ? AND user_id = ?",
-            (rid, current_user["id"]),
-        )
-        row = conn.execute("SELECT * FROM reminders WHERE id = ?", (rid,)).fetchone()
+    row = toggle_reminder_done(rid, current_user["id"], current_user["workplace_id"])
     if not row:
         raise HTTPException(status_code=404, detail="Reminder not found")
-    return dict(row)
+    return row
 
 
 @app.delete("/api/reminders/{rid}")
@@ -316,33 +302,20 @@ def delete_reminder(
     rid: int,
     current_user: dict = Depends(get_current_user),
 ) -> dict[str, str]:
-    with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM reminders WHERE id = ? AND user_id = ?",
-            (rid, current_user["id"]),
-        )
+    db_delete_reminder(rid, current_user["id"], current_user["workplace_id"])
     return {"message": "deleted"}
 
 
 @app.delete("/api/reminders/done/clear")
 def clear_done_reminders(current_user: dict = Depends(get_current_user)) -> dict[str, str]:
-    with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM reminders WHERE done = 1 AND user_id = ?",
-            (current_user["id"],),
-        )
+    db_clear_done_reminders(current_user["id"], current_user["workplace_id"])
     return {"message": "cleared"}
 
 
 # ── Health records ────────────────────────────────────────────────────────────
 @app.get("/api/records")
 def get_records(current_user: dict = Depends(get_current_user)) -> list[dict[str, Any]]:
-    with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT * FROM health_records WHERE user_id = ? ORDER BY recorded_at DESC LIMIT 100",
-            (current_user["id"],),
-        ).fetchall()
-    return [dict(r) for r in rows]
+    return list_health_records(current_user["id"], current_user["workplace_id"])
 
 
 @app.post("/api/records", status_code=201)
@@ -350,15 +323,7 @@ def add_record(
     rec: HealthRecordIn,
     current_user: dict = Depends(get_current_user),
 ) -> dict[str, Any]:
-    with get_connection() as conn:
-        cur = conn.execute(
-            "INSERT INTO health_records (user_id, type, data, notes) VALUES (?,?,?,?)",
-            (current_user["id"], rec.type, rec.data, rec.notes),
-        )
-        row = conn.execute(
-            "SELECT * FROM health_records WHERE id = ?", (cur.lastrowid,)
-        ).fetchone()
-    return dict(row)
+    return create_health_record(current_user["id"], current_user["workplace_id"], rec.model_dump())
 
 
 @app.delete("/api/records/{rid}")
@@ -366,11 +331,7 @@ def delete_record(
     rid: int,
     current_user: dict = Depends(get_current_user),
 ) -> dict[str, str]:
-    with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM health_records WHERE id = ? AND user_id = ?",
-            (rid, current_user["id"]),
-        )
+    delete_health_record(rid, current_user["id"], current_user["workplace_id"])
     return {"message": "deleted"}
 
 

@@ -21,7 +21,7 @@ An advanced AI-powered healthcare assistant with chat, symptom analysis, health 
 
 - **Backend**: FastAPI + Uvicorn
 - **AI**: Groq (`llama-3.1-8b-instant` by default)
-- **Database**: SQLite for chat history, reminders, and health records
+- **Database**: Supabase for chat history, reminders, and health records, scoped by workplace
 - **Frontend**: Vanilla HTML, CSS, and JavaScript
 - **Tests**: Pytest
 - **Deployment**: Render Blueprint via `render.yaml`
@@ -47,6 +47,9 @@ Edit `.env` and add your key:
 ```env
 GROQ_API_KEY=your_groq_api_key_here
 GROQ_MODEL=llama-3.1-8b-instant
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+DEFAULT_WORKPLACE_ID=default
 ```
 
 ### 3. Run
@@ -90,7 +93,7 @@ nexora-ai/
 │   ├── main.py          # FastAPI routes
 │   ├── ai.py            # Groq AI integration
 │   ├── calculators.py   # Health calculators
-│   ├── database.py      # SQLite setup
+│   ├── database.py      # Supabase data access
 │   └── models.py        # Pydantic models
 ├── frontend/
 │   ├── index.html       # Single-page app
@@ -102,7 +105,8 @@ nexora-ai/
 │       └── js/app.js
 ├── tests/
 │   └── test_api.py
-├── data/
+├── docs/
+│   └── supabase_schema.sql
 ├── .env.example
 ├── render.yaml
 ├── requirements.txt
@@ -148,7 +152,14 @@ Set these environment variables in Render:
 ```env
 GROQ_API_KEY=your_groq_api_key_here
 GROQ_MODEL=llama-3.1-8b-instant
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+DEFAULT_WORKPLACE_ID=default
 ```
+
+Before deploying, run [docs/supabase_schema.sql](docs/supabase_schema.sql) in the Supabase SQL editor.
+Every saved user row and saved health/chat row includes `workplace_id`; the frontend defaults to `default`,
+or you can open the app with `?workplace_id=your-workplace` before signing in.
 
 ## Running Tests
 

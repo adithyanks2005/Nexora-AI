@@ -30,8 +30,8 @@ nexora-ai/
 │   ├── test_api.py              # API tests
 │   └── __init__.py
 │
-├── data/                         # Data storage (generated)
-│   └── app.db                   # SQLite database
+├── docs/                         # Documentation and setup SQL
+│   └── supabase_schema.sql      # Supabase table schema
 │
 ├── Configuration Files
 │   ├── .env                     # Environment variables (local)
@@ -59,7 +59,7 @@ nexora-ai/
 |------|---------|
 | `backend/main.py` | FastAPI application root, route definitions |
 | `backend/ai.py` | Groq API integration, LLM calls |
-| `backend/database.py` | SQLite database initialization and queries |
+| `backend/database.py` | Supabase data access and local fallback initialization |
 | `frontend/index.html` | Single-page application entry point |
 | `frontend/static/js/app.js` | Main frontend logic |
 | `.env.example` | Template for environment configuration |
@@ -91,6 +91,9 @@ pytest
 Required in `.env`:
 - `GROQ_API_KEY` - API key from Groq
 - `GROQ_MODEL` - Model ID (default: `llama-3.1-8b-instant`)
+- `SUPABASE_URL` - Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key for backend-only database access
+- `DEFAULT_WORKPLACE_ID` - Default tenant/workplace id (default: `default`)
 
 ## Deployment
 

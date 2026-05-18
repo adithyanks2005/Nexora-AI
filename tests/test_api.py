@@ -16,6 +16,13 @@ init_db()
 client = TestClient(app)
 
 
+@pytest.fixture()
+def auth_headers() -> dict[str, str]:
+    r = client.post("/api/auth/guest", headers={"X-Workplace-ID": "test"})
+    assert r.status_code == 200
+    return {"Authorization": f"Bearer {r.json()['token']}"}
+
+
 # ── Health check ──────────────────────────────────────────────────────────────
 def test_health_endpoint():
     r = client.get("/api/health")
@@ -24,23 +31,23 @@ def test_health_endpoint():
 
 
 # ── Sessions ──────────────────────────────────────────────────────────────────
-def test_create_and_list_session():
-    r = client.post("/api/sessions", json={"title": "Test Session"})
+def test_create_and_list_session(auth_headers):
+    r = client.post("/api/sessions", json={"title": "Test Session"}, headers=auth_headers)
     assert r.status_code == 201
     sid = r.json()["id"]
 
-    r2 = client.get("/api/sessions")
+    r2 = client.get("/api/sessions", headers=auth_headers)
     assert r2.status_code == 200
     ids = [s["id"] for s in r2.json()]
     assert sid in ids
 
-    client.delete(f"/api/sessions/{sid}")
+    client.delete(f"/api/sessions/{sid}", headers=auth_headers)
 
 
-def test_delete_session():
-    r = client.post("/api/sessions", json={"title": "Delete Me"})
+def test_delete_session(auth_headers):
+    r = client.post("/api/sessions", json={"title": "Delete Me"}, headers=auth_headers)
     sid = r.json()["id"]
-    r2 = client.delete(f"/api/sessions/{sid}")
+    r2 = client.delete(f"/api/sessions/{sid}", headers=auth_headers)
     assert r2.status_code == 200
 
 
@@ -114,78 +121,82 @@ def test_ideal_weight_female():
 
 
 # ── Reminders ─────────────────────────────────────────────────────────────────
-def test_reminder_crud():
+def test_reminder_crud(auth_headers):
     # Create
     r = client.post("/api/reminders", json={
         "title": "Test Vitamin", "time": "09:00",
         "repeat": "Daily", "notes": "With food", "icon": "💊", "color": "#E6F1FB"
-    })
+    }, headers=auth_headers)
     assert r.status_code == 201
     rid = r.json()["id"]
 
     # List
-    r2 = client.get("/api/reminders")
+    r2 = client.get("/api/reminders", headers=auth_headers)
     assert any(rem["id"] == rid for rem in r2.json())
 
     # Toggle
-    r3 = client.patch(f"/api/reminders/{rid}/toggle")
+    r3 = client.patch(f"/api/reminders/{rid}/toggle", headers=auth_headers)
     assert r3.status_code == 200
     assert r3.json()["done"] == 1
 
     # Toggle back
-    r4 = client.patch(f"/api/reminders/{rid}/toggle")
+    r4 = client.patch(f"/api/reminders/{rid}/toggle", headers=auth_headers)
     assert r4.json()["done"] == 0
 
     # Delete
-    r5 = client.delete(f"/api/reminders/{rid}")
+    r5 = client.delete(f"/api/reminders/{rid}", headers=auth_headers)
     assert r5.status_code == 200
 
 
-def test_reminder_not_found():
-    r = client.patch("/api/reminders/999999/toggle")
+def test_reminder_not_found(auth_headers):
+    r = client.patch("/api/reminders/999999/toggle", headers=auth_headers)
     assert r.status_code == 404
 
 
-def test_clear_done_reminders():
+def test_clear_done_reminders(auth_headers):
     # Add and mark done
     r = client.post("/api/reminders", json={
         "title": "Done Reminder", "time": "10:00",
         "repeat": "Once", "notes": "", "icon": "✅", "color": "#E1F5EE"
-    })
+    }, headers=auth_headers)
     rid = r.json()["id"]
-    client.patch(f"/api/reminders/{rid}/toggle")
+    client.patch(f"/api/reminders/{rid}/toggle", headers=auth_headers)
 
-    r2 = client.delete("/api/reminders/done/clear")
+    r2 = client.delete("/api/reminders/done/clear", headers=auth_headers)
     assert r2.status_code == 200
 
-    remaining = client.get("/api/reminders").json()
+    remaining = client.get("/api/reminders", headers=auth_headers).json()
     assert all(rem["done"] == 0 for rem in remaining)
 
 
 # ── Health Records ────────────────────────────────────────────────────────────
-def test_health_record_crud():
+def test_health_record_crud(auth_headers):
     # Create
     r = client.post("/api/records", json={
         "type": "Blood Pressure", "data": "120/80 mmHg", "notes": "Morning reading"
-    })
+    }, headers=auth_headers)
     assert r.status_code == 201
     rid = r.json()["id"]
 
     # List
-    r2 = client.get("/api/records")
+    r2 = client.get("/api/records", headers=auth_headers)
     assert any(rec["id"] == rid for rec in r2.json())
 
     # Delete
-    r3 = client.delete(f"/api/records/{rid}")
+    r3 = client.delete(f"/api/records/{rid}", headers=auth_headers)
     assert r3.status_code == 200
 
 
-def test_health_record_types():
+def test_health_record_types(auth_headers):
     types = ["Weight", "Heart Rate", "Blood Sugar", "Sleep", "Mood"]
     ids = []
     for t in types:
-        r = client.post("/api/records", json={"type": t, "data": "test value", "notes": ""})
+        r = client.post(
+            "/api/records",
+            json={"type": t, "data": "test value", "notes": ""},
+            headers=auth_headers,
+        )
         assert r.status_code == 201
         ids.append(r.json()["id"])
     for rid in ids:
-        client.delete(f"/api/records/{rid}")
+        client.delete(f"/api/records/{rid}", headers=auth_headers)
