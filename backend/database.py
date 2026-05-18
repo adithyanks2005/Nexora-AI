@@ -106,3 +106,15 @@ def init_db() -> None:
                 recorded_at TEXT NOT NULL DEFAULT (datetime('now'))
             );
         """)
+        
+        # Migration: Ensure user_id column exists in tables (for backward compatibility with old local DBs)
+        for table in ["chat_sessions", "reminders", "health_records"]:
+            try:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN user_id TEXT NOT NULL DEFAULT ''")
+            except sqlite3.OperationalError as e:
+                # If column already exists, SQLite throws operational error
+                if "duplicate column name" in str(e).lower():
+                    continue
+                else:
+                    print(f"Migration warning for {table}: {e}")
+
