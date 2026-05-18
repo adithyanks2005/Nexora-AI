@@ -567,7 +567,16 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
   display:flex;align-items:center;justify-content:center;
   font-size:32px;margin:0 auto 20px;
 }
-.login-title{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;margin-bottom:8px;}
+.login-title{
+  font-family:'Syne',sans-serif;
+  font-weight:800;
+  font-size:clamp(28px,7vw,38px);
+  line-height:1;
+  letter-spacing:0;
+  margin-bottom:12px;
+  color:var(--text);
+  text-shadow:none;
+}
 .login-title span{color:var(--accent);}
 .login-sub{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:32px;}
 .login-features{
@@ -589,12 +598,13 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
   background:var(--surface2);
   color:var(--text);font-family:inherit;font-size:15px;font-weight:600;
   cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;
+  line-height:1.2;min-height:48px;
   transition:all 0.18s;
 }
 .google-btn:hover{background:rgba(79,156,249,0.08);border-color:rgba(79,156,249,0.4);}
 .google-btn:disabled{opacity:0.5;cursor:not-allowed;}
 .google-btn svg{width:20px;height:20px;flex-shrink:0;}
-.guest-btn{margin-top:10px;border-color:rgba(67,217,140,0.35);color:var(--success);}
+.guest-btn{margin-top:12px;border-color:rgba(67,217,140,0.35);color:var(--success);}
 .guest-btn:hover{background:rgba(67,217,140,0.08);border-color:rgba(67,217,140,0.55);}
 .login-disclaimer{font-size:11px;color:var(--text3);margin-top:16px;line-height:1.5;}
 .login-error{
@@ -654,7 +664,7 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
       </svg>
       Continue with Google
     </button>
-    <button class="google-btn guest-btn" id="guestSignInBtn" onclick="continueAsGuest()" style="display:none;">Continue as Guest</button>
+    <button class="google-btn guest-btn" id="guestSignInBtn" onclick="continueAsGuest()">Continue as Guest</button>
     <div class="login-error" id="loginError"></div>
     <p class="login-disclaimer">By signing in you agree to use this app for personal wellness only.<br>Nexora AI is not a substitute for professional medical advice.</p>
   </div>
@@ -1213,12 +1223,14 @@ function signInWithGoogle() {
   errEl.style.display = 'none';
 
   if (!GOOGLE_CLIENT_ID) {
-    configureLoginOptions();
+    showLoginError('Google login is not configured yet. You can continue as a guest for now.');
+    resetAuthButtons();
     return;
   }
 
   if (!window.google || !window.google.accounts) {
     showLoginError('Google Sign-In failed to load. Check your internet connection.');
+    resetAuthButtons();
     return;
   }
 
@@ -1247,7 +1259,7 @@ function signInWithGoogle() {
 function openGoogleOAuthPopup() {
   if (!GOOGLE_CLIENT_ID) {
     showLoginError('Google login is not configured. Add GOOGLE_CLIENT_ID in Vercel Project Settings > Environment Variables, then redeploy.');
-    resetSignInBtn();
+    resetAuthButtons();
     return;
   }
   const params = new URLSearchParams({
@@ -1265,7 +1277,7 @@ function openGoogleOAuthPopup() {
   );
   const timer = setInterval(async () => {
     try {
-      if (!popup || popup.closed) { clearInterval(timer); resetSignInBtn(); return; }
+      if (!popup || popup.closed) { clearInterval(timer); resetAuthButtons(); return; }
       const url = popup.location.href;
       if (url.startsWith(window.location.origin)) {
         clearInterval(timer);
@@ -1273,7 +1285,7 @@ function openGoogleOAuthPopup() {
         const hash = new URLSearchParams(url.split('#')[1] || '');
         const idToken = hash.get('id_token');
         if (idToken) await handleGoogleCredential({ credential: idToken });
-        else { showLoginError('Sign-in cancelled or failed.'); resetSignInBtn(); }
+        else { showLoginError('Sign-in cancelled or failed.'); resetAuthButtons(); }
       }
     } catch { /* cross-origin — still loading */ }
   }, 300);
@@ -1284,13 +1296,13 @@ async function handleGoogleCredential(response) {
   errEl.style.display = 'none';
   try {
     const data = await authFetch('/api/auth/google', 'POST', { id_token: response.credential });
-    if (!data) { showLoginError('Authentication failed. Please try again.'); resetSignInBtn(); return; }
+    if (!data) { showLoginError('Authentication failed. Please try again.'); resetAuthButtons(); return; }
     setToken(data.token);
     currentUser = data.user;
     showApp();
   } catch (e) {
     showLoginError(e.message || 'Sign-in failed. Please try again.');
-    resetSignInBtn();
+    resetAuthButtons();
   }
 }
 
@@ -1305,22 +1317,31 @@ function resetSignInBtn() {
   </svg> Continue with Google`;
 }
 
+function resetGuestSignInBtn() {
+  const btn = document.getElementById('guestSignInBtn');
+  btn.disabled = false;
+  btn.textContent = 'Continue as Guest';
+}
+
+function resetAuthButtons() {
+  resetSignInBtn();
+  resetGuestSignInBtn();
+}
+
 function configureLoginOptions() {
   const googleBtn = document.getElementById('googleSignInBtn');
   const guestBtn = document.getElementById('guestSignInBtn');
   const errEl = document.getElementById('loginError');
-  if (!GOOGLE_CLIENT_ID) {
-    googleBtn.style.display = 'none';
-    guestBtn.style.display = 'flex';
-    errEl.style.display = 'none';
-  } else {
-    googleBtn.style.display = 'flex';
-    guestBtn.style.display = 'none';
-  }
+  googleBtn.style.display = 'flex';
+  guestBtn.style.display = 'flex';
+  errEl.style.display = 'none';
+  resetAuthButtons();
 }
 
 async function continueAsGuest() {
   const btn = document.getElementById('guestSignInBtn');
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
   btn.disabled = true;
   btn.textContent = 'Starting guest session...';
   try {
@@ -1331,8 +1352,7 @@ async function continueAsGuest() {
     showApp();
   } catch (e) {
     showLoginError(e.message || 'Could not start guest session.');
-    btn.disabled = false;
-    btn.textContent = 'Continue as Guest';
+    resetAuthButtons();
   }
 }
 
