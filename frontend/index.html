@@ -607,6 +607,24 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
 .google-btn:hover{background:rgba(79,156,249,0.08);border-color:rgba(79,156,249,0.4);}
 .google-btn:disabled{opacity:0.5;cursor:not-allowed;}
 .google-btn svg{width:20px;height:20px;flex-shrink:0;}
+#googleBtnOverlay{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.01;
+  z-index: 10;
+  overflow: hidden;
+  pointer-events: none;
+}
+#googleBtnOverlay iframe{
+  width: 100% !important;
+  height: 100% !important;
+  transform: scale(1.6);
+  transform-origin: center;
+  cursor: pointer;
+}
 .guest-btn{margin-top:12px;border-color:rgba(67,217,140,0.35);color:var(--success);}
 .guest-btn:hover{background:rgba(67,217,140,0.08);border-color:rgba(67,217,140,0.55);}
 .login-disclaimer{font-size:11px;color:var(--text3);margin-top:16px;line-height:1.5;}
@@ -694,7 +712,8 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
       <div class="login-feat"><div class="login-feat-icon">📋</div><span>Health records stored securely</span></div>
       <div class="login-feat"><div class="login-feat-icon">🔒</div><span>Your data is private and never shared</span></div>
     </div>
-    <button class="google-btn" id="googleSignInBtn" onclick="signInWithGoogle()">
+    <div style="position: relative; width: 100%;">
+      <button class="google-btn" id="googleSignInBtn" onclick="signInWithGoogle()">
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -703,6 +722,8 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
       </svg>
       Continue with Google
     </button>
+      <div id="googleBtnOverlay"></div>
+    </div>
     <button class="google-btn guest-btn" id="guestSignInBtn" onclick="continueAsGuest()">Continue as Guest</button>
     <div class="login-error" id="loginError"></div>
     <p class="login-disclaimer">By signing in you agree to use this app for personal wellness only.<br>Nexora AI is not a substitute for professional medical advice.</p>
@@ -1375,6 +1396,34 @@ function configureLoginOptions() {
   guestBtn.style.display = 'flex';
   errEl.style.display = 'none';
   resetAuthButtons();
+
+  const overlay = document.getElementById('googleBtnOverlay');
+  if (overlay) {
+    if (GOOGLE_CLIENT_ID) {
+      overlay.style.pointerEvents = 'auto';
+      if (window.google && window.google.accounts) {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleGoogleCredential,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+        google.accounts.id.renderButton(
+          overlay,
+          { 
+            theme: 'outline', 
+            size: 'large', 
+            width: googleBtn.offsetWidth || 340,
+            text: 'continue_with'
+          }
+        );
+      } else {
+        setTimeout(configureLoginOptions, 1000);
+      }
+    } else {
+      overlay.style.pointerEvents = 'none';
+    }
+  }
 }
 
 async function continueAsGuest() {
