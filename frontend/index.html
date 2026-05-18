@@ -1305,6 +1305,12 @@ function openGoogleOAuthPopup() {
     resetAuthButtons();
     return;
   }
+  const origin = window.location.origin !== 'null' ? window.location.origin : window.location.href;
+  if (window.location.protocol === 'file:') {
+    showLoginError('Google Login does not support opening directly from a file. Please use the run.bat script to start the local server, and access it via http://localhost:8000');
+    resetAuthButtons();
+    return;
+  }
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: window.location.origin,
