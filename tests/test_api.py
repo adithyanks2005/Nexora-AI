@@ -18,9 +18,9 @@ init_db()
 client = TestClient(app)
 
 
-@pytest.fixture()
+@pytest.fixture
 def auth_headers() -> dict[str, str]:
-    r = client.post("/api/auth/guest", headers={"X-Workplace-ID": "test"})
+    r = client.post("/api/auth/guest")
     assert r.status_code == 200
     return {"Authorization": f"Bearer {r.json()['token']}"}
 
@@ -242,11 +242,7 @@ def test_health_record_types(auth_headers):
     types = ["Weight", "Heart Rate", "Blood Sugar", "Sleep", "Mood"]
     ids = []
     for t in types:
-        r = client.post(
-            "/api/records",
-            json={"type": t, "data": "test value", "notes": ""},
-            headers=auth_headers,
-        )
+        r = client.post("/api/records", json={"type": t, "data": "test value", "notes": ""}, headers=auth_headers)
         assert r.status_code == 201
         ids.append(r.json()["id"])
     for rid in ids:
