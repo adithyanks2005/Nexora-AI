@@ -66,16 +66,7 @@ def get_current_user(
 
 # ── Google token verification ─────────────────────────────────────────────────
 def verify_google_token(id_token_str: str) -> dict[str, Any]:
-    if id_token_str.startswith("mock_google_"):
-        email = id_token_str.replace("mock_google_", "")
-        name = email.split("@")[0].replace(".", " ").title()
-        return {
-            "email": email,
-            "name": name,
-            "picture": f"https://api.dicebear.com/7.x/initials/svg?seed={name}",
-            "sub": f"google_mock_{email}"
-        }
-
+    """Verify a real Google ID token via Google's public keys."""
     client_id = os.getenv("GOOGLE_CLIENT_ID", "")
     if not client_id:
         raise HTTPException(
@@ -91,7 +82,10 @@ def verify_google_token(id_token_str: str) -> dict[str, Any]:
         )
         return info
     except ValueError as e:
-        raise HTTPException(status_code=401, detail=f"Invalid Google token: {e}")
+        raise HTTPException(
+            status_code=401,
+            detail=f"Invalid Google token – please sign in with a different account. ({e})",
+        )
 
 
 # ── Supabase token verification (placeholder) ────────────────────────────────

@@ -697,23 +697,10 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
     </div>
     <!-- Official Google GSI Button Container -->
     <div id="googleSignInBtnContainer" style="width: 100%; min-height: 48px; display: flex; justify-content: center; align-items: center; margin-bottom: 12px;"></div>
-    
-    <!-- Mock Google Login Fallback -->
-    <div id="mockGoogleSignInContainer" style="display: none; width: 100%; margin-bottom: 12px;">
-      <button class="google-btn" style="border-color: rgba(79,156,249,0.3); color: var(--accent);" onclick="promptMockGoogleAccount()">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;flex-shrink:0;">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-        </svg>
-        Continue with Mock Google
-      </button>
-    </div>
-    
-    <!-- Trouble Signing In helper link -->
+    <!-- Retry hint shown after a failed sign-in -->
     <div id="troubleSignInLink" style="display: none; text-align: center; margin-top: 6px; margin-bottom: 12px;">
-      <a href="#" onclick="promptMockGoogleAccount(); return false;" style="font-size: 12px; color: var(--accent); text-decoration: none; font-weight: 600; opacity: 0.85;">Trouble signing in? Use Mock Login</a>
+      <span style="font-size: 12px; color: var(--text-muted);">Signed in with the wrong account?</span>
+      <a href="#" onclick="retryGoogleSignIn(); return false;" style="font-size: 12px; color: var(--accent); text-decoration: none; font-weight: 600; opacity: 0.85; margin-left:4px;">Use a different account</a>
     </div>
     <button class="google-btn guest-btn" id="guestSignInBtn" onclick="continueAsGuest()">Continue as Guest</button>
     <div class="login-error" id="loginError"></div>
@@ -1270,32 +1257,48 @@ async function authFetch(path, method = 'GET', body = null) {
   return res.json();
 }
 
+function renderGSIButton() {
+  const container = document.getElementById('googleSignInBtnContainer');
+  if (!container || !window.google || !window.google.accounts) return;
+  container.innerHTML = '';
+  google.accounts.id.renderButton(container, {
+    theme: isDark ? 'filled_black' : 'outline',
+    size: 'large',
+    width: 340,
+    text: 'continue_with',
+    shape: 'rectangular',
+  });
+}
+
+function retryGoogleSignIn() {
+  // Revoke the cached session so Google shows the account picker again
+  if (window.google && window.google.accounts) {
+    google.accounts.id.cancel();
+  }
+  document.getElementById('troubleSignInLink').style.display = 'none';
+  document.getElementById('loginError').style.display = 'none';
+  renderGSIButton();
+  // Prompt the account chooser immediately
+  if (window.google && window.google.accounts) {
+    google.accounts.id.prompt();
+  }
+}
+
 function initGoogleSignIn() {
   const container = document.getElementById('googleSignInBtnContainer');
-  const mockContainer = document.getElementById('mockGoogleSignInContainer');
-  const troubleLink = document.getElementById('troubleSignInLink');
-  
   if (!container) return;
 
-  const isPlaceholder = !GOOGLE_CLIENT_ID || 
-                        GOOGLE_CLIENT_ID.trim() === '' || 
-                        GOOGLE_CLIENT_ID.includes('your_google_client_id') ||
-                        GOOGLE_CLIENT_ID.includes('placeholder');
+  const missingId = !GOOGLE_CLIENT_ID ||
+    GOOGLE_CLIENT_ID.trim() === '' ||
+    GOOGLE_CLIENT_ID.includes('your_google_client_id') ||
+    GOOGLE_CLIENT_ID.includes('placeholder');
 
-  if (isPlaceholder) {
-    container.style.display = 'none';
-    if (mockContainer) mockContainer.style.display = 'block';
-    if (troubleLink) troubleLink.style.display = 'none';
+  if (missingId) {
+    container.innerHTML = '<p style="color:var(--danger,#e74c3c);font-size:13px;text-align:center;">Google Sign-In is not configured. Contact the admin.</p>';
     return;
   }
 
-  // Valid Client ID - try to render official GSI button
-  container.style.display = 'block';
-  if (mockContainer) mockContainer.style.display = 'none';
-  if (troubleLink) troubleLink.style.display = 'block';
-
   if (!window.google || !window.google.accounts) {
-    // GSI script not loaded yet, retry in 100ms
     setTimeout(initGoogleSignIn, 100);
     return;
   }
@@ -1304,39 +1307,32 @@ function initGoogleSignIn() {
     google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: handleGoogleCredential,
-      auto_select: false,
+      auto_select: true,
       cancel_on_tap_outside: true,
     });
-
-    google.accounts.id.renderButton(
-      container,
-      {
-        theme: isDark ? 'filled_black' : 'outline',
-        size: 'large',
-        width: 340,
-        text: 'continue_with',
-        shape: 'rectangular',
-      }
-    );
+    renderGSIButton();
   } catch (err) {
-    console.error("GSI Render failed: ", err);
-    // If it fails, fallback to Mock Google login
-    container.style.display = 'none';
-    if (mockContainer) mockContainer.style.display = 'block';
+    console.error('GSI init failed:', err);
+    container.innerHTML = '<p style="color:var(--danger,#e74c3c);font-size:13px;text-align:center;">Google Sign-In failed to load. Refresh and try again.</p>';
   }
 }
 
 async function handleGoogleCredential(response) {
   const errEl = document.getElementById('loginError');
+  const troubleLink = document.getElementById('troubleSignInLink');
   errEl.style.display = 'none';
+  if (troubleLink) troubleLink.style.display = 'none';
   try {
     const data = await authFetch('/api/auth/google', 'POST', { id_token: response.credential });
-    if (!data) { showLoginError('Authentication failed. Please try again.'); resetAuthButtons(); return; }
+    if (!data) throw new Error('Authentication failed. Please try again.');
     setToken(data.token);
     currentUser = data.user;
     showApp();
   } catch (e) {
-    showLoginError(e.message || 'Sign-in failed. Please try again.');
+    showLoginError(e.message || 'Sign-in failed. Please try a different account.');
+    // Re-render the button so user can pick another account
+    renderGSIButton();
+    if (troubleLink) troubleLink.style.display = 'block';
     resetAuthButtons();
   }
 }
@@ -2163,23 +2159,7 @@ function updateActivityRings() {
   });
 }
 
-// MOCK GOOGLE ACCOUNT CHOOSER FUNCTIONS
-function selectMockGoogleAccount(email) {
-  closeGoogleChooser();
-  handleGoogleCredential({ credential: 'mock_google_' + email });
-}
-function promptMockGoogleAccount() {
-  const email = prompt("Enter your Google Email:");
-  if (email && email.includes("@")) {
-    selectMockGoogleAccount(email);
-  } else if (email) {
-    alert("Please enter a valid email address.");
-  }
-}
-function closeGoogleChooser() {
-  const modal = document.getElementById('googleChooserModal');
-  if (modal) modal.style.display = 'none';
-}
+// Google Sign-In retry helpers (mock functions removed)
 
 </script>
 <script>
