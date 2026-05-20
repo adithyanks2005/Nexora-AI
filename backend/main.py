@@ -339,8 +339,13 @@ def delete_record(
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 @app.get("/{full_path:path}", response_class=HTMLResponse, include_in_schema=False)
 async def serve_frontend(full_path: str = "") -> HTMLResponse:
-    # Don't intercept API routes
-    if full_path.startswith("api/") or full_path.startswith("static/"):
+    # Don't intercept API, static, Vercel internals, or missing asset files.
+    if (
+        full_path.startswith("api/")
+        or full_path.startswith("static/")
+        or full_path.startswith("_vercel/")
+        or Path(full_path).suffix
+    ):
         raise HTTPException(status_code=404)
     html_path = FRONTEND_DIR / "index.html"
     if not html_path.exists():

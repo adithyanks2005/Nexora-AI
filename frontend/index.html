@@ -1294,23 +1294,7 @@ function signInWithGoogle() {
   btn.disabled = true;
   btn.innerHTML = `<span style="font-size:18px;animation:spin 1s linear infinite;display:inline-block;">⏳</span> Signing in…`;
 
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleGoogleCredential,
-    auto_select: false,
-    cancel_on_tap_outside: true,
-  });
-  google.accounts.id.prompt((notification) => {
-    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-      // One Tap not shown — open popup flow
-      google.accounts.id.renderButton(
-        document.createElement('div'),
-        { theme: 'outline', size: 'large' }
-      );
-      // Fallback: use OAuth popup
-      openGoogleOAuthPopup();
-    }
-  });
+  openGoogleOAuthPopup();
 }
 
 function openGoogleOAuthPopup() {
@@ -2221,9 +2205,5 @@ function closeGoogleChooser() {
 }
 
 </script>
-<script>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-</script>
-<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
