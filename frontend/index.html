@@ -1319,7 +1319,7 @@ function openGoogleOAuthPopup() {
   );
   if (!popup) {
     showLoginError('Popup blocked. Please allow popups for this site and try again.');
-    resetAuthButtons();
+    // keep button disabled so user can retry after fixing popups
     return;
   }
   let attempts = 0;
@@ -1333,8 +1333,8 @@ function openGoogleOAuthPopup() {
     try {
       if (!popup || popup.closed) {
         clearInterval(timer);
-        showLoginError('Sign-in popup was closed or blocked. Make sure http://localhost:8000 is added to Authorized redirect URIs in Google Cloud.');
-        resetAuthButtons();
+        showLoginError('Sign-in popup was closed or blocked. Ensure http://localhost:8000 is added to Authorized redirect URIs in Google Cloud.');
+        // keep button disabled for retry
         return;
       }
       const url = popup.location.href;
