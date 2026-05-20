@@ -76,7 +76,7 @@ def verify_google_token(id_token_str: str) -> dict[str, Any]:
             "sub": f"google_mock_{email}"
         }
 
-    client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip().lstrip("\ufeff")
     if not client_id:
         raise HTTPException(
             status_code=500,

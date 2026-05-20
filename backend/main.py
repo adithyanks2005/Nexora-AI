@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 import os
+import json
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -351,4 +352,10 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
     if not html_path.exists():
         raise HTTPException(status_code=404, detail="Frontend not found")
     html = html_path.read_text(encoding="utf-8")
+    google_client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip().lstrip("\ufeff")
+    if google_client_id:
+        html = html.replace(
+            "const GOOGLE_CLIENT_ID = '638093827002-msthhp8pnpi0jkui1j2n3n6j07f1cjhs.apps.googleusercontent.com';",
+            f"const GOOGLE_CLIENT_ID = {json.dumps(google_client_id)};",
+        )
     return HTMLResponse(content=html)

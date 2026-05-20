@@ -1266,9 +1266,9 @@ async function authFetch(path, method = 'GET', body = null) {
   let res;
   try { res = await fetch(path, opts); }
   catch { throw new Error('You are offline.'); }
-  if (res.status === 401) { signOut(); return null; }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
+    if (res.status === 401 && !path.startsWith('/api/auth/')) signOut();
     throw new Error(err.detail || 'Request failed');
   }
   if (res.status === 204) return null;
@@ -1322,9 +1322,20 @@ function openGoogleOAuthPopup() {
     'google_login',
     'width=500,height=600,left=' + (screen.width/2 - 250) + ',top=' + (screen.height/2 - 300)
   );
+  if (!popup) {
+    showLoginError('Popup blocked. Please allow popups for this site and try again.');
+    resetAuthButtons();
+    return;
+  }
+  let attempts = 0;
   const timer = setInterval(async () => {
+    if (++attempts > 600) {
+      clearInterval(timer);
+      showLoginError('Sign-in timed out. Please try again.');
+      resetAuthButtons();
+      return;
+    }
     try {
-      if (!popup || popup.closed) { clearInterval(timer); resetAuthButtons(); return; }
       const url = popup.location.href;
       if (url.startsWith(window.location.origin)) {
         clearInterval(timer);
