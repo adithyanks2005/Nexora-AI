@@ -1285,15 +1285,10 @@ function signInWithGoogle() {
     return;
   }
 
-  if (!window.google || !window.google.accounts) {
-    showLoginError('Google Sign-In failed to load. Check your internet connection.');
-    resetAuthButtons();
-    return;
-  }
-
   btn.disabled = true;
   btn.innerHTML = `<span style="font-size:18px;animation:spin 1s linear infinite;display:inline-block;">⏳</span> Signing in…`;
 
+  // Direct synchronous popup flow avoids popup blockers
   openGoogleOAuthPopup();
 }
 
@@ -1336,6 +1331,12 @@ function openGoogleOAuthPopup() {
       return;
     }
     try {
+      if (!popup || popup.closed) {
+        clearInterval(timer);
+        showLoginError('Sign-in popup was closed or blocked. Make sure http://localhost:8000 is added to Authorized redirect URIs in Google Cloud.');
+        resetAuthButtons();
+        return;
+      }
       const url = popup.location.href;
       if (url.startsWith(window.location.origin)) {
         clearInterval(timer);
