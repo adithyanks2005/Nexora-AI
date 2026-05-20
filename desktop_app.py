@@ -11,7 +11,7 @@ from backend.main import app
 
 
 HOST = "127.0.0.1"
-PORT = 8001
+PORT = 8000
 
 
 def wait_until_ready(timeout: float = 10.0) -> None:
@@ -32,8 +32,8 @@ def main() -> None:
     thread = threading.Thread(target=run_server, daemon=True)
     thread.start()
     wait_until_ready()
-    webbrowser.open(f"http://{HOST}:{PORT}")
-    print("Nexora AI is running at http://127.0.0.1:8001")
+    webbrowser.open(f"http://localhost:{PORT}")
+    print(f"Nexora AI is running at http://localhost:{PORT}")
     print("Close this window to stop the local app.")
     try:
         while thread.is_alive():
