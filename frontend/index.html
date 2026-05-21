@@ -1593,6 +1593,10 @@ async function sendChat() {
     const data = await authFetch('/api/chat', 'POST', {session_id: currentSessionId, messages: chatHistory});
     removeTyping();
     if (!data) { addMsg('⚠️ Session expired. Please sign in again.', 'bot'); return; }
+    if (data.session_id && data.session_id !== currentSessionId) {
+      currentSessionId = data.session_id;
+      localStorage.setItem('nexora_session_id', currentSessionId);
+    }
     const reply = data.reply;
     chatHistory.push({role: 'assistant', content: reply});
     addMsg(renderMarkdown(reply), 'bot', true);
