@@ -318,6 +318,22 @@ def get_chat_session(session_id: str, user_id: str, workplace_id: str) -> dict[s
     return dict(row) if row else None
 
 
+def get_chat_session_by_id(session_id: str) -> dict[str, Any] | None:
+    if USING_SUPABASE:
+        return _one(
+            get_supabase()
+            .table("chat_sessions")
+            .select("*")
+            .eq("id", session_id)
+            .limit(1)
+            .execute()
+        )
+
+    with get_connection() as conn:
+        row = conn.execute("SELECT * FROM chat_sessions WHERE id = ?", (session_id,)).fetchone()
+    return dict(row) if row else None
+
+
 def create_chat_session(session_id: str, user_id: str, workplace_id: str, title: str) -> dict[str, Any]:
     workplace_id = normalize_workplace_id(workplace_id)
     row = {"id": session_id, "user_id": user_id, "workplace_id": workplace_id, "title": title}

@@ -9,17 +9,29 @@ let symptoms         = [];
 let isRecording      = false;
 let recognition      = null;
 let deferredInstallPrompt = null;
+/* ── Authentication ──────────────────────────────────────────────────── */
+function isAuthenticated() {
+  return !!localStorage.getItem('nexora_jwt');
+}
 
+function redirectToLogin() {
+  // Redirect to login page if not authenticated
+  window.location.href = '/';
+}
 /* ── DOM refs ────────────────────────────────────────────────────────────── */
-const chatMessages  = document.getElementById('chatMessages');
-const chatInput     = document.getElementById('chatInput');
-const sendBtn       = document.getElementById('sendBtn');
-const voiceBtn      = document.getElementById('voiceBtn');
-const sessionList   = document.getElementById('sessionList');
-const chatTitle     = document.getElementById('chatTitle');
-const toast         = document.getElementById('toast');
-const installAppBtn = document.getElementById('installAppBtn');
-const offlineBanner = document.getElementById('offlineBanner');
+let chatMessages, chatInput, sendBtn, voiceBtn, sessionList, chatTitle, toast, installAppBtn, offlineBanner;
+
+function initializeDOMRefs() {
+  chatMessages  = document.getElementById('chatMessages');
+  chatInput     = document.getElementById('chatInput');
+  sendBtn       = document.getElementById('sendBtn');
+  voiceBtn      = document.getElementById('voiceBtn');
+  sessionList   = document.getElementById('sessionList');
+  chatTitle     = document.getElementById('chatTitle');
+  toast         = document.getElementById('toast');
+  installAppBtn = document.getElementById('installAppBtn');
+  offlineBanner = document.getElementById('offlineBanner');
+}
 
 window.addEventListener('beforeinstallprompt', event => {
   event.preventDefault();
@@ -30,11 +42,20 @@ window.addEventListener('beforeinstallprompt', event => {
 window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
   if (installAppBtn) installAppBtn.hidden = true;
-  showToast('Nexora AI installed');
+  if (toast) showToast('Nexora AI installed');
 });
 
 /* ── Init ────────────────────────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  // Check authentication first
+  if (!isAuthenticated()) {
+    redirectToLogin();
+    return;
+  }
+
+  // Initialize DOM references after confirming authentication
+  initializeDOMRefs();
+
   registerAppShell();
   setupInstallPrompt();
   syncOnlineStatus();
@@ -620,11 +641,27 @@ async function deleteRecord(id) {
 }
 
 /* ── API helper ──────────────────────────────────────────────────────────── */
+function getToken() { 
+  return localStorage.getItem('nexora_jwt'); 
+}
+
+function getWorkplaceId() {
+  return localStorage.getItem('nexora_workplace_id') || 'default';
+}
+
 async function apiFetch(path, method = 'GET', body = null) {
+  const token = getToken();
   const opts = {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'X-Workplace-ID': getWorkplaceId()
+    },
   };
+  // Include JWT token in Authorization header
+  if (token) {
+    opts.headers['Authorization'] = 'Bearer ' + token;
+  }
   if (body) opts.body = JSON.stringify(body);
   let res;
   try {
@@ -634,6 +671,11 @@ async function apiFetch(path, method = 'GET', body = null) {
   }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
+    // If 401 Unauthorized and not an auth endpoint, redirect to login
+    if (res.status === 401 && !path.startsWith('/api/auth/')) {
+      window.location.href = '/';
+      return;
+    }
     throw new Error(err.detail || 'Request failed');
   }
   if (res.status === 204) return null;

@@ -4,10 +4,12 @@ Run: pytest tests/ -v
 """
 from __future__ import annotations
 
+import uuid
+
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.database import init_db
+from backend.database import USING_SUPABASE, create_chat_session, get_connection, init_db
 from backend.main import app
 
 # Initialise DB before any test runs
@@ -30,6 +32,29 @@ def test_health_endpoint():
     assert r.json()["status"] == "ok"
 
 
+def test_valid_jwt_recovers_missing_local_user_row():
+    if USING_SUPABASE:
+        pytest.skip("Local user-row recovery only applies to SQLite fallback storage.")
+
+    r = client.post(
+        "/api/auth/google",
+        json={"id_token": "mock_google_recover@example.com", "workplace_id": "recover"},
+    )
+    assert r.status_code == 200
+    data = r.json()
+    headers = {"Authorization": f"Bearer {data['token']}"}
+
+    with get_connection() as conn:
+        conn.execute(
+            "DELETE FROM users WHERE id = ? AND workplace_id = ?",
+            (data["user"]["id"], data["user"]["workplace_id"]),
+        )
+
+    recovered = client.get("/api/reminders", headers=headers)
+    assert recovered.status_code == 200
+    assert recovered.json() == []
+
+
 # ── Sessions ──────────────────────────────────────────────────────────────────
 def test_create_and_list_session(auth_headers):
     r = client.post("/api/sessions", json={"title": "Test Session"}, headers=auth_headers)
@@ -49,6 +74,32 @@ def test_delete_session(auth_headers):
     sid = r.json()["id"]
     r2 = client.delete(f"/api/sessions/{sid}", headers=auth_headers)
     assert r2.status_code == 200
+
+
+def test_chat_replaces_session_id_owned_by_another_user(monkeypatch):
+    user_a = client.post("/api/auth/guest", headers={"X-Workplace-ID": "collision"}).json()["user"]
+    user_b_login = client.post("/api/auth/guest", headers={"X-Workplace-ID": "collision"}).json()
+    user_b_headers = {"Authorization": f"Bearer {user_b_login['token']}"}
+    stale_session_id = str(uuid.uuid4())
+
+    create_chat_session(stale_session_id, user_a["id"], user_a["workplace_id"], "Existing")
+
+    async def fake_call_ai(messages):
+        return "ok"
+
+    monkeypatch.setattr("backend.main.call_ai", fake_call_ai)
+    r = client.post(
+        "/api/chat",
+        json={
+            "session_id": stale_session_id,
+            "messages": [{"role": "user", "content": "Hello"}],
+        },
+        headers=user_b_headers,
+    )
+
+    assert r.status_code == 200
+    assert r.json()["reply"] == "ok"
+    assert r.json()["session_id"] != stale_session_id
 
 
 # ── Calculators ───────────────────────────────────────────────────────────────

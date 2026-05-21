@@ -10,7 +10,14 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
-from backend.database import get_user, normalize_workplace_id, upsert_user as db_upsert_user
+from backend.database import (
+    USING_SUPABASE,
+    create_user,
+    get_user,
+    init_db,
+    normalize_workplace_id,
+    upsert_user as db_upsert_user,
+)
 
 # ── Config ────────────────────────────────────────────────────────────────────
 JWT_SECRET       = os.getenv("JWT_SECRET", "nexora-dev-secret-change-in-prod")
@@ -21,7 +28,13 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 # ── JWT helpers ───────────────────────────────────────────────────────────────
-def create_jwt(user_id: str, email: str, workplace_id: str = "default") -> str:
+def create_jwt(
+    user_id: str,
+    email: str,
+    workplace_id: str = "default",
+    name: str = "",
+    picture: str = "",
+) -> str:
     workplace_id = normalize_workplace_id(workplace_id)
     payload = {
         "sub": user_id,
@@ -30,6 +43,10 @@ def create_jwt(user_id: str, email: str, workplace_id: str = "default") -> str:
         "exp": datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRE_DAYS),
         "iat": datetime.now(timezone.utc),
     }
+    if name:
+        payload["name"] = name
+    if picture:
+        payload["picture"] = picture
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
@@ -58,9 +75,30 @@ def get_current_user(
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token payload.")
 
-    user = get_user(user_id, workplace_id)
+    try:
+        user = get_user(user_id, workplace_id)
+    except Exception:
+        if USING_SUPABASE:
+            raise
+        init_db()
+        user = get_user(user_id, workplace_id)
+
     if not user:
-        raise HTTPException(status_code=401, detail="User not found. Please sign in again.")
+        if USING_SUPABASE:
+            raise HTTPException(status_code=401, detail="User not found. Please sign in again.")
+
+        email = payload.get("email")
+        if not email:
+            raise HTTPException(status_code=401, detail="Invalid token payload.")
+        user = create_user(
+            {
+                "id": user_id,
+                "workplace_id": workplace_id,
+                "email": email,
+                "name": payload.get("name") or email.split("@")[0],
+                "picture": payload.get("picture", ""),
+            }
+        )
     return user
 
 

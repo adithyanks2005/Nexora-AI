@@ -46,6 +46,7 @@ from backend.database import (
     delete_health_record,
     delete_reminder as db_delete_reminder,
     get_chat_session,
+    get_chat_session_by_id,
     init_db,
     list_chat_messages,
     list_chat_sessions,
@@ -114,7 +115,9 @@ def google_login(body: GoogleAuthRequest) -> dict[str, Any]:
     workplace_id = normalize_workplace_id(body.workplace_id)
     google_info = verify_google_token(body.id_token)
     user = upsert_user(google_info, workplace_id)
-    token = create_jwt(user["id"], user["email"], user["workplace_id"])
+    token = create_jwt(
+        user["id"], user["email"], user["workplace_id"], user["name"], user["picture"]
+    )
     return {
         "token": token,
         "user": {
@@ -133,7 +136,9 @@ def supabase_login(body: SupabaseAuthRequest) -> dict[str, Any]:
     workplace_id = normalize_workplace_id(body.workplace_id)
     supabase_info = verify_supabase_token(body.access_token)
     user = upsert_user(supabase_info, workplace_id)
-    token = create_jwt(user["id"], user["email"], user["workplace_id"])
+    token = create_jwt(
+        user["id"], user["email"], user["workplace_id"], user["name"], user["picture"]
+    )
     return {
         "token": token,
         "user": {
@@ -155,7 +160,9 @@ def guest_login(request: Request) -> dict[str, Any]:
     user = create_user(
         {"id": user_id, "workplace_id": workplace_id, "email": email, "name": "Guest", "picture": ""}
     )
-    token = create_jwt(user["id"], user["email"], user["workplace_id"])
+    token = create_jwt(
+        user["id"], user["email"], user["workplace_id"], user["name"], user["picture"]
+    )
     return {"token": token, "user": user}
 
 
@@ -213,10 +220,14 @@ async def chat(
 ) -> dict[str, str]:
     uid = current_user["id"]
     workplace_id = current_user["workplace_id"]
-    row = get_chat_session(req.session_id, uid, workplace_id)
+    session_id = req.session_id
+    row = get_chat_session(session_id, uid, workplace_id)
     if not row:
+        existing_session = get_chat_session_by_id(session_id)
+        if existing_session:
+            session_id = str(uuid.uuid4())
         create_chat_session(
-            req.session_id,
+            session_id,
             uid,
             workplace_id,
             req.messages[0].content[:40] if req.messages else "New Chat",
@@ -227,11 +238,11 @@ async def chat(
 
     last_user = next((m for m in reversed(req.messages) if m.role == "user"), None)
     if last_user:
-        add_chat_message(req.session_id, workplace_id, "user", last_user.content)
-    add_chat_message(req.session_id, workplace_id, "assistant", reply)
-    touch_chat_session(req.session_id, uid, workplace_id, last_user.content[:40] if last_user else "Chat")
+        add_chat_message(session_id, workplace_id, "user", last_user.content)
+    add_chat_message(session_id, workplace_id, "assistant", reply)
+    touch_chat_session(session_id, uid, workplace_id, last_user.content[:40] if last_user else "Chat")
 
-    return {"reply": reply, "session_id": req.session_id}
+    return {"reply": reply, "session_id": session_id}
 
 
 # ── Symptom checker ───────────────────────────────────────────────────────────
