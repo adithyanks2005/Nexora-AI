@@ -1251,7 +1251,7 @@ function getWorkplaceId() {
 }
 
 function normalizeLocalOAuthOrigin() {
-  if (window.location.hostname !== '0.0.0.0') return false;
+  if (window.location.hostname !== '0.0.0.0' && window.location.hostname !== '127.0.0.1') return false;
   const url = new URL(window.location.href);
   url.hostname = 'localhost';
   window.location.replace(url.toString());
@@ -1319,10 +1319,11 @@ function openGoogleOAuthPopup() {
   );
   if (!popup) {
     showLoginError('Popup blocked. Please allow popups for this site and try again.');
-    // keep button disabled so user can retry after fixing popups
+    resetAuthButtons();
     return;
   }
   let attempts = 0;
+  let closedCount = 0;
   const timer = setInterval(async () => {
     if (++attempts > 600) {
       clearInterval(timer);
@@ -1331,11 +1332,18 @@ function openGoogleOAuthPopup() {
       return;
     }
     try {
+      // Require multiple consecutive positive checks to declare popup closed.
+      // This prevents false positives during cross-origin context switches.
       if (!popup || popup.closed) {
-        clearInterval(timer);
-        showLoginError('Sign-in popup was closed or blocked. Ensure http://localhost:8000 is added to Authorized redirect URIs in Google Cloud.');
-        // keep button disabled for retry
-        return;
+        closedCount++;
+        if (closedCount >= 4) {
+          clearInterval(timer);
+          showLoginError('Sign-in popup was closed or blocked. Ensure ' + window.location.origin + ' is added to Authorized redirect URIs in Google Cloud.');
+          resetAuthButtons();
+          return;
+        }
+      } else {
+        closedCount = 0;
       }
       const url = popup.location.href;
       if (url.startsWith(window.location.origin)) {
@@ -1346,7 +1354,13 @@ function openGoogleOAuthPopup() {
         if (idToken) await handleGoogleCredential({ credential: idToken });
         else { showLoginError('Sign-in cancelled or failed.'); resetAuthButtons(); }
       }
-    } catch { /* cross-origin — still loading */ }
+    } catch {
+      // Cross-origin throws security error while loading. 
+      // Reset closedCount if we confirm the window is still open.
+      if (popup && !popup.closed) {
+        closedCount = 0;
+      }
+    }
   }, 300);
 }
 
@@ -1365,6 +1379,7 @@ async function handleGoogleCredential(response) {
   } catch (e) {
     showLoginError(e.message || 'Sign-in failed. Please try again.');
     resetAuthButtons();
+    return;
   }
 }
 
