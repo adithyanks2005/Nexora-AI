@@ -697,6 +697,10 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
     </div>
     <!-- Official Google GSI Button Container -->
     <div id="googleSignInBtnContainer" style="width: 100%; min-height: 48px; display: flex; justify-content: center; align-items: center; margin-bottom: 12px;"></div>
+    <!-- Popup fallback button (visible when GSI not available or as alternate) -->
+    <div style="text-align:center;margin-bottom:12px;">
+      <button id="googlePopupBtn" class="google-btn" style="display:none;" onclick="openGoogleOAuthPopup()">Sign in with Google (Popup)</button>
+    </div>
     
     <!-- Mock Google Login Fallback -->
     <div id="mockGoogleSignInContainer" style="display: none; width: 100%; margin-bottom: 12px;">
@@ -1253,6 +1257,21 @@ function getToken() { return localStorage.getItem('nexora_jwt'); }
 function setToken(t) { localStorage.setItem('nexora_jwt', t); }
 function clearToken() { localStorage.removeItem('nexora_jwt'); }
 
+function getWorkplaceId() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get('workplace_id') || params.get('workplace');
+  if (fromUrl) localStorage.setItem('nexora_workplace_id', fromUrl);
+  return localStorage.getItem('nexora_workplace_id') || 'default';
+}
+
+function normalizeLocalOAuthOrigin() {
+  if (window.location.hostname !== '0.0.0.0' && window.location.hostname !== '127.0.0.1') return false;
+  const url = new URL(window.location.href);
+  url.hostname = 'localhost';
+  window.location.replace(url.toString());
+  return true;
+}
+
 async function authFetch(path, method = 'GET', body = null) {
   const token = getToken();
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
@@ -1293,6 +1312,8 @@ function initGoogleSignIn() {
   container.style.display = 'block';
   if (mockContainer) mockContainer.style.display = 'none';
   if (troubleLink) troubleLink.style.display = 'block';
+  const popupBtn = document.getElementById('googlePopupBtn');
+  if (popupBtn) popupBtn.style.display = 'inline-flex';
 
   if (!window.google || !window.google.accounts) {
     // GSI script not loaded yet, retry in 100ms
@@ -1323,7 +1344,71 @@ function initGoogleSignIn() {
     // If it fails, fallback to Mock Google login
     container.style.display = 'none';
     if (mockContainer) mockContainer.style.display = 'block';
+    if (popupBtn) popupBtn.style.display = 'inline-flex';
   }
+}
+
+function openGoogleOAuthPopup() {
+  if (!GOOGLE_CLIENT_ID) {
+    showLoginError('Google login is not configured. Add GOOGLE_CLIENT_ID in environment variables and reload.');
+    return;
+  }
+  if (window.location.protocol === 'file:') {
+    showLoginError('Google Login does not support opening directly from a file. Run the app via the local server and access it via http://localhost:8000');
+    return;
+  }
+  if (normalizeLocalOAuthOrigin()) return;
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: window.location.origin,
+    response_type: 'token id_token',
+    scope: 'openid email profile',
+    nonce: Math.random().toString(36).slice(2),
+    prompt: 'select_account',
+  });
+  const popup = window.open(
+    'https://accounts.google.com/o/oauth2/v2/auth?' + params,
+    'google_login',
+    'width=500,height=600,left=' + (screen.width/2 - 250) + ',top=' + (screen.height/2 - 300)
+  );
+  if (!popup) {
+    showLoginError('Popup blocked. Please allow popups for this site and try again.');
+    return;
+  }
+  let attempts = 0;
+  let closedCount = 0;
+  const timer = setInterval(async () => {
+    if (++attempts > 600) {
+      clearInterval(timer);
+      showLoginError('Sign-in timed out. Please try again.');
+      return;
+    }
+    try {
+      if (!popup || popup.closed) {
+        closedCount++;
+        if (closedCount >= 4) {
+          clearInterval(timer);
+          showLoginError('Sign-in popup was closed or blocked. Ensure ' + window.location.origin + ' is added to Authorized redirect URIs in Google Cloud.');
+          return;
+        }
+      } else {
+        closedCount = 0;
+      }
+      const url = popup.location.href;
+      if (url.startsWith(window.location.origin)) {
+        clearInterval(timer);
+        popup.close();
+        const hash = new URLSearchParams(url.split('#')[1] || '');
+        const idToken = hash.get('id_token');
+        if (idToken) await handleGoogleCredential({ credential: idToken });
+        else { showLoginError('Sign-in cancelled or failed.'); }
+      }
+    } catch {
+      if (popup && !popup.closed) {
+        closedCount = 0;
+      }
+    }
+  }, 300);
 }
 
 async function handleGoogleCredential(response) {
