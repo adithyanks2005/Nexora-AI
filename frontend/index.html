@@ -628,6 +628,12 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
 .auth-divider::before,.auth-divider::after{
   content:"";height:1px;flex:1;background:var(--border);
 }
+.google-fallback-wrap{
+  display:none;
+  width:100%;
+  justify-content:center;
+  align-items:center;
+}
 
 .guest-btn{border-color:rgba(67,217,140,0.35);color:var(--success);}
 .guest-btn:hover{background:rgba(67,217,140,0.08);border-color:rgba(67,217,140,0.55);}
@@ -729,6 +735,7 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
         </svg>
         Continue with Google
       </button>
+      <div id="googleOfficialFallback" class="google-fallback-wrap"></div>
       <!-- Mock Google Login Fallback, only shown during local development -->
       <div id="mockGoogleSignInContainer" class="mock-google-wrap">
         <button class="google-btn mock-google-btn" onclick="promptMockGoogleAccount()">
@@ -1294,6 +1301,7 @@ function isLocalDevelopment() {
   return ['localhost', '127.0.0.1', '0.0.0.0'].includes(window.location.hostname);
 }
 let gsiInitialized = false;
+let gsiFallbackRendered = false;
 
 async function authFetch(path, method = 'GET', body = null) {
   const token = getToken();
@@ -1316,8 +1324,9 @@ function initGoogleSignIn() {
   const container = document.getElementById('googleSignInBtnContainer');
   const mockContainer = document.getElementById('mockGoogleSignInContainer');
   const popupBtn = document.getElementById('googlePopupBtn');
+  const fallbackWrap = document.getElementById('googleOfficialFallback');
   
-  if (!container || !popupBtn) return;
+  if (!container || !popupBtn || !fallbackWrap) return;
 
   const isPlaceholder = !GOOGLE_CLIENT_ID || 
                         GOOGLE_CLIENT_ID.trim() === '' || 
@@ -1327,6 +1336,7 @@ function initGoogleSignIn() {
   if (isPlaceholder) {
     container.style.display = 'none';
     popupBtn.style.display = 'none';
+    fallbackWrap.style.display = 'none';
     if (mockContainer) mockContainer.style.display = isLocalDevelopment() ? 'block' : 'none';
     return;
   }
@@ -1334,6 +1344,7 @@ function initGoogleSignIn() {
   // Valid Client ID - use the branded popup button as the primary sign-in action.
   container.style.display = 'none';
   popupBtn.style.display = 'flex';
+  fallbackWrap.style.display = 'none';
   if (mockContainer) mockContainer.style.display = 'none';
 
   if (!window.google || !window.google.accounts) {
@@ -1351,6 +1362,19 @@ function initGoogleSignIn() {
         cancel_on_tap_outside: true,
       });
       gsiInitialized = true;
+    }
+    if (!gsiFallbackRendered) {
+      google.accounts.id.renderButton(
+        fallbackWrap,
+        {
+          theme: isDark ? 'filled_black' : 'outline',
+          size: 'large',
+          width: 340,
+          text: 'continue_with',
+          shape: 'rectangular',
+        }
+      );
+      gsiFallbackRendered = true;
     }
   } catch (err) {
     console.error("GSI init failed: ", err);
@@ -1377,7 +1401,9 @@ function openGoogleOAuthPopup() {
   google.accounts.id.prompt((notification) => {
     if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
       resetAuthButtons();
-      showLoginError('Google sign-in could not start in this browser context. Please allow Google popups/cookies and try again.');
+      const fallbackWrap = document.getElementById('googleOfficialFallback');
+      if (fallbackWrap) fallbackWrap.style.display = 'flex';
+      showLoginError('Tap the Google button below to continue sign-in.');
     }
   });
 }
@@ -1385,6 +1411,8 @@ function openGoogleOAuthPopup() {
 async function handleGoogleCredential(response) {
   const errEl = document.getElementById('loginError');
   errEl.style.display = 'none';
+  const fallbackWrap = document.getElementById('googleOfficialFallback');
+  if (fallbackWrap) fallbackWrap.style.display = 'none';
   const popupBtn = document.getElementById('googlePopupBtn');
   if (popupBtn) {
     popupBtn.disabled = true;
