@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -18,6 +19,7 @@ DEFAULT_GROQ_MODEL = "llama-3.1-8b-instant"
 SYSTEM_PROMPT = """You are Nexora AI, a friendly, supportive health companion. Your role is to listen to the user's description of symptoms, provide possible explanations, give practical self-care suggestions, and reassure them, while never prescribing medication or making definitive diagnoses.
 
 CRITICAL RULES - follow these strictly:
+0. You are strictly limited to health and medical topics. If a request is unrelated to health/medicine, refuse briefly and ask for a health question.
 1. If the user greets you (e.g., "hi", "hello", "hey") **and does not provide any symptom description**, respond with a warm greeting and ask what health concern they would like help with. **Do not give any health advice at this point.**
 2. If the user's message contains insufficient symptom information, politely ask for more details about their symptoms before answering.
 3. Carefully read the user's symptom description and respond to EXACTLY what they asked.
@@ -46,6 +48,26 @@ Examples of WRONG behavior:
 - Ignoring a greeting and providing generic health advice.
 """
 
+HEALTH_KEYWORDS = {
+    "health", "medical", "medicine", "doctor", "hospital", "clinic", "nurse",
+    "symptom", "symptoms", "pain", "fever", "cough", "cold", "flu", "infection",
+    "injury", "wound", "allergy", "headache", "migraine", "nausea", "vomit",
+    "diarrhea", "constipation", "blood", "pressure", "sugar", "diabetes",
+    "heart", "chest", "breath", "breathing", "asthma", "sleep", "anxiety",
+    "depression", "stress", "mental", "therapy", "diet", "nutrition", "weight",
+    "bmi", "calorie", "hydration", "water", "exercise", "workout", "pulse",
+    "spo2", "oxygen", "pregnancy", "period", "menstrual", "pharmacy", "drug",
+    "dose", "side effect", "treatment", "diagnosis", "wellness", "care",
+}
+
+def _is_health_query(text: str) -> bool:
+    t = (text or "").strip().lower()
+    if not t:
+        return True
+    if re.fullmatch(r"(hi|hello|hey|hii+|good (morning|afternoon|evening)|yo)\W*", t):
+        return True
+    return any(k in t for k in HEALTH_KEYWORDS)
+
 
 async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
     api_key = os.getenv("GROQ_API_KEY", "").strip()
@@ -62,6 +84,13 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
         for msg in messages
         if msg.get("content")
     ]
+
+    last_user_msg = next((m.get("content", "") for m in reversed(messages) if m.get("role") == "user"), "")
+    if not _is_health_query(last_user_msg):
+        return (
+            "I can only help with health and medical topics. "
+            "Please ask a health-related question, symptom, or wellness concern."
+        )
 
     payload = {
         "model": model,
