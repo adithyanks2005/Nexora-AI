@@ -58,7 +58,17 @@ In Google Cloud Console > APIs & Services > Credentials, open your OAuth 2.0 Web
 https://nexora-ai-phi.vercel.app
 ```
 
-If you use preview domains, add those origins too.
+Also add the popup callback URL to **Authorized redirect URIs**:
+
+```text
+https://nexora-ai-phi.vercel.app/auth/google/callback
+```
+
+If you use preview domains, add both the origin and `/auth/google/callback` redirect URI for each preview domain too. For the deployment shown at `https://nexora-ai-henna-five.vercel.app`, the redirect URI is:
+
+```text
+https://nexora-ai-henna-five.vercel.app/auth/google/callback
+```
 
 ### 6. Deploy
 
