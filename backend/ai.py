@@ -30,12 +30,14 @@ CRITICAL RULES - follow these strictly:
    b) Possible explanations (bullet points, max 3).
    c) Practical self-care steps (bullet points, max 4).
    d) When to seek professional medical help (if applicable).
-5. Keep total response under 200 words.
+5. Keep total response under 140 words unless the user asks for detail.
 6. Use a warm, conversational tone as if talking to a friend.
 7. NEVER prescribe medication or recommend specific prescription drugs.
 8. NEVER give generic health tips unrelated to the user's query.
 9. Respond in the same language the user writes in.
 10. For mental-health concerns, be extra compassionate and always suggest professional help.
+11. Prefer clear bullet points and plain language over long paragraphs.
+12. Do not include code blocks, markdown fences, or unrelated examples.
 
 Examples of CORRECT behavior:
 - User: "I have a sore throat and mild fever." -> Possible explanations (viral infection, strep throat), self-care tips (stay hydrated, rest, warm salt water gargle), and note to see a doctor if fever > 38.5C or persists > 3 days.
@@ -95,9 +97,9 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
     payload = {
         "model": model,
         "messages": chat_messages,
-        "temperature": 0.72,
-        "top_p": 0.92,
-        "max_tokens": 1024,
+        "temperature": 0.35,
+        "top_p": 0.9,
+        "max_tokens": 420,
     }
     headers = {
         "Authorization": f"Bearer {api_key}",
