@@ -1268,6 +1268,7 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
 <script>
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 const GOOGLE_CLIENT_ID = '638093827002-msthhp8pnpi0jkui1j2n3n6j07f1cjhs.apps.googleusercontent.com';
+const CANONICAL_PROD_ORIGIN = 'https://nexora-ai-henna-five.vercel.app';
 let currentUser = null;
 
 function getToken() { return localStorage.getItem('nexora_jwt'); }
@@ -1285,6 +1286,17 @@ function normalizeLocalOAuthOrigin() {
   if (window.location.hostname !== '0.0.0.0' && window.location.hostname !== '127.0.0.1') return false;
   const url = new URL(window.location.href);
   url.hostname = 'localhost';
+  window.location.replace(url.toString());
+  return true;
+}
+
+function normalizeVercelProductionOrigin() {
+  const host = window.location.hostname;
+  if (!host.endsWith('.vercel.app')) return false;
+  if (window.location.origin === CANONICAL_PROD_ORIGIN) return false;
+  const url = new URL(window.location.href);
+  url.protocol = 'https:';
+  url.hostname = 'nexora-ai-henna-five.vercel.app';
   window.location.replace(url.toString());
   return true;
 }
@@ -1369,6 +1381,7 @@ function openGoogleOAuthPopup() {
     return;
   }
   if (normalizeLocalOAuthOrigin()) return;
+  if (normalizeVercelProductionOrigin()) return;
   const redirectUri = window.location.origin + '/auth/google/callback';
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
