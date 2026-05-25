@@ -1292,6 +1292,7 @@ function normalizeLocalOAuthOrigin() {
 function isLocalDevelopment() {
   return ['localhost', '127.0.0.1', '0.0.0.0'].includes(window.location.hostname);
 }
+let gsiInitialized = false;
 
 async function authFetch(path, method = 'GET', body = null) {
   const token = getToken();
@@ -1341,25 +1342,17 @@ function initGoogleSignIn() {
   }
 
   try {
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleCredential,
-      auto_select: false,
-      cancel_on_tap_outside: true,
-    });
-
-    google.accounts.id.renderButton(
-      container,
-      {
-        theme: isDark ? 'filled_black' : 'outline',
-        size: 'large',
-        width: 340,
-        text: 'continue_with',
-        shape: 'rectangular',
-      }
-    );
+    if (!gsiInitialized) {
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+      gsiInitialized = true;
+    }
   } catch (err) {
-    console.error("GSI Render failed: ", err);
+    console.error("GSI init failed: ", err);
     container.style.display = 'none';
     popupBtn.style.display = 'flex';
     if (mockContainer) mockContainer.style.display = isLocalDevelopment() ? 'block' : 'none';
@@ -1376,66 +1369,16 @@ function openGoogleOAuthPopup() {
     return;
   }
   if (normalizeLocalOAuthOrigin()) return;
-  const redirectUri = window.location.origin + '/auth/google/callback';
-  const params = new URLSearchParams({
-    client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: redirectUri,
-    response_type: 'token id_token',
-    scope: 'openid email profile',
-    nonce: Math.random().toString(36).slice(2),
-    prompt: 'select_account',
-  });
-  const popup = window.open(
-    'https://accounts.google.com/o/oauth2/v2/auth?' + params,
-    'google_login',
-    'width=500,height=600,left=' + (screen.width/2 - 250) + ',top=' + (screen.height/2 - 300)
-  );
-  if (!popup) {
-    showLoginError('Popup blocked. Please allow popups for this site and try again.');
+  if (!window.google || !window.google.accounts || !window.google.accounts.id) {
+    showLoginError('Google Sign-In is still loading. Please wait a moment and try again.');
     return;
   }
-  let attempts = 0;
-  let closedCount = 0;
-  const timer = setInterval(async () => {
-    if (++attempts > 600) {
-      clearInterval(timer);
-      showLoginError('Sign-in timed out. Please try again.');
-      return;
+  google.accounts.id.prompt((notification) => {
+    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+      resetAuthButtons();
+      showLoginError('Google sign-in could not start in this browser context. Please allow Google popups/cookies and try again.');
     }
-    try {
-      if (!popup || popup.closed) {
-        closedCount++;
-        if (closedCount >= 4) {
-          clearInterval(timer);
-          showLoginError('Sign-in popup was closed. If Google showed a redirect error, add ' + redirectUri + ' to Authorized redirect URIs in Google Cloud.');
-          return;
-        }
-      } else {
-        closedCount = 0;
-      }
-      const url = popup.location.href;
-      if (url.startsWith(redirectUri)) {
-        clearInterval(timer);
-        popup.close();
-        const parsedUrl = new URL(url);
-        const hash = new URLSearchParams(parsedUrl.hash.replace(/^#/, ''));
-        const query = parsedUrl.searchParams;
-        const oauthError = hash.get('error') || query.get('error');
-        if (oauthError) {
-          const description = hash.get('error_description') || query.get('error_description') || oauthError;
-          showLoginError('Google sign-in failed: ' + description);
-          return;
-        }
-        const idToken = hash.get('id_token');
-        if (idToken) await handleGoogleCredential({ credential: idToken });
-        else { showLoginError('Sign-in cancelled or failed.'); }
-      }
-    } catch {
-      if (popup && !popup.closed) {
-        closedCount = 0;
-      }
-    }
-  }, 300);
+  });
 }
 
 async function handleGoogleCredential(response) {
