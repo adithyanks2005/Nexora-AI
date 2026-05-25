@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import jwt
+import requests
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from google.auth.transport import requests as google_requests
@@ -113,6 +114,31 @@ def verify_google_token(id_token_str: str) -> dict[str, Any]:
             "picture": f"https://api.dicebear.com/7.x/initials/svg?seed={name}",
             "sub": f"google_mock_{email}"
         }
+
+    # Popup token flow without redirect_uri: frontend sends "access_token:<token>".
+    if id_token_str.startswith("access_token:"):
+        access_token = id_token_str.split(":", 1)[1].strip()
+        if not access_token:
+            raise HTTPException(status_code=401, detail="Invalid Google access token.")
+        try:
+            resp = requests.get(
+                "https://openidconnect.googleapis.com/v1/userinfo",
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=10,
+            )
+        except Exception as e:
+            raise HTTPException(status_code=401, detail=f"Google userinfo request failed: {e}")
+
+        if resp.status_code != 200:
+            detail = resp.text.strip() or f"HTTP {resp.status_code}"
+            raise HTTPException(status_code=401, detail=f"Invalid Google access token: {detail}")
+
+        info = resp.json()
+        email = info.get("email")
+        sub = info.get("sub")
+        if not email or not sub:
+            raise HTTPException(status_code=401, detail="Google userinfo response missing email or sub.")
+        return info
 
     client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip().lstrip("\ufeff")
     if not client_id:
