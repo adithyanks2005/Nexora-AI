@@ -111,22 +111,14 @@ if STATIC_DIR.exists():
 # ── ads.txt (Google AdSense site verification) ────────────────────────────────
 @app.get("/ads.txt", include_in_schema=False)
 def ads_txt():
-    from fastapi.responses import FileResponse
-    ads_path = FRONTEND_DIR / "ads.txt"
-    if ads_path.exists():
-        return FileResponse(str(ads_path), media_type="text/plain")
-    
-    # Dynamic fallback based on env
-    adsense_id = os.getenv("ADSENSE_CLIENT_ID", "").strip()
-    if adsense_id:
-        pub_id = adsense_id
-        if pub_id.startswith("ca-"):
-            pub_id = pub_id[3:]
-        content = f"google.com, {pub_id}, DIRECT, f08c47fec0942fa0\n"
-        from fastapi.responses import PlainTextResponse
-        return PlainTextResponse(content=content)
-        
-    raise HTTPException(status_code=404)
+    from fastapi.responses import PlainTextResponse
+    # Always generate from env var (with hardcoded fallback).
+    # Do NOT use FileResponse — the file is not reliably accessible
+    # in Vercel's serverless runtime.
+    adsense_id = os.getenv("ADSENSE_CLIENT_ID", "ca-pub-7304874327710410").strip().lstrip("\ufeff")
+    pub_id = adsense_id[3:] if adsense_id.startswith("ca-") else adsense_id
+    content = f"google.com, {pub_id}, DIRECT, f08c47fec0942fa0\n"
+    return PlainTextResponse(content=content, media_type="text/plain")
 
 
 # ── Digital Asset Links (TWA browser bar removal) ─────────────────────────────
