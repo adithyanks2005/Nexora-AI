@@ -108,6 +108,38 @@ if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
+# ── ads.txt (Google AdSense site verification) ────────────────────────────────
+@app.get("/ads.txt", include_in_schema=False)
+def ads_txt():
+    from fastapi.responses import FileResponse
+    ads_path = FRONTEND_DIR / "ads.txt"
+    if ads_path.exists():
+        return FileResponse(str(ads_path), media_type="text/plain")
+    
+    # Dynamic fallback based on env
+    adsense_id = os.getenv("ADSENSE_CLIENT_ID", "").strip()
+    if adsense_id:
+        pub_id = adsense_id
+        if pub_id.startswith("ca-"):
+            pub_id = pub_id[3:]
+        content = f"google.com, {pub_id}, DIRECT, f08c47fec0942fa0\n"
+        from fastapi.responses import PlainTextResponse
+        return PlainTextResponse(content=content)
+        
+    raise HTTPException(status_code=404)
+
+
+# ── Digital Asset Links (TWA browser bar removal) ─────────────────────────────
+@app.get("/.well-known/assetlinks.json", include_in_schema=False)
+def asset_links():
+    from fastapi.responses import FileResponse
+    asset_path = FRONTEND_DIR / ".well-known" / "assetlinks.json"
+    if asset_path.exists():
+        return FileResponse(str(asset_path), media_type="application/json")
+    raise HTTPException(status_code=404)
+
+
+
 # ── Auth ──────────────────────────────────────────────────────────────────────
 @app.post("/api/auth/google")
 def google_login(body: GoogleAuthRequest) -> dict[str, Any]:
@@ -356,6 +388,8 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
         full_path.startswith("api/")
         or full_path.startswith("static/")
         or full_path.startswith("_vercel/")
+        or full_path.startswith(".well-known/")
+        or full_path == "ads.txt"
         or Path(full_path).suffix
     ):
         raise HTTPException(status_code=404)
@@ -369,6 +403,24 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
     html = html.replace(
         "const GOOGLE_CLIENT_ID = '638093827002-msthhp8pnpi0jkui1j2n3n6j07f1cjhs.apps.googleusercontent.com';",
         f"const GOOGLE_CLIENT_ID = {json.dumps(google_client_id)};",
+    )
+
+    # Inject Google AdSense client ID and script if configured.
+    adsense_id = os.getenv("ADSENSE_CLIENT_ID", "ca-pub-7304874327710410").strip().lstrip("\ufeff")
+    if adsense_id:
+        adsense_script = f'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={adsense_id}" crossorigin="anonymous"></script>'
+    else:
+        adsense_script = ''
+    # Replace placeholder + any hardcoded fallback script on the same line
+    import re as _re
+    html = _re.sub(
+        r'<!-- ADSENSE_SCRIPT_PLACEHOLDER -->(<script[^>]*pagead2\.googlesyndication[^>]*></script>)?',
+        adsense_script,
+        html,
+    )
+    html = html.replace(
+        "const ADSENSE_CLIENT_ID = 'ca-pub-7304874327710410';",
+        f"const ADSENSE_CLIENT_ID = {json.dumps(adsense_id)};",
     )
 
     return HTMLResponse(content=html)
