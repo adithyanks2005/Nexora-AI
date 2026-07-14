@@ -371,6 +371,14 @@ def delete_record(
     return {"message": "deleted"}
 
 
+# ── Google Search Console verification ─────────────────────────────────────────
+@app.get("/google3a1d73f6dcff8989.html", response_class=HTMLResponse, include_in_schema=False)
+async def google_site_verification() -> HTMLResponse:
+    verification_file = FRONTEND_DIR / "google3a1d73f6dcff8989.html"
+    if not verification_file.exists():
+        raise HTTPException(status_code=404)
+    return HTMLResponse(content=verification_file.read_text(encoding="utf-8"))
+
 # ── Serve frontend with injected config (Catch-all fallback) ───────────────────
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 @app.get("/{full_path:path}", response_class=HTMLResponse, include_in_schema=False)
