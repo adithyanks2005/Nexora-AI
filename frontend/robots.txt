@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nexora-ai-henna-five.vercel.app/sitemap.xml
