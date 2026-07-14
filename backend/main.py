@@ -121,6 +121,31 @@ def ads_txt():
     return PlainTextResponse(content=content, media_type="text/plain")
 
 
+# ── SEO (sitemap.xml, robots.txt) ─────────────────────────────────────────────
+@app.get("/sitemap.xml", include_in_schema=False)
+def sitemap_xml():
+    from fastapi.responses import PlainTextResponse
+    content = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://nexora-ai-henna-five.vercel.app/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>"""
+    return PlainTextResponse(content=content, media_type="application/xml")
+
+@app.get("/robots.txt", include_in_schema=False)
+def robots_txt():
+    from fastapi.responses import PlainTextResponse
+    content = """User-agent: *
+Allow: /
+
+Sitemap: https://nexora-ai-henna-five.vercel.app/sitemap.xml
+"""
+    return PlainTextResponse(content=content, media_type="text/plain")
+
+
 # ── Digital Asset Links (TWA browser bar removal) ─────────────────────────────
 @app.get("/.well-known/assetlinks.json", include_in_schema=False)
 def asset_links():
