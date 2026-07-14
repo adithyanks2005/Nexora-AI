@@ -1,0 +1,62 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Load signing credentials from local.properties (never commit those values)
+def localProps = new Properties()
+def localPropsFile = rootProject.file('local.properties')
+if (localPropsFile.exists()) {
+    localPropsFile.withReader('UTF-8') { reader -> localProps.load(reader) }
+}
+
+android {
+    namespace 'com.nexoraai.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.nexoraai.app"
+        minSdk 21
+        targetSdk 35
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    signingConfigs {
+        release {
+            storeFile     localProps['STORE_FILE']     ? file(localProps['STORE_FILE'])    : null
+            storePassword localProps['STORE_PASSWORD'] ?: ''
+            keyAlias      localProps['KEY_ALIAS']      ?: 'nexora'
+            keyPassword   localProps['KEY_PASSWORD']   ?: ''
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            applicationIdSuffix ".debug"
+            debuggable true
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    bundle {
+        language { enableSplit = true }
+        density  { enableSplit = true }
+        abi      { enableSplit = true }
+    }
+}
+
+dependencies {
+    implementation 'androidx.browser:browser:1.8.0'
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+}
+

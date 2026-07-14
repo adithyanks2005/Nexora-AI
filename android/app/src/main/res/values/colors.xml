@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches your app's --bg color (#0f1117) and --accent (#6c63ff) -->
+    <color name="colorPrimary">#0f1117</color>
+    <color name="colorPrimaryDark">#04080f</color>
+    <color name="colorAccent">#6c63ff</color>
+    <color name="colorSplash">#0f1117</color>
+</resources>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nexora AI</string>
+
+    <!-- Digital Asset Links statement — links this APK to your Vercel domain.
+         Replace REPLACE_WITH_YOUR_SHA256_CERT_FINGERPRINT with your actual
+         SHA-256 fingerprint from your release keystore. -->
+    <string name="asset_statements">
+        [{
+            \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+            \"target\": {
+                \"namespace\": \"web\",
+                \"site\": \"https://nexora-ai.vercel.app\"
+            }
+        }]
+    </string>
+</resources>

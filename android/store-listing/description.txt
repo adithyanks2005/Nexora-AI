@@ -1,0 +1,54 @@
+🩺 Nexora AI — Your Intelligent Health Companion
+
+Nexora AI is a powerful, AI-driven healthcare assistant designed to help you understand your health, track your wellness, and make informed decisions — all in one beautifully designed app.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🤖 AI HEALTH CHAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Chat naturally with an advanced AI powered by Llama 3.1. Ask health questions, describe symptoms, and get informative, easy-to-understand responses. Full conversation history lets you pick up where you left off.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 SYMPTOM CHECKER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Describe your symptoms and get an AI-powered analysis. Specify the body area affected, severity, and how long you've had the symptoms for a more personalised assessment.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧮 HEALTH CALCULATORS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• BMI Calculator — Know your body mass index instantly
+• Daily Calorie & Macros — Plan your nutrition goals
+• Water Intake — Stay hydrated with personalised targets
+• Ideal Body Weight — Understand your healthy weight range
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💊 MEDICATION REMINDERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Never miss a dose. Add, manage, and track medication reminders with custom icons. Mark reminders as done and clear completed tasks easily.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 HEALTH RECORDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Log and track important health metrics over time:
+• Blood pressure
+• Blood sugar levels
+• Body weight
+• Heart rate
+• Mood tracking
+• And more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎙️ VOICE INPUT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Speak your health questions directly — hands-free and convenient.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌗 DARK & LIGHT MODE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Switch between dark and light themes for comfortable use day and night.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ DISCLAIMER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Nexora AI provides general health information only. It is NOT a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider for any medical concerns.
+
+Created by ADITHYAN KS

@@ -414,5 +414,11 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
         "const ADSENSE_CLIENT_ID = 'ca-pub-7304874327710410';",
         f"const ADSENSE_CLIENT_ID = {json.dumps(adsense_id)};",
     )
+    
+    # Also inject the ID into any ad units in the DOM
+    html = html.replace(
+        'data-ad-client="ca-pub-7304874327710410"',
+        f'data-ad-client="{adsense_id}"'
+    )
 
     return HTMLResponse(content=html)

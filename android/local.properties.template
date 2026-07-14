@@ -1,0 +1,13 @@
+# ============================================================
+#  android/local.properties — SIGNING CREDENTIALS
+#  DO NOT commit this file to git (it's already in .gitignore)
+# ============================================================
+#
+# After running generate-keystore.bat, fill in the values below:
+#
+# STORE_FILE=app/nexora-release.jks
+# STORE_PASSWORD=your_keystore_password_here
+# KEY_ALIAS=nexora
+# KEY_PASSWORD=your_key_password_here
+#
+# Uncomment the lines above and replace the placeholder values.

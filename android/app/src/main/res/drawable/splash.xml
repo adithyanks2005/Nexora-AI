@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash screen: dark background with Nexora accent circle -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <color android:color="#0f1117" />
+    </item>
+    <item
+        android:gravity="center"
+        android:width="120dp"
+        android:height="120dp">
+        <shape android:shape="oval">
+            <gradient
+                android:startColor="#6c63ff"
+                android:endColor="#a78bfa"
+                android:angle="135"
+                android:type="linear" />
+        </shape>
+    </item>
+</layer-list>

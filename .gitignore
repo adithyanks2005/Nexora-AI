@@ -50,3 +50,10 @@ data/
 # Dependencies
 node_modules/
 .npm
+
+# Android signing — NEVER commit these
+android/local.properties
+android/app/*.jks
+android/app/*.keystore
+android/.gradle/
+android/app/build/

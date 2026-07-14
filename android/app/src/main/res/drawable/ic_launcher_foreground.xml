@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DNA/health icon representing Nexora AI -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer circle gradient background -->
+    <path
+        android:fillColor="#6c63ff"
+        android:pathData="M54,20 C35.2,20 20,35.2 20,54 C20,72.8 35.2,88 54,88 C72.8,88 88,72.8 88,54 C88,35.2 72.8,20 54,20 Z" />
+    <!-- DNA helix simplified symbol -->
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M44,36 Q54,42 64,36 L64,40 Q54,46 44,40 Z" />
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M44,48 Q54,54 64,48 L64,52 Q54,58 44,52 Z" />
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M44,60 Q54,66 64,60 L64,64 Q54,70 44,64 Z" />
+    <path
+        android:fillColor="#a78bfa"
+        android:pathData="M44,36 L44,72 L48,72 L48,36 Z" />
+    <path
+        android:fillColor="#a78bfa"
+        android:pathData="M60,36 L60,72 L64,72 L64,36 Z" />
+</vector>
