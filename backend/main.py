@@ -124,28 +124,28 @@ def ads_txt():
 # ── SEO (sitemap.xml, robots.txt) ─────────────────────────────────────────────
 @app.get("/sitemap.xml", include_in_schema=False)
 def sitemap_xml():
-    from fastapi.responses import FileResponse
+    from fastapi.responses import Response
     file_path = FRONTEND_DIR / "sitemap.xml"
     if file_path.exists():
-        return FileResponse(str(file_path), media_type="application/xml")
+        return Response(content=file_path.read_text(encoding="utf-8"), media_type="application/xml")
     raise HTTPException(status_code=404)
 
 @app.get("/robots.txt", include_in_schema=False)
 def robots_txt():
-    from fastapi.responses import FileResponse
+    from fastapi.responses import Response
     file_path = FRONTEND_DIR / "robots.txt"
     if file_path.exists():
-        return FileResponse(str(file_path), media_type="text/plain")
+        return Response(content=file_path.read_text(encoding="utf-8"), media_type="text/plain")
     raise HTTPException(status_code=404)
 
 
 # ── Digital Asset Links (TWA browser bar removal) ─────────────────────────────
 @app.get("/.well-known/assetlinks.json", include_in_schema=False)
 def asset_links():
-    from fastapi.responses import FileResponse
+    from fastapi.responses import Response
     asset_path = FRONTEND_DIR / ".well-known" / "assetlinks.json"
     if asset_path.exists():
-        return FileResponse(str(asset_path), media_type="application/json")
+        return Response(content=asset_path.read_text(encoding="utf-8"), media_type="application/json")
     raise HTTPException(status_code=404)
 
 
