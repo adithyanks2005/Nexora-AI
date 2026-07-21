@@ -2031,14 +2031,19 @@ async function continueAsGuest() {
   btn.textContent = 'Starting guest session...';
   try {
     const data = await authFetch('/api/auth/guest', 'POST');
-    if (!data || !data.token) throw new Error('No token returned from server.');
+    if (!data || !data.token) throw new Error('Server returned no token. Check GROQ_API_KEY and backend logs.');
     setToken(data.token);
     currentUser = data.user;
-    // Small delay to ensure token is saved before showApp fires
-    await new Promise(r => setTimeout(r, 50));
+    // Ensure token is saved before showing app
+    await new Promise(r => setTimeout(r, 100));
+    // Verify the token works before showing app
+    const me = await authFetch('/api/auth/me');
+    if (!me) throw new Error('Token verification failed after login.');
+    currentUser = me;
     showApp();
   } catch (e) {
-    showLoginError(e.message || 'Could not start guest session.');
+    console.error('Guest login failed:', e);
+    showLoginError(e.message || 'Could not start guest session. Is the backend running?');
     btn.disabled = false;
     btn.textContent = 'Continue as Guest';
   }
@@ -2070,8 +2075,8 @@ async function checkAuth() {
     showApp();
   } catch(e) {
     const msg = e.message || '';
-    // Only clear token and redirect on real auth errors, not network issues
-    if (msg.includes('expired') || msg.includes('Invalid token') || msg.includes('401') || msg.includes('not found') || msg.includes('sign in')) {
+    // Only clear token on definitive auth failures
+    if (msg.includes('expired') || msg.includes('Invalid token') || msg.includes('not found') || msg.includes('sign in')) {
       clearToken();
     }
     showLoginScreen();
@@ -2085,13 +2090,17 @@ function showLoginScreen() {
 }
 
 function showApp() {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.querySelector('.app').style.display = 'flex';
-  updateUserUI();
-  // Load data silently — errors must NOT cause sign-out
-  loadReminders().catch(e => console.warn('loadReminders failed:', e));
-  loadRecords().catch(e => console.warn('loadRecords failed:', e));
-  loadChatHistory().catch(e => console.warn('loadChatHistory failed:', e));
+  try {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.querySelector('.app').style.display = 'flex';
+    updateUserUI();
+    loadReminders().catch(e => console.warn('loadReminders:', e));
+    loadRecords().catch(e => console.warn('loadRecords:', e));
+    loadChatHistory().catch(e => console.warn('loadChatHistory:', e));
+  } catch(e) {
+    console.error('showApp crashed:', e);
+    showLoginError('App failed to load: ' + e.message);
+  }
 }
 
 function updateUserUI() {
