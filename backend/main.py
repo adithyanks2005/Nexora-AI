@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import sys
 import os
 import json
@@ -56,9 +57,11 @@ from backend.database import (
     toggle_reminder_done,
     touch_chat_session,
 )
+from backend.crawler import crawl_url
 from backend.models import (
-    BMIRequest, CalorieRequest, ChatRequest, GoogleAuthRequest, HealthRecordIn,
-    IdealWeightRequest, ReminderIn, SessionCreate, SupabaseAuthRequest, SymptomRequest, WaterRequest,
+    BMIRequest, CalorieRequest, ChatRequest, CrawlRequest, CrawlResponse,
+    GoogleAuthRequest, HealthRecordIn, IdealWeightRequest, ReminderIn,
+    SessionCreate, SupabaseAuthRequest, SymptomRequest, WaterRequest,
 )
 
 
@@ -73,9 +76,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Nexora AI - Healthcare Chatbot", version="2.0.0", lifespan=lifespan)
 
+_ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv("ALLOWED_ORIGINS", "*").split(",")
+    if o.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_ALLOWED_ORIGINS,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -136,6 +145,15 @@ def robots_txt():
     file_path = FRONTEND_DIR / "robots.txt"
     if file_path.exists():
         return Response(content=file_path.read_text(encoding="utf-8"), media_type="text/plain")
+    raise HTTPException(status_code=404)
+
+
+@app.get("/llms.txt", include_in_schema=False)
+def llms_txt():
+    from fastapi.responses import PlainTextResponse
+    file_path = FRONTEND_DIR / "llms.txt"
+    if file_path.exists():
+        return PlainTextResponse(content=file_path.read_text(encoding="utf-8"))
     raise HTTPException(status_code=404)
 
 
@@ -389,6 +407,16 @@ def delete_record(
     return {"message": "deleted"}
 
 
+# -- Web Crawler --------------------------------------------------------------
+@app.post("/api/crawl", response_model=CrawlResponse)
+async def crawl(
+    req: CrawlRequest,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, Any]:
+    """Crawl a URL and return structured content: title, description, headings, links, text preview."""
+    return await crawl_url(req.url, respect_robots=req.respect_robots)
+
+
 # ── Google Search Console verification ─────────────────────────────────────────
 @app.get("/google3a1d73f6dcff8989.html", response_class=HTMLResponse, include_in_schema=False)
 async def google_site_verification() -> HTMLResponse:
@@ -430,8 +458,7 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
     else:
         adsense_script = ''
     # Replace placeholder + any hardcoded fallback script on the same line
-    import re as _re
-    html = _re.sub(
+    html = re.sub(
         r'<!-- ADSENSE_SCRIPT_PLACEHOLDER -->(<script[^>]*pagead2\.googlesyndication[^>]*></script>)?',
         adsense_script,
         html,

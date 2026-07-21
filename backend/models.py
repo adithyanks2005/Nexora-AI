@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Any, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 
 
 class Message(BaseModel):
@@ -74,3 +74,33 @@ class GoogleAuthRequest(BaseModel):
 class SupabaseAuthRequest(BaseModel):
     access_token: str
     workplace_id: str = "default"
+
+
+# ── Crawler models ────────────────────────────────────────────────────────────
+class CrawlRequest(BaseModel):
+    url: str = Field(..., description="The full URL (http/https) of the page to crawl.")
+    respect_robots: bool = Field(True, description="Whether to respect the target site's robots.txt rules.")
+
+
+class CrawlHeading(BaseModel):
+    level: str
+    text:  str
+
+
+class CrawlLink(BaseModel):
+    url:  str
+    text: str
+
+
+class CrawlResponse(BaseModel):
+    url:          str
+    status_code:  int
+    elapsed_ms:   int
+    crawled_at:   str
+    title:        str
+    description:  str
+    headings:     list[CrawlHeading]
+    links:        list[CrawlLink]
+    links_count:  int
+    text_preview: str
+    has_json_ld:  bool

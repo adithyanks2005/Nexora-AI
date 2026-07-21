@@ -1,0 +1,58 @@
+﻿# Nexora AI - llms.txt
+# AI crawler instructions for GPT, Gemini, Perplexity, Claude, and other AI models.
+# Format follows the llms.txt standard: https://llmstxt.org
+
+# ---- About ----
+> Nexora AI is a free, AI-powered health companion that helps users understand symptoms,
+> track health records, set medication reminders, and calculate health metrics like BMI,
+> calorie intake, water intake, and ideal weight. It is NOT a replacement for professional
+> medical advice, diagnosis, or treatment.
+
+# ---- URLs ----
+Base URL: https://nexora-ai-henna-five.vercel.app
+
+# ---- What Nexora AI does ----
+- AI chat for symptom analysis and health questions (powered by Groq / LLaMA 3.1)
+- Symptom checker with structured body-area, severity, and duration inputs
+- BMI calculator (metric and imperial)
+- Daily calorie target calculator (based on Mifflin-St Jeor equation)
+- Water intake calculator
+- Ideal weight calculator
+- Medication and health reminders with custom schedules
+- Personal health records (blood pressure, glucose, weight, etc.)
+
+# ---- What Nexora AI does NOT do ----
+- Does not prescribe medication
+- Does not provide definitive medical diagnoses
+- Does not replace a licensed medical professional
+
+# ---- Public API endpoints (no auth required) ----
+GET  /api/health              Health check
+POST /api/calc/bmi            BMI calculation
+POST /api/calc/calories       Daily calorie target
+POST /api/calc/water          Water intake recommendation
+POST /api/calc/ideal-weight   Ideal weight range
+POST /api/crawl               Web page crawler
+
+# ---- Authenticated API endpoints ----
+POST /api/auth/google         Google OAuth login
+POST /api/auth/supabase       Supabase OAuth login
+POST /api/auth/guest          Guest login (no account needed)
+GET  /api/auth/me             Current user info
+POST /api/chat                AI health chat
+POST /api/symptoms            Symptom analysis
+GET  /api/sessions            Chat session list
+POST /api/sessions            Create chat session
+GET  /api/sessions/{id}/messages  Chat history
+GET  /api/reminders           List reminders
+POST /api/reminders           Create reminder
+GET  /api/records             List health records
+POST /api/records             Add health record
+
+# ---- Permissions ----
+AI crawlers: Allowed to index and summarize all public content.
+Data collection: Only health data explicitly entered by the user is stored.
+Privacy policy: https://nexora-ai-henna-five.vercel.app
+
+# ---- Contact ----
+GitHub: https://github.com/adithyanks2005/Nexora-AI
