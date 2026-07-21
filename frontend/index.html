@@ -1164,7 +1164,7 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
     <div class="auth-actions">
       <!-- Official Google GSI Button Container -->
       <div id="googleSignInBtnContainer" style="display:none;"></div>
-      <button id="googlePopupBtn" class="google-btn google-primary-btn" style="display:none;" onclick="openGoogleOAuthPopup()">
+      <button id="googlePopupBtn" class="google-btn google-primary-btn" onclick="openGoogleOAuthPopup()">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;flex-shrink:0;">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -1173,8 +1173,8 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
         </svg>
         Continue with Google
       </button>
-      <!-- Mock Google Login Fallback, only shown during local development -->
-      <div id="mockGoogleSignInContainer" class="mock-google-wrap">
+      <!-- Mock Google Login Fallback, only shown during local development when no real Client ID -->
+      <div id="mockGoogleSignInContainer" class="mock-google-wrap" style="display:none;">
         <button class="google-btn mock-google-btn" onclick="promptMockGoogleAccount()">
           Continue with Mock Google
         </button>
@@ -1894,20 +1894,21 @@ function initGoogleSignIn() {
                         GOOGLE_CLIENT_ID.includes('placeholder');
 
   if (isPlaceholder) {
-    container.style.display = 'none';
+    // No real Client ID — show mock button only on local dev, nothing on prod
     popupBtn.style.display = 'none';
+    container.style.display = 'none';
     if (mockContainer) mockContainer.style.display = isLocalDevelopment() ? 'block' : 'none';
     return;
   }
 
-  // Valid Client ID - use the branded popup button as the primary sign-in action.
-  container.style.display = 'none';
+  // Valid Client ID — keep Google button visible, hide mock
   popupBtn.style.display = 'flex';
+  container.style.display = 'none';
   if (mockContainer) mockContainer.style.display = 'none';
 
+  // Initialize GSI for One-Tap (optional, does not affect popup button)
   if (!window.google || !window.google.accounts) {
-    // GSI script not loaded yet, retry in 100ms.
-    setTimeout(initGoogleSignIn, 100);
+    setTimeout(initGoogleSignIn, 200);
     return;
   }
 
@@ -1922,10 +1923,8 @@ function initGoogleSignIn() {
       gsiInitialized = true;
     }
   } catch (err) {
-    console.error("GSI init failed: ", err);
-    container.style.display = 'none';
-    popupBtn.style.display = 'flex';
-    if (mockContainer) mockContainer.style.display = isLocalDevelopment() ? 'block' : 'none';
+    console.error("GSI init failed:", err);
+    // Popup button still works even if One-Tap init fails
   }
 }
 
