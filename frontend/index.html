@@ -1210,20 +1210,6 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
       </button>
       <button class="nav-item" onclick="switchSection('calc',this)">
         <span class="nav-icon">🧮</span> Calculators
-      </button>
-      <button class="nav-item" onclick="switchSection('reminders',this)">
-        <span class="nav-icon">⏰</span> Reminders
-      </button>
-      <button class="nav-item" onclick="switchSection('records',this)">
-        <span class="nav-icon">📋</span> Health Records
-      </button>
-      <button class="nav-item" onclick="switchSection('watch',this)">
-        <span class="nav-icon">⌚</span> Smart Watch
-      </button>
-    </nav>
-    <!-- User info -->
-    <div class="user-info" id="sidebarUser" style="display:none;">
-      <div class="user-avatar-fallback" id="userAvatarFallback">?</div>
       <img class="user-avatar" id="userAvatarImg" src="" alt="User Avatar" width="36" height="36" style="display:none;" onerror="this.style.display='none';document.getElementById('userAvatarFallback').style.display='flex'"/>
       <div style="flex:1;min-width:0;">
         <div class="user-name" id="sidebarUserName">—</div>
@@ -1702,6 +1688,110 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
         <div style="text-align:center;padding:12px 0 6px;font-size:11px;color:var(--text3);line-height:1.7;">
           Smartwatch data is for wellness tracking only and does not constitute medical advice.<br>
           Web Bluetooth works in Chrome on Android and desktop. Not supported on iOS Safari.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HEALTH ARTICLES SECTION ── -->
+    <div class="section" id="section-articles" style="overflow-y: auto;">
+      <div class="panel" style="padding: 24px; max-width: 800px; margin: 0 auto;">
+        <div class="panel-header" style="margin-bottom: 32px; text-align: center;">
+          <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;margin-bottom:8px;">📚 Health & Wellness Articles</h2>
+          <p style="font-size:15px;color:var(--text2);">Explore evidence-based guides to improve your daily wellbeing.</p>
+        </div>
+
+        <div class="article-list" style="display:flex; flex-direction:column; gap: 24px;">
+          <!-- Article 1 -->
+          <article class="form-card" style="padding:28px;">
+            <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:22px;margin-bottom:12px;color:var(--accent);">The Science of Sleep: How to Improve Your Sleep Hygiene</h3>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Published: July 2026 • 5 min read</div>
+            <div style="font-size:15px;line-height:1.8;color:var(--text);">
+              <p style="margin-bottom:14px;">Quality sleep is the cornerstone of good health, impacting everything from your immune system to your emotional well-being. However, in our fast-paced world, achieving restful sleep can often feel like an impossible task. Sleep hygiene refers to the habits and practices that are conducive to sleeping well on a regular basis.</p>
+              <h4 style="font-size:16px;margin:20px 0 10px;font-weight:600;">Why is Sleep Important?</h4>
+              <p style="margin-bottom:14px;">During sleep, your body goes into repair mode. Growth hormones are released to rebuild tissue and muscle, the brain consolidates memories, and the immune system produces cytokines to fight infection. Chronic sleep deprivation has been linked to a higher risk of conditions like obesity, type 2 diabetes, cardiovascular disease, and depression.</p>
+              <h4 style="font-size:16px;margin:20px 0 10px;font-weight:600;">Key Elements of Good Sleep Hygiene</h4>
+              <ul style="margin-left:20px;margin-bottom:14px;">
+                <li style="margin-bottom:8px;"><strong>Consistent Schedule:</strong> Go to bed and wake up at the same time every day, even on weekends. This reinforces your body's sleep-wake cycle.</li>
+                <li style="margin-bottom:8px;"><strong>Create a Restful Environment:</strong> Ensure your bedroom is cool, dark, and quiet. Consider using room-darkening shades, earplugs, a fan, or white noise devices.</li>
+                <li style="margin-bottom:8px;"><strong>Limit Screen Time:</strong> The blue light emitted by phones, tablets, and computers suppresses the production of melatonin, the sleep hormone. Stop using these devices at least an hour before bed.</li>
+                <li style="margin-bottom:8px;"><strong>Watch Your Diet:</strong> Avoid heavy or large meals within a couple of hours of bedtime. Nicotine, caffeine, and alcohol should be avoided in the hours leading up to sleep.</li>
+              </ul>
+              <p>Improving your sleep hygiene takes time and consistency, but the profound benefits to your physical and mental health make it a highly worthwhile investment.</p>
+            </div>
+          </article>
+
+          <!-- Article 2 -->
+          <article class="form-card" style="padding:28px;">
+            <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:22px;margin-bottom:12px;color:var(--accent);">Understanding BMI and Ideal Body Weight</h3>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Published: July 2026 • 4 min read</div>
+            <div style="font-size:15px;line-height:1.8;color:var(--text);">
+              <p style="margin-bottom:14px;">Body Mass Index (BMI) is a simple and widely used tool to estimate whether a person has a healthy body weight for a given height. While it's not a perfect measure of health, it provides a useful starting point for understanding weight-related risks.</p>
+              <h4 style="font-size:16px;margin:20px 0 10px;font-weight:600;">How is BMI Calculated?</h4>
+              <p style="margin-bottom:14px;">BMI is calculated by dividing your weight in kilograms by the square of your height in meters. The resulting number falls into one of several categories: Underweight (Under 18.5), Normal weight (18.5 – 24.9), Overweight (25 – 29.9), and Obesity (30 or greater).</p>
+              <h4 style="font-size:16px;margin:20px 0 10px;font-weight:600;">The Limitations of BMI</h4>
+              <p style="margin-bottom:14px;">It is important to remember that BMI does not directly measure body fat. It cannot distinguish between fat and muscle mass. Therefore, a very muscular athlete might have a BMI that categorizes them as "overweight" despite having low body fat and excellent metabolic health. Similarly, older adults may have a normal BMI but have lost muscle mass, a condition called sarcopenia.</p>
+              <h4 style="font-size:16px;margin:20px 0 10px;font-weight:600;">Beyond BMI</h4>
+              <p>For a more comprehensive view of your health, doctors look beyond BMI to factors such as waist circumference, body fat percentage, blood pressure, cholesterol levels, and family medical history. Maintaining a healthy weight should always be focused on overall well-being and sustainable lifestyle habits rather than just hitting a specific number on a scale.</p>
+            </div>
+          </article>
+
+          <!-- Article 3 -->
+          <article class="form-card" style="padding:28px;">
+            <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:22px;margin-bottom:12px;color:var(--accent);">Hydration 101: Why Water is Your Body's Best Friend</h3>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Published: July 2026 • 3 min read</div>
+            <div style="font-size:15px;line-height:1.8;color:var(--text);">
+              <p style="margin-bottom:14px;">Water makes up about 60% of our body weight and is essential for the function of every cell, tissue, and organ. Despite its importance, many people fail to consume enough fluids daily, leading to mild dehydration that can negatively impact physical and cognitive performance.</p>
+              <h4 style="font-size:16px;margin:20px 0 10px;font-weight:600;">The Benefits of Staying Hydrated</h4>
+              <ul style="margin-left:20px;margin-bottom:14px;">
+                <li style="margin-bottom:8px;"><strong>Temperature Regulation:</strong> Water allows the body to release heat when ambient temperature is higher than body temperature via sweating.</li>
+                <li style="margin-bottom:8px;"><strong>Joint Lubrication:</strong> Cartilage, found in joints and the disks of the spine, contains around 80% water. Long-term dehydration can reduce the joints' shock-absorbing ability.</li>
+                <li style="margin-bottom:8px;"><strong>Digestion and Waste Removal:</strong> Water is needed in the processes of sweating and the removal of urine and feces. It helps prevent constipation and reduces the burden on kidneys.</li>
+              </ul>
+              <h4 style="font-size:16px;margin:20px 0 10px;font-weight:600;">How Much Water Do You Need?</h4>
+              <p>The common advice of "eight 8-ounce glasses a day" is easy to remember, but hydration needs vary based on age, sex, activity level, and climate. The U.S. National Academies of Sciences, Engineering, and Medicine determined that an adequate daily fluid intake is about 15.5 cups (3.7 liters) for men and 11.5 cups (2.7 liters) for women. Pay attention to your body's signals: thirst and the color of your urine (pale yellow is ideal) are the best indicators of your hydration status.</p>
+            </div>
+          </article>
+
+          <!-- Article 4 -->
+          <article class="form-card" style="padding:28px;">
+            <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:22px;margin-bottom:12px;color:var(--accent);">Stress Management: Simple Techniques for Daily Life</h3>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Published: July 2026 • 4 min read</div>
+            <div style="font-size:15px;line-height:1.8;color:var(--text);">
+              <p style="margin-bottom:14px;">Stress is a natural physical and mental reaction to life experiences. Everyone expresses stress from time to time. However, chronic stress can wreak havoc on your mind and body. Effective stress management helps you break the hold stress has on your life, so you can be happier, healthier, and more productive.</p>
+              <h4 style="font-size:16px;margin:20px 0 10px;font-weight:600;">Recognizing the Signs of Stress</h4>
+              <p style="margin-bottom:14px;">Physical signs can include headaches, muscle tension, fatigue, and sleep problems. Emotional signs might involve anxiety, restlessness, lack of motivation, and irritability. Recognizing these symptoms early is the first step in managing them.</p>
+              <h4 style="font-size:16px;margin:20px 0 10px;font-weight:600;">Effective Management Techniques</h4>
+              <ul style="margin-left:20px;margin-bottom:14px;">
+                <li style="margin-bottom:8px;"><strong>Physical Activity:</strong> Exercise is one of the most important things you can do to combat stress. It lowers your body's stress hormones over time and releases endorphins.</li>
+                <li style="margin-bottom:8px;"><strong>Deep Breathing:</strong> Deep breathing activates the parasympathetic nervous system, which controls the relaxation response. Techniques like box breathing or the 4-7-8 method can be very effective.</li>
+                <li style="margin-bottom:8px;"><strong>Mindfulness and Meditation:</strong> These practices help you stay anchored in the present moment, reducing the tendency to ruminate on past problems or worry about the future.</li>
+              </ul>
+              <p>Remember that stress management is not a one-size-fits-all approach. It is about building a personalized toolkit of coping mechanisms that work for you.</p>
+            </div>
+          </article>
+
+          <!-- Article 5 -->
+          <article class="form-card" style="padding:28px;">
+            <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:22px;margin-bottom:12px;color:var(--accent);">Nutrition Basics: Building a Balanced Diet</h3>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">Published: July 2026 • 5 min read</div>
+            <div style="font-size:15px;line-height:1.8;color:var(--text);">
+              <p style="margin-bottom:14px;">A balanced diet is crucial for providing the nutrients your body needs to function correctly. Without good nutrition, your body is more prone to disease, infection, fatigue, and poor performance. Understanding the basics of macronutrients and micronutrients is the foundation of healthy eating.</p>
+              <h4 style="font-size:16px;margin:20px 0 10px;font-weight:600;">Macronutrients vs. Micronutrients</h4>
+              <p style="margin-bottom:14px;"><strong>Macronutrients</strong> are nutrients the body needs in large amounts: carbohydrates, proteins, and fats. They provide the body with energy. <strong>Micronutrients</strong> are vitamins and minerals. While only required in small quantities, they are essential for disease prevention and well-being.</p>
+              <h4 style="font-size:16px;margin:20px 0 10px;font-weight:600;">Components of a Balanced Plate</h4>
+              <ul style="margin-left:20px;margin-bottom:14px;">
+                <li style="margin-bottom:8px;"><strong>Vegetables and Fruits (Half the plate):</strong> Aim for color and variety. They are packed with vitamins, minerals, and dietary fiber.</li>
+                <li style="margin-bottom:8px;"><strong>Whole Grains (Quarter of the plate):</strong> Opt for whole wheat, barley, quinoa, oats, and brown rice. They have a milder effect on blood sugar and insulin than white bread and white rice.</li>
+                <li style="margin-bottom:8px;"><strong>Healthy Protein (Quarter of the plate):</strong> Fish, poultry, beans, and nuts are healthy, versatile protein sources. Limit red meat and avoid processed meats.</li>
+                <li style="margin-bottom:8px;"><strong>Healthy Plant Oils (In moderation):</strong> Use oils like olive, canola, soy, corn, and sunflower. Avoid partially hydrogenated oils, which contain unhealthy trans fats.</li>
+              </ul>
+              <p>Eating well doesn't have to be complicated. By focusing on whole, unprocessed foods and maintaining mindful portion sizes, you can build a diet that supports long-term health and vitality.</p>
+            </div>
+          </article>
+          
+        </div>
+        <div style="text-align:center;padding:24px 0 12px;font-size:11px;color:var(--text3);">
+          Disclaimer: These articles are for informational purposes only and should not replace professional medical advice.
         </div>
       </div>
     </div>
