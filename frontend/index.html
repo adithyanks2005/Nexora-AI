@@ -2623,30 +2623,31 @@ async function connectWatch() {
     return;
   }
 
-  // Check if Bluetooth is available (available = adapter present & not blocked by OS)
+  // FIRST: Check if Bluetooth is available (before showing browser picker)
   try {
     const available = await navigator.bluetooth.getAvailability();
     if (!available) {
-      // Bluetooth is off or unavailable — show OS settings link
-      nameEl.textContent = 'Bluetooth is off';
-      infoEl.innerHTML = `Please turn on Bluetooth on your device, then tap Connect again.
-        <a href="ms-settings:bluetooth" id="btSettingsLink"
-           style="color:var(--accent);text-decoration:underline;margin-left:4px;cursor:pointer;"
-           onclick="event.preventDefault(); openBluetoothSettings();">
-          Open Bluetooth Settings ↗
-        </a>`;
+      // Bluetooth is OFF — show our custom prompt instead of browser dialog
       dot.className = 'watch-status-dot';
-      btn.textContent = '⌚ Connect Watch';
-      btn.classList.remove('danger');
+      nameEl.textContent = 'Bluetooth is turned off';
+      infoEl.innerHTML = `
+        <div style="margin-bottom:8px;">Please turn on Bluetooth on your device.</div>
+        <button onclick="openBluetoothSettings()" 
+                style="padding:8px 16px; border-radius:8px; background:linear-gradient(135deg,var(--accent),var(--accent2)); 
+                       color:#fff; border:none; font-size:13px; font-weight:600; cursor:pointer; margin-right:8px;">
+          Open Bluetooth Settings
+        </button>
+        <span style="font-size:12px; color:var(--text3);">Then tap Connect again after enabling Bluetooth.</span>
+      `;
       return;
     }
   } catch(e) {
-    // getAvailability() not supported — proceed anyway and let requestDevice handle it
+    // getAvailability() not supported — proceed and let requestDevice handle it
   }
 
   dot.className = 'watch-status-dot connecting';
   nameEl.textContent = 'Searching nearby devices…';
-  infoEl.textContent = 'Make sure your smartwatch is nearby and Bluetooth is on…';
+  infoEl.textContent = 'Select your smartwatch from the list. Make sure it's nearby and powered on…';
   btn.textContent = 'Scanning...';
   btn.disabled = true;
 
@@ -2704,22 +2705,28 @@ async function connectWatch() {
     btn.classList.remove('danger');
 
     const msg = err.message || '';
+    const errName = err.name || '';
 
-    if (msg.includes('Bluetooth adapter') || msg.includes('not available') || msg.includes('adapter')) {
-      // Bluetooth adapter off or disabled
+    // Handle different error cases
+    if (msg.includes('Bluetooth adapter') || msg.includes('not available') || msg.includes('adapter') || errName === 'NotFoundError' && msg.includes('Bluetooth')) {
+      // Bluetooth adapter is off or disabled
       dot.className = 'watch-status-dot';
-      nameEl.textContent = 'Bluetooth is off';
-      infoEl.innerHTML = `Bluetooth is turned off. Please enable it, then tap Connect again.
-        <a href="#" onclick="event.preventDefault(); openBluetoothSettings();"
-           style="color:var(--accent);text-decoration:underline;margin-left:4px;">
-          Open Bluetooth Settings ↗
-        </a>`;
-    } else if (err.name === 'NotFoundError' || msg.includes('cancelled') || msg.includes('User cancelled')) {
+      nameEl.textContent = 'Bluetooth is turned off';
+      infoEl.innerHTML = `
+        <div style="margin-bottom:8px;">Bluetooth is currently disabled.</div>
+        <button onclick="openBluetoothSettings()" 
+                style="padding:8px 16px; border-radius:8px; background:linear-gradient(135deg,var(--accent),var(--accent2)); 
+                       color:#fff; border:none; font-size:13px; font-weight:600; cursor:pointer;">
+          Open Bluetooth Settings
+        </button>
+      `;
+    } else if (errName === 'NotFoundError' || msg.includes('cancelled') || msg.includes('cancel') || msg.includes('User cancel')) {
       // User dismissed the picker — silent reset
       dot.className = 'watch-status-dot';
       nameEl.textContent = 'No device selected';
-      infoEl.textContent = 'Selection cancelled. Tap Connect to try again.';
+      infoEl.textContent = 'You cancelled the device selection. Tap Connect to try again.';
     } else {
+      // Other error
       dot.className = 'watch-status-dot';
       nameEl.textContent = 'Connection failed';
       infoEl.textContent = 'Could not connect: ' + msg;
@@ -2729,26 +2736,68 @@ async function connectWatch() {
 
 function openBluetoothSettings() {
   const ua = navigator.userAgent;
-  // Windows — ms-settings:bluetooth
+  const infoEl = document.getElementById('wsInfo');
+  
+  // Windows — ms-settings:bluetooth opens Bluetooth settings directly
   if (ua.includes('Windows')) {
-    window.open('ms-settings:bluetooth', '_blank');
+    try {
+      window.location.href = 'ms-settings:bluetooth';
+      if (infoEl) {
+        infoEl.innerHTML = `
+          <div style="color:var(--success); margin-bottom:8px;">✓ Opening Bluetooth settings...</div>
+          <div style="font-size:12px; color:var(--text3);">
+            Turn on Bluetooth in the settings window, then come back and tap 
+            <strong style="color:var(--text);">Connect Watch</strong> again.
+          </div>
+        `;
+      }
+    } catch(e) {
+      if (infoEl) infoEl.innerHTML = 'Could not open settings automatically. Please open Settings → Bluetooth manually.';
+    }
     return;
   }
-  // Android Chrome — show instruction since no direct settings URL is available
+  
+  // Android Chrome — no direct URL, show instruction
   if (/Android/.test(ua)) {
-    const infoEl = document.getElementById('wsInfo');
-    if (infoEl) infoEl.innerHTML = 'On Android: swipe down → long-press the Bluetooth icon to open settings. Then come back and tap Connect.';
+    if (infoEl) {
+      infoEl.innerHTML = `
+        <div style="margin-bottom:8px; font-weight:600;">📱 How to enable Bluetooth on Android:</div>
+        <ol style="margin-left:20px; font-size:13px; line-height:1.7; color:var(--text2);">
+          <li>Swipe down from the top to open Quick Settings</li>
+          <li>Long-press the Bluetooth icon</li>
+          <li>Turn on Bluetooth</li>
+          <li>Come back to this page and tap Connect Watch</li>
+        </ol>
+      `;
+    }
     return;
   }
+  
   // macOS / iOS — show instruction
   if (/Mac|iPhone|iPad/.test(ua)) {
-    const infoEl = document.getElementById('wsInfo');
-    if (infoEl) infoEl.innerHTML = 'On Mac/iOS: open System Settings → Bluetooth and turn it on. Then come back and tap Connect.';
+    if (infoEl) {
+      infoEl.innerHTML = `
+        <div style="margin-bottom:8px; font-weight:600;">🍎 How to enable Bluetooth on Mac/iOS:</div>
+        <ol style="margin-left:20px; font-size:13px; line-height:1.7; color:var(--text2);">
+          <li>Open <strong>System Settings</strong></li>
+          <li>Go to <strong>Bluetooth</strong></li>
+          <li>Turn Bluetooth <strong>On</strong></li>
+          <li>Come back to this page and tap Connect Watch</li>
+        </ol>
+      `;
+    }
     return;
   }
+  
   // Fallback
-  const infoEl = document.getElementById('wsInfo');
-  if (infoEl) infoEl.textContent = 'Please turn on Bluetooth in your system settings, then tap Connect again.';
+  if (infoEl) {
+    infoEl.innerHTML = `
+      <div style="color:var(--text2);">
+        Please open your system settings and enable Bluetooth, then tap 
+        <strong style="color:var(--text);">Connect Watch</strong> again.
+      </div>
+    `;
+  }
 }
 
 function disconnectWatch() {
