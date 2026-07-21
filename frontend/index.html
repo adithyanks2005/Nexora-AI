@@ -1831,6 +1831,11 @@ let currentUser = null;
 function getToken() { return localStorage.getItem('nexora_jwt'); }
 function setToken(t) { localStorage.setItem('nexora_jwt', t); }
 function clearToken() { localStorage.removeItem('nexora_jwt'); }
+function getStoredUser() {
+  try { return JSON.parse(localStorage.getItem('nexora_user') || 'null'); } catch { return null; }
+}
+function setStoredUser(u) { localStorage.setItem('nexora_user', JSON.stringify(u)); }
+function clearStoredUser() { localStorage.removeItem('nexora_user'); }
 
 function getWorkplaceId() {
   const params = new URLSearchParams(window.location.search);
@@ -1936,6 +1941,7 @@ async function handleGoogleCredential(response) {
     const data = await authFetch('/api/auth/google', 'POST', { id_token: response.credential });
     if (!data || !data.token) throw new Error('No token received from server.');
     setToken(data.token);
+    setStoredUser(data.user);
     currentUser = data.user;
     showApp();
   } catch(e) {
@@ -1968,8 +1974,9 @@ async function continueAsGuest() {
   btn.textContent = 'Starting session...';
   try {
     const data = await authFetch('/api/auth/guest', 'POST');
-    if (!data || !data.token) throw new Error('No token returned. Check Vercel environment variables.');
+    if (!data || !data.token) throw new Error('No token returned from server.');
     setToken(data.token);
+    setStoredUser(data.user);
     currentUser = data.user;
     showApp();
   } catch(e) {
@@ -1991,14 +1998,32 @@ function showLandingScreen() { showLoginScreen(); }
 async function checkAuth() {
   const token = getToken();
   if (!token) { showLoginScreen(); return; }
+
+  // Use stored user for instant load — avoids cold-start DB lookup
+  const stored = getStoredUser();
+  if (stored) {
+    currentUser = stored;
+    showApp();
+    // Verify token in background — if invalid, sign out silently
+    authFetch('/api/auth/me').then(u => {
+      if (u) { currentUser = u; setStoredUser(u); updateUserUI(); }
+    }).catch(() => {
+      // Token expired or invalid — sign out
+      clearToken(); clearStoredUser(); currentUser = null;
+      showLoginScreen();
+    });
+    return;
+  }
+
+  // No stored user — must verify with backend
   try {
     const user = await authFetch('/api/auth/me');
     if (!user) { showLoginScreen(); return; }
     currentUser = user;
+    setStoredUser(user);
     showApp();
   } catch(e) {
-    // Token invalid/expired — clear it and show login
-    clearToken();
+    clearToken(); clearStoredUser();
     showLoginScreen();
   }
 }
@@ -2037,11 +2062,11 @@ function updateUserUI() {
 
 function signOut() {
   clearToken();
+  clearStoredUser();
   currentUser = null;
   if (window.google && window.google.accounts) {
     google.accounts.id.disableAutoSelect();
   }
-  // Reset UI state
   document.getElementById('chatMessages').innerHTML = '';
   document.getElementById('reminderList').innerHTML = '';
   document.getElementById('recordsList').innerHTML = '';
