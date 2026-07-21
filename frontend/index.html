@@ -1976,14 +1976,14 @@ async function handleGoogleCredential(response) {
   }
   try {
     const data = await authFetch('/api/auth/google', 'POST', { id_token: response.credential });
-    if (!data) { showLoginError('Authentication failed. Please try again.'); resetAuthButtons(); return; }
+    if (!data || !data.token) { showLoginError('Authentication failed. No token received.'); resetAuthButtons(); return; }
     setToken(data.token);
     currentUser = data.user;
+    await new Promise(r => setTimeout(r, 50));
     showApp();
   } catch (e) {
     showLoginError(e.message || 'Sign-in failed. Please try again.');
     resetAuthButtons();
-    return;
   }
 }
 
@@ -2031,12 +2031,18 @@ async function continueAsGuest() {
   btn.textContent = 'Starting guest session...';
   try {
     const data = await authFetch('/api/auth/guest', 'POST');
-    if (!data) throw new Error('Guest session failed.');
+    if (!data || !data.token) throw new Error('No token returned from server.');
     setToken(data.token);
     currentUser = data.user;
+    // Small delay to ensure token is saved before showApp fires
+    await new Promise(r => setTimeout(r, 50));
     showApp();
   } catch (e) {
     showLoginError(e.message || 'Could not start guest session.');
+    btn.disabled = false;
+    btn.textContent = 'Continue as Guest';
+  }
+}
     resetAuthButtons();
   }
 }
@@ -2062,8 +2068,12 @@ async function checkAuth() {
     if (!user) { showLoginScreen(); return; }
     currentUser = user;
     showApp();
-  } catch {
-    clearToken();
+  } catch(e) {
+    const msg = e.message || '';
+    // Only clear token and redirect on real auth errors, not network issues
+    if (msg.includes('expired') || msg.includes('Invalid token') || msg.includes('401') || msg.includes('not found') || msg.includes('sign in')) {
+      clearToken();
+    }
     showLoginScreen();
   }
 }
@@ -2078,9 +2088,10 @@ function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.querySelector('.app').style.display = 'flex';
   updateUserUI();
-  loadReminders();
-  loadRecords();
-  loadChatHistory();
+  // Load data silently — errors must NOT cause sign-out
+  loadReminders().catch(e => console.warn('loadReminders failed:', e));
+  loadRecords().catch(e => console.warn('loadRecords failed:', e));
+  loadChatHistory().catch(e => console.warn('loadChatHistory failed:', e));
 }
 
 function updateUserUI() {

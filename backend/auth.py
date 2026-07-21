@@ -21,21 +21,23 @@ from backend.database import (
 )
 
 # ── Config ────────────────────────────────────────────────────────────────────
-_jwt_secret_raw = os.getenv("JWT_SECRET", "")
-if not _jwt_secret_raw or len(_jwt_secret_raw) < 32:
+_jwt_secret_raw = os.getenv("JWT_SECRET", "").strip()
+if not _jwt_secret_raw or len(_jwt_secret_raw) < 16:
     import warnings
-    warnings.warn(
-        "JWT_SECRET is not set or too short. Using a random secret. "
-        "All tokens will be invalid after restart. Set a strong JWT_SECRET in production.",
-        UserWarning
-    )
-    import secrets
-    JWT_SECRET = secrets.token_urlsafe(32)
+    # Use a stable fallback so tokens survive restarts in dev
+    # In production, JWT_SECRET must be set as an environment variable
+    JWT_SECRET = "nexora-dev-only-secret-set-JWT_SECRET-in-production"
+    if not _jwt_secret_raw:
+        warnings.warn(
+            "JWT_SECRET is not set. Using default dev secret — all users share the same key. "
+            "Set JWT_SECRET in production environment variables.",
+            UserWarning
+        )
 else:
     JWT_SECRET = _jwt_secret_raw
 
-JWT_ALGORITHM    = "HS256"
-JWT_EXPIRE_DAYS  = 30
+JWT_ALGORITHM   = "HS256"
+JWT_EXPIRE_DAYS = 30
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
