@@ -4,6 +4,23 @@
 
 ### Critical / High Severity
 
+#### 0. ✅ **Login screen never appeared - auth completely broken**
+**Location:** `frontend/index.html` (DOMContentLoaded handler, checkAuth, showLandingScreen)
+**Issue:** 
+- `DOMContentLoaded` event handler was completely empty — `checkAuth()` was never called on page load
+- `showLandingScreen()` tried to show a `landingScreen` element that didn't exist in the HTML, causing silent crash
+- `checkAuth()` called `showLandingScreen()` instead of `showLoginScreen()` on auth failure
+- `.app` CSS had `display:flex` by default, causing the app to flash before being hidden by JS
+- Result: **Neither Google login nor Guest login worked — users saw a blank screen**
+
+**Fix:**
+- Added `checkAuth()` and `initAds()` calls to `DOMContentLoaded` handler
+- Changed `showLandingScreen()` to call `showLoginScreen()` directly since no landing page exists
+- Changed `checkAuth()` to call `showLoginScreen()` on failure and clear stale tokens
+- Changed `.app` default CSS from `display:flex` to `display:none` (shown via JS after auth)
+
+**Verification:** Login screen now appears on page load, both Google and Guest login work properly.
+
 #### 1. ✅ Missing `</button>` closing tag in sidebar
 **Location:** `frontend/index.html` (line ~1213)
 **Issue:** The Calculators nav button was missing its closing tag, causing user profile elements (avatar, name, email, sign-out) to render INSIDE the button. Any click on user profile triggered navigation to Calculators.
