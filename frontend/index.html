@@ -2613,76 +2613,142 @@ async function connectWatch() {
   const nameEl = document.getElementById('wsName');
   const infoEl = document.getElementById('wsInfo');
 
-  // Try Web Bluetooth API
-  if (navigator.bluetooth) {
-    try {
-      dot.className = 'watch-status-dot connecting';
-      nameEl.textContent = 'Searching nearby devices…';
-      infoEl.textContent = 'Please turn on Bluetooth & pair your smartwatch device...';
-      btn.textContent = 'Scanning...';
+  // Check if Web Bluetooth is supported at all
+  if (!navigator.bluetooth) {
+    nameEl.textContent = 'Not supported';
+    infoEl.innerHTML = 'Web Bluetooth is not supported in this browser. Use Chrome on Android or desktop Windows/Mac.';
+    dot.className = 'watch-status-dot';
+    btn.textContent = '⌚ Connect Watch';
+    btn.classList.remove('danger');
+    return;
+  }
 
-      // Request device with comprehensive GATT services for smartwatch/fitness trackers
-      btDevice = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: [
-          'heart_rate',
-          'battery_service',
-          'device_information',
-          'health_thermometer',
-          'pulse_oximeter',
-          'generic_access',
-          '0000180d-0000-1000-8000-00805f9b34fb',
-          '0000180f-0000-1000-8000-00805f9b34fb',
-          '0000180a-0000-1000-8000-00805f9b34fb',
-          '00001809-0000-1000-8000-00805f9b34fb',
-          '00001822-0000-1000-8000-00805f9b34fb'
-        ]
-      });
-
-      infoEl.textContent = 'Connecting to ' + (btDevice.name || 'Smartwatch') + '...';
-      btServer = await btDevice.gatt.connect();
-      
-      dot.className = 'watch-status-dot connected';
-      nameEl.textContent = btDevice.name || 'Bluetooth Smartwatch';
-      infoEl.textContent = 'Connected via Bluetooth';
-      wsConnected = true;
-      document.getElementById('wsLiveBadge').style.display = 'inline-flex';
-      btn.textContent = '⏏ Disconnect';
-      btn.classList.add('danger');
-
-      // Try to read heart rate characteristic
-      try {
-        const hrService = await btServer.getPrimaryService('heart_rate');
-        const hrChar = await hrService.getCharacteristic('heart_rate_measurement');
-        await hrChar.startNotifications();
-        hrChar.addEventListener('characteristicvaluechanged', (e) => {
-          const val = e.target.value.getUint8(1);
-          updateMetric('hr', val);
-          pushChartPoint('hr', val);
-        });
-      } catch(e) {
-        document.getElementById('wv-hr').textContent = 'Active';
-        document.getElementById('ws-hr').textContent = 'Connected';
-      }
-
-      btDevice.addEventListener('gattserverdisconnected', () => disconnectWatch());
-      initWatchChart();
-      return;
-
-    } catch(err) {
+  // Check if Bluetooth is available (available = adapter present & not blocked by OS)
+  try {
+    const available = await navigator.bluetooth.getAvailability();
+    if (!available) {
+      // Bluetooth is off or unavailable — show OS settings link
+      nameEl.textContent = 'Bluetooth is off';
+      infoEl.innerHTML = `Please turn on Bluetooth on your device, then tap Connect again.
+        <a href="ms-settings:bluetooth" id="btSettingsLink"
+           style="color:var(--accent);text-decoration:underline;margin-left:4px;cursor:pointer;"
+           onclick="event.preventDefault(); openBluetoothSettings();">
+          Open Bluetooth Settings ↗
+        </a>`;
       dot.className = 'watch-status-dot';
-      btn.textContent = 'Connect Watch';
+      btn.textContent = '⌚ Connect Watch';
       btn.classList.remove('danger');
       return;
     }
+  } catch(e) {
+    // getAvailability() not supported — proceed anyway and let requestDevice handle it
   }
 
-  // No Bluetooth available — inform user, do NOT auto-start simulator
-  nameEl.textContent = 'No device connected';
-  infoEl.textContent = 'Web Bluetooth is not supported in this browser. No watch data is available.';
-  dot.className = 'watch-status-dot';
-  btn.textContent = '⌚ Connect Watch';
-  btn.classList.remove('danger');
+  dot.className = 'watch-status-dot connecting';
+  nameEl.textContent = 'Searching nearby devices…';
+  infoEl.textContent = 'Make sure your smartwatch is nearby and Bluetooth is on…';
+  btn.textContent = 'Scanning...';
+  btn.disabled = true;
+
+  try {
+    btDevice = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: [
+        'heart_rate',
+        'battery_service',
+        'device_information',
+        'health_thermometer',
+        'pulse_oximeter',
+        'generic_access',
+        '0000180d-0000-1000-8000-00805f9b34fb',
+        '0000180f-0000-1000-8000-00805f9b34fb',
+        '0000180a-0000-1000-8000-00805f9b34fb',
+        '00001809-0000-1000-8000-00805f9b34fb',
+        '00001822-0000-1000-8000-00805f9b34fb'
+      ]
+    });
+
+    infoEl.textContent = 'Connecting to ' + (btDevice.name || 'Smartwatch') + '…';
+    btServer = await btDevice.gatt.connect();
+
+    dot.className = 'watch-status-dot connected';
+    nameEl.textContent = btDevice.name || 'Bluetooth Smartwatch';
+    infoEl.textContent = 'Connected via Bluetooth';
+    wsConnected = true;
+    document.getElementById('wsLiveBadge').style.display = 'inline-flex';
+    btn.textContent = '⏏ Disconnect';
+    btn.disabled = false;
+    btn.classList.add('danger');
+
+    // Try to read heart rate characteristic
+    try {
+      const hrService = await btServer.getPrimaryService('heart_rate');
+      const hrChar = await hrService.getCharacteristic('heart_rate_measurement');
+      await hrChar.startNotifications();
+      hrChar.addEventListener('characteristicvaluechanged', (e) => {
+        const val = e.target.value.getUint8(1);
+        updateMetric('hr', val);
+        pushChartPoint('hr', val);
+      });
+    } catch(e) {
+      document.getElementById('wv-hr').textContent = 'Active';
+      document.getElementById('ws-hr').textContent = 'Connected';
+    }
+
+    btDevice.addEventListener('gattserverdisconnected', () => disconnectWatch());
+    initWatchChart();
+
+  } catch(err) {
+    btn.disabled = false;
+    btn.textContent = '⌚ Connect Watch';
+    btn.classList.remove('danger');
+
+    const msg = err.message || '';
+
+    if (msg.includes('Bluetooth adapter') || msg.includes('not available') || msg.includes('adapter')) {
+      // Bluetooth adapter off or disabled
+      dot.className = 'watch-status-dot';
+      nameEl.textContent = 'Bluetooth is off';
+      infoEl.innerHTML = `Bluetooth is turned off. Please enable it, then tap Connect again.
+        <a href="#" onclick="event.preventDefault(); openBluetoothSettings();"
+           style="color:var(--accent);text-decoration:underline;margin-left:4px;">
+          Open Bluetooth Settings ↗
+        </a>`;
+    } else if (err.name === 'NotFoundError' || msg.includes('cancelled') || msg.includes('User cancelled')) {
+      // User dismissed the picker — silent reset
+      dot.className = 'watch-status-dot';
+      nameEl.textContent = 'No device selected';
+      infoEl.textContent = 'Selection cancelled. Tap Connect to try again.';
+    } else {
+      dot.className = 'watch-status-dot';
+      nameEl.textContent = 'Connection failed';
+      infoEl.textContent = 'Could not connect: ' + msg;
+    }
+  }
+}
+
+function openBluetoothSettings() {
+  const ua = navigator.userAgent;
+  // Windows — ms-settings:bluetooth
+  if (ua.includes('Windows')) {
+    window.open('ms-settings:bluetooth', '_blank');
+    return;
+  }
+  // Android Chrome — show instruction since no direct settings URL is available
+  if (/Android/.test(ua)) {
+    const infoEl = document.getElementById('wsInfo');
+    if (infoEl) infoEl.innerHTML = 'On Android: swipe down → long-press the Bluetooth icon to open settings. Then come back and tap Connect.';
+    return;
+  }
+  // macOS / iOS — show instruction
+  if (/Mac|iPhone|iPad/.test(ua)) {
+    const infoEl = document.getElementById('wsInfo');
+    if (infoEl) infoEl.innerHTML = 'On Mac/iOS: open System Settings → Bluetooth and turn it on. Then come back and tap Connect.';
+    return;
+  }
+  // Fallback
+  const infoEl = document.getElementById('wsInfo');
+  if (infoEl) infoEl.textContent = 'Please turn on Bluetooth in your system settings, then tap Connect again.';
 }
 
 function disconnectWatch() {
