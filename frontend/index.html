@@ -198,7 +198,7 @@ body{
 }
 
 /* -- GRID LAYOUT -- */
-.app{display:flex;height:100vh;overflow:hidden;}
+.app{display:none;height:100vh;overflow:hidden;} /* Hidden by default, shown via JS after auth */
 
 /* -- SIDEBAR -- */
 .sidebar{
@@ -2050,22 +2050,22 @@ function showLoginError(msg, type = 'error') {
 }
 
 function showLandingScreen() {
-  document.getElementById('landingScreen').style.display = 'block';
-  document.getElementById('loginScreen').style.display = 'none';
-  document.querySelector('.app').style.display = 'none';
+  // No separate landing screen — go straight to login
+  showLoginScreen();
   setTimeout(initAds, 100);
 }
 
 async function checkAuth() {
   const token = getToken();
-  if (!token) { showLandingScreen(); return; }
+  if (!token) { showLoginScreen(); return; }
   try {
     const user = await authFetch('/api/auth/me');
-    if (!user) { showLandingScreen(); return; }
+    if (!user) { showLoginScreen(); return; }
     currentUser = user;
     showApp();
   } catch {
-    showLandingScreen();
+    clearToken();
+    showLoginScreen();
   }
 }
 
@@ -2897,7 +2897,9 @@ function initAds() {
 
 // Initialize ads when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-
+  // Kick off auth check — shows login screen or the app
+  checkAuth();
+  initAds();
 });
 
 </script>
