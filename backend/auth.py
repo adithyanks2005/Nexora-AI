@@ -21,7 +21,19 @@ from backend.database import (
 )
 
 # ── Config ────────────────────────────────────────────────────────────────────
-JWT_SECRET       = os.getenv("JWT_SECRET", "nexora-dev-secret-change-in-prod")
+_jwt_secret_raw = os.getenv("JWT_SECRET", "")
+if not _jwt_secret_raw or len(_jwt_secret_raw) < 32:
+    import warnings
+    warnings.warn(
+        "JWT_SECRET is not set or too short. Using a random secret. "
+        "All tokens will be invalid after restart. Set a strong JWT_SECRET in production.",
+        UserWarning
+    )
+    import secrets
+    JWT_SECRET = secrets.token_urlsafe(32)
+else:
+    JWT_SECRET = _jwt_secret_raw
+
 JWT_ALGORITHM    = "HS256"
 JWT_EXPIRE_DAYS  = 30
 

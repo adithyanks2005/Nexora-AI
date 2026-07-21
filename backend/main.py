@@ -94,10 +94,10 @@ app.add_middleware(
 async def global_exception_handler(request: Request, exc: Exception):
     print(f"ERROR: Unhandled exception during {request.method} {request.url.path}")
     traceback.print_exc()
+    # Never expose traceback in production
     return JSONResponse(
         status_code=500,
-        content={"detail": f"Internal Server Error: {str(exc)}",
-                 "traceback": traceback.format_exc().splitlines()[-1]},
+        content={"detail": "Internal Server Error. Please try again later."},
     )
 
 
@@ -369,6 +369,13 @@ def toggle_reminder(
     return row
 
 
+# IMPORTANT: Register /done/clear BEFORE /{rid} to avoid route shadowing
+@app.delete("/api/reminders/done/clear")
+def clear_done_reminders(current_user: dict = Depends(get_current_user)) -> dict[str, str]:
+    db_clear_done_reminders(current_user["id"], current_user["workplace_id"])
+    return {"message": "cleared"}
+
+
 @app.delete("/api/reminders/{rid}")
 def delete_reminder(
     rid: int,
@@ -376,12 +383,6 @@ def delete_reminder(
 ) -> dict[str, str]:
     db_delete_reminder(rid, current_user["id"], current_user["workplace_id"])
     return {"message": "deleted"}
-
-
-@app.delete("/api/reminders/done/clear")
-def clear_done_reminders(current_user: dict = Depends(get_current_user)) -> dict[str, str]:
-    db_clear_done_reminders(current_user["id"], current_user["workplace_id"])
-    return {"message": "cleared"}
 
 
 # ── Health records ────────────────────────────────────────────────────────────

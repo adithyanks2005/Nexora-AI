@@ -1210,7 +1210,20 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
       </button>
       <button class="nav-item" onclick="switchSection('calc',this)">
         <span class="nav-icon">🧮</span> Calculators
+      </button>
+      <button class="nav-item" onclick="switchSection('reminders',this)">
+        <span class="nav-icon">⏰</span> Reminders
+      </button>
+      <button class="nav-item" onclick="switchSection('records',this)">
+        <span class="nav-icon">📋</span> Health Records
+      </button>
+      <button class="nav-item" onclick="switchSection('articles',this)">
+        <span class="nav-icon">📚</span> Articles
+      </button>
+    </nav>
+    <div class="user-info" id="sidebarUserInfo" style="display:none;">
       <img class="user-avatar" id="userAvatarImg" src="" alt="User Avatar" width="36" height="36" style="display:none;" onerror="this.style.display='none';document.getElementById('userAvatarFallback').style.display='flex'"/>
+      <div class="user-avatar-fallback" id="userAvatarFallback" style="display:flex;">👤</div>
       <div style="flex:1;min-width:0;">
         <div class="user-name" id="sidebarUserName">—</div>
         <div class="user-email" id="sidebarUserEmail">—</div>
@@ -1357,7 +1370,7 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
           <label class="form-label">Unit</label>
           <select class="form-select" id="bmi-unit" onchange="toggleBmiUnit()">
             <option value="metric">Metric (kg / cm)</option>
-            <option value="imperial">Imperial (lbs / cm)</option>
+            <option value="imperial">Imperial (lbs / in)</option>
           </select>
         </div>
         <div class="form-card">
@@ -2065,8 +2078,8 @@ function showApp() {
 
 function updateUserUI() {
   if (!currentUser) return;
-  const panel = document.getElementById('sidebarUser');
-  panel.style.display = 'flex';
+  const panel = document.getElementById('sidebarUserInfo');
+  if (panel) panel.style.display = 'flex';
   document.getElementById('sidebarUserName').textContent = currentUser.name || currentUser.email;
   document.getElementById('sidebarUserEmail').textContent = currentUser.email;
   if (currentUser.picture) {
@@ -2090,7 +2103,8 @@ function signOut() {
   document.getElementById('chatMessages').innerHTML = '';
   document.getElementById('reminderList').innerHTML = '';
   document.getElementById('recordsList').innerHTML = '';
-  document.getElementById('sidebarUser').style.display = 'none';
+  const sidebarUserInfo = document.getElementById('sidebarUserInfo');
+  if (sidebarUserInfo) sidebarUserInfo.style.display = 'none';
   showLoginScreen();
 }
 

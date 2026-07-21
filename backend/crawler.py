@@ -33,17 +33,20 @@ MAX_LINKS         = 50
 
 # -- Robots helpers -----------------------------------------------------------
 
-def _robots_allowed(url: str) -> bool:
+async def _robots_allowed_async(url: str) -> bool:
     """Return True if NexoraBot is permitted to fetch url per robots.txt."""
-    try:
-        parsed = urllib.parse.urlparse(url)
-        base = f"{parsed.scheme}://{parsed.netloc}"
-        rp = urllib.robotparser.RobotFileParser()
-        rp.set_url(f"{base}/robots.txt")
-        rp.read()
-        return rp.can_fetch(CRAWLER_UA, url)
-    except Exception:
-        return True
+    import asyncio
+    def _check() -> bool:
+        try:
+            parsed = urllib.parse.urlparse(url)
+            base = f"{parsed.scheme}://{parsed.netloc}"
+            rp = urllib.robotparser.RobotFileParser()
+            rp.set_url(f"{base}/robots.txt")
+            rp.read()
+            return rp.can_fetch(CRAWLER_UA, url)
+        except Exception:
+            return True
+    return await asyncio.to_thread(_check)
 
 
 # -- HTML parsing helpers -----------------------------------------------------
@@ -124,7 +127,7 @@ async def crawl_url(url: str, *, respect_robots: bool = True) -> dict[str, Any]:
     if parsed.scheme not in ("http", "https"):
         raise HTTPException(status_code=400, detail="Only http:// and https:// URLs are supported.")
 
-    if respect_robots and not _robots_allowed(url):
+    if respect_robots and not await _robots_allowed_async(url):
         raise HTTPException(status_code=403, detail=f"robots.txt disallows crawling {url} by NexoraBot.")
 
     headers = {

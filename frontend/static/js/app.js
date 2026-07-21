@@ -674,7 +674,7 @@ async function apiFetch(path, method = 'GET', body = null) {
     // If 401 Unauthorized and not an auth endpoint, redirect to login
     if (res.status === 401 && !path.startsWith('/api/auth/')) {
       window.location.href = '/';
-      return;
+      throw new Error('Unauthorized. Redirecting to login...');
     }
     throw new Error(err.detail || 'Request failed');
   }
