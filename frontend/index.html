@@ -1253,9 +1253,14 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
 
     <!-- ── CHAT SECTION ── -->
     <div class="section active" id="section-chat">
-      <div class="chat-header">
-        <h2>💬 Chat with Nexora</h2>
-        <p>Your intelligent healthcare companion</p>
+      <div class="chat-header" style="display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <h2>💬 Chat with Nexora</h2>
+          <p>Your intelligent healthcare companion</p>
+        </div>
+        <button onclick="newChat()" style="padding: 8px 16px; border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+          <span style="font-size: 16px;">+</span> New Chat
+        </button>
       </div>
       <div class="chat-messages" id="chatMessages">
         <div class="welcome-banner">
@@ -2137,12 +2142,42 @@ function switchCalc(id, btn) {
 }
 
 // ── CHAT ──
-// ── CHAT ──
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
     const r = Math.random() * 16 | 0;
     return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
   });
+}
+
+function newChat() {
+  // Generate a fresh session ID
+  currentSessionId = generateUUID();
+  localStorage.setItem('nexora_session_id', currentSessionId);
+  chatHistory = [];
+
+  // Clear messages and show welcome banner
+  const wrap = document.getElementById('chatMessages');
+  wrap.innerHTML = `
+    <div class="welcome-banner">
+      <div class="wb-icon">🧬</div>
+      <div>
+        <h3>Hello! I'm Nexora AI</h3>
+        <p>Your intelligent healthcare companion. Ask me anything about health, wellness, symptoms, nutrition, or mental wellbeing.</p>
+        <div class="welcome-chips">
+          <span class="chip" onclick="sendQuick(this)">🩸 Diabetes symptoms</span>
+          <span class="chip" onclick="sendQuick(this)">😴 Better sleep tips</span>
+          <span class="chip" onclick="sendQuick(this)">🥦 Immune boosting foods</span>
+          <span class="chip" onclick="sendQuick(this)">🧘 Stress management</span>
+          <span class="chip" onclick="sendQuick(this)">💧 Daily water intake</span>
+        </div>
+      </div>
+    </div>`;
+
+  // Clear and focus input
+  const inp = document.getElementById('chatInput');
+  inp.value = '';
+  inp.style.height = 'auto';
+  inp.focus();
 }
 
 let currentSessionId = localStorage.getItem('nexora_session_id') || generateUUID();
