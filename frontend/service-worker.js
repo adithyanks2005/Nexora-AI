@@ -1,4 +1,4 @@
-const CACHE_NAME = "nexora-ai-v3";
+const CACHE_NAME = "nexora-ai-v4";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",

@@ -2984,6 +2984,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initAds();
   // Register service worker for PWA / offline support
   if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      // Force-update any existing SW so stale caches are cleared immediately
+      registrations.forEach(reg => reg.update());
+    });
     navigator.serviceWorker.register('/service-worker.js').catch(() => {});
   }
 });
