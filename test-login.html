@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Nexora Login Test</title>
+  <style>
+    body { font-family: Arial; padding: 40px; background: #0a0f1e; color: #fff; }
+    button { padding: 12px 24px; margin: 10px; font-size: 14px; cursor: pointer; }
+    #result { margin-top: 20px; padding: 20px; background: #1a1f2e; border-radius: 8px; }
+    .success { color: #43d98c; }
+    .error { color: #ff6b6b; }
+  </style>
+</head>
+<body>
+  <h1>🧬 Nexora Login Test</h1>
+  <p>Testing auth against: <code>https://nexora-ai-henna-five.vercel.app</code></p>
+  
+  <button onclick="testGuest()">Test Guest Login</button>
+  <button onclick="testHealth()">Test Health Endpoint</button>
+  
+  <div id="result"></div>
+
+  <script>
+    const API_BASE = 'https://nexora-ai-henna-five.vercel.app';
+    
+    function log(msg, isError = false) {
+      const el = document.getElementById('result');
+      const className = isError ? 'error' : 'success';
+      el.innerHTML += `<div class="${className}">${msg}</div>`;
+    }
+    
+    async function testHealth() {
+      document.getElementById('result').innerHTML = '<strong>Testing /api/health...</strong><br>';
+      try {
+        const res = await fetch(`${API_BASE}/api/health`);
+        const data = await res.json();
+        log(`✓ Health check: ${JSON.stringify(data)}`);
+      } catch(e) {
+        log(`✗ Health check failed: ${e.message}`, true);
+      }
+    }
+    
+    async function testGuest() {
+      document.getElementById('result').innerHTML = '<strong>Testing Guest Login...</strong><br>';
+      try {
+        log('1. Calling /api/auth/guest...');
+        const res = await fetch(`${API_BASE}/api/auth/guest`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        
+        log(`   Status: ${res.status} ${res.statusText}`);
+        
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText}`);
+        }
+        
+        const data = await res.json();
+        log(`2. ✓ Got response with keys: ${Object.keys(data).join(', ')}`);
+        
+        if (!data.token) {
+          throw new Error('No token in response');
+        }
+        
+        log(`3. ✓ Token received (${data.token.length} chars)`);
+        log(`4. ✓ User: ${data.user.name} <${data.user.email}>`);
+        
+        // Test the token
+        log('5. Testing token with /api/auth/me...');
+        const meRes = await fetch(`${API_BASE}/api/auth/me`, {
+          headers: { 'Authorization': `Bearer ${data.token}` }
+        });
+        
+        if (!meRes.ok) {
+          throw new Error(`Token validation failed: ${meRes.status}`);
+        }
+        
+        const meData = await meRes.json();
+        log(`6. ✓ Token valid! User: ${meData.name} <${meData.email}>`);
+        log('<br><strong>✅ GUEST LOGIN WORKS PERFECTLY!</strong>');
+        
+      } catch(e) {
+        log(`✗ Error: ${e.message}`, true);
+        log(`   Stack: ${e.stack}`, true);
+      }
+    }
+  </script>
+</body>
+</html>
