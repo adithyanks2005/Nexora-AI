@@ -78,16 +78,13 @@ app = FastAPI(title="Nexora AI - Healthcare Chatbot", version="3.0.0", lifespan=
 
 _ALLOWED_ORIGINS = [
     o.strip()
-    for o in os.getenv(
-        "ALLOWED_ORIGINS",
-        "https://nexora-ai-henna-five.vercel.app,http://localhost:8000,http://127.0.0.1:8000"
-    ).split(",")
+    for o in os.getenv("ALLOWED_ORIGINS", "*").split(",")
     if o.strip()
 ]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=False,   # JWT goes in Authorization header, not cookies — no credentials needed
     allow_methods=["*"],
     allow_headers=["*"],
 )
