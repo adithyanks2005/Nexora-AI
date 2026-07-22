@@ -1823,6 +1823,20 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
+// ── GLOBAL ERROR TRAP — shows JS errors visibly during debug ──────────────────
+window.onerror = function(msg, src, line, col, err) {
+  const el = document.getElementById('loginError');
+  if (el) {
+    el.textContent = '⚠️ JS Error: ' + msg + ' (line ' + line + ')';
+    el.className = 'login-error';
+    el.style.display = 'block';
+  }
+  console.error('Global error:', msg, src, line, col, err);
+};
+window.onunhandledrejection = function(e) {
+  console.error('Unhandled promise rejection:', e.reason);
+};
+
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 const GOOGLE_CLIENT_ID = '638093827002-msthhp8pnpi0jkui1j2n3n6j07f1cjhs.apps.googleusercontent.com';
 const CANONICAL_PROD_ORIGIN = 'https://nexora-ai-henna-five.vercel.app';
