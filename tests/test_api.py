@@ -55,6 +55,21 @@ def test_valid_jwt_recovers_missing_local_user_row():
     assert recovered.json() == []
 
 
+def test_supabase_login_mock_token_issues_jwt():
+    r = client.post(
+        "/api/auth/supabase",
+        json={"access_token": "mock_supabase_supabase@example.com", "workplace_id": "supabase"},
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data["user"]["email"] == "supabase@example.com"
+    assert data["token"]
+
+    me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {data['token']}"})
+    assert me.status_code == 200
+    assert me.json()["email"] == "supabase@example.com"
+
+
 # ── Sessions ──────────────────────────────────────────────────────────────────
 def test_create_and_list_session(auth_headers):
     r = client.post("/api/sessions", json={"title": "Test Session"}, headers=auth_headers)

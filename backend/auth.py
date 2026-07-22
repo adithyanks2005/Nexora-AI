@@ -20,6 +20,13 @@ from backend.database import (
     upsert_user as db_upsert_user,
 )
 
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
+SUPABASE_KEY = (
+    os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    or os.getenv("SUPABASE_ANON_KEY", "").strip()
+    or os.getenv("SUPABASE_KEY", "").strip()
+)
+
 # ── Config ────────────────────────────────────────────────────────────────────
 _jwt_secret_raw = os.getenv("JWT_SECRET", "").strip()
 if not _jwt_secret_raw or len(_jwt_secret_raw) < 16:
@@ -174,16 +181,6 @@ def verify_google_token(id_token_str: str) -> dict[str, Any]:
 
 # ── Supabase token verification (placeholder) ────────────────────────────────
 def verify_supabase_token(access_token: str) -> dict[str, Any]:
-    """
-    TODO: Implement Supabase OAuth token verification.
-
-    This function will:
-    1. Validate the JWT token from Supabase
-    2. Retrieve user info from Supabase Auth API
-    3. Return user data (email, name, picture, sub)
-
-    Placeholder implementation returns mock data for testing.
-    """
     if access_token.startswith("mock_supabase_"):
         email = access_token.replace("mock_supabase_", "")
         name = email.split("@")[0].replace(".", " ").title()
@@ -194,21 +191,47 @@ def verify_supabase_token(access_token: str) -> dict[str, Any]:
             "sub": f"supabase_{email}"
         }
 
-    # TODO: Implement actual Supabase OAuth verification
-    supabase_url = os.getenv("SUPABASE_URL", "")
-    supabase_anon_key = os.getenv("SUPABASE_ANON_KEY", "")
-
-    if not supabase_url or not supabase_anon_key:
+    if not SUPABASE_URL or not SUPABASE_KEY:
         raise HTTPException(
             status_code=500,
             detail="Supabase configuration is not set up on the server.",
         )
 
-    # Placeholder: Raise error until implementation is complete
-    raise HTTPException(
-        status_code=501,
-        detail="Supabase OAuth verification is not yet implemented. Please use Google OAuth for now.",
+    try:
+        resp = requests.get(
+            f"{SUPABASE_URL.rstrip('/')}/auth/v1/user",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "apikey": SUPABASE_KEY,
+            },
+            timeout=10,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Supabase user lookup failed: {e}")
+
+    if resp.status_code != 200:
+        detail = resp.text.strip() or f"HTTP {resp.status_code}"
+        raise HTTPException(status_code=401, detail=f"Invalid Supabase token: {detail}")
+
+    info = resp.json()
+    user_metadata = info.get("user_metadata") or {}
+    email = info.get("email") or user_metadata.get("email")
+    sub = info.get("id") or info.get("sub")
+    if not email or not sub:
+        raise HTTPException(status_code=401, detail="Supabase user response missing email or id.")
+
+    name = (
+        user_metadata.get("full_name")
+        or user_metadata.get("name")
+        or info.get("email", "").split("@")[0]
     )
+    picture = user_metadata.get("avatar_url") or info.get("picture") or ""
+    return {
+        "email": email,
+        "name": name,
+        "picture": picture,
+        "sub": sub,
+    }
 
 
 # ── Upsert user ───────────────────────────────────────────────────────────────

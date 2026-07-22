@@ -157,6 +157,24 @@ def llms_txt():
     raise HTTPException(status_code=404)
 
 
+@app.get("/manifest.webmanifest", include_in_schema=False)
+def manifest_webmanifest():
+    from fastapi.responses import Response
+    file_path = FRONTEND_DIR / "manifest.webmanifest"
+    if file_path.exists():
+        return Response(content=file_path.read_text(encoding="utf-8"), media_type="application/manifest+json")
+    raise HTTPException(status_code=404)
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon_ico():
+    from fastapi.responses import Response
+    file_path = FRONTEND_DIR / "static" / "icons" / "icon.svg"
+    if file_path.exists():
+        return Response(content=file_path.read_text(encoding="utf-8"), media_type="image/svg+xml")
+    raise HTTPException(status_code=404)
+
+
 # ── Digital Asset Links (TWA browser bar removal) ─────────────────────────────
 @app.get("/.well-known/assetlinks.json", include_in_schema=False)
 def asset_links():
@@ -450,6 +468,21 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
     html = html.replace(
         "const GOOGLE_CLIENT_ID = '638093827002-msthhp8pnpi0jkui1j2n3n6j07f1cjhs.apps.googleusercontent.com';",
         f"const GOOGLE_CLIENT_ID = {json.dumps(google_client_id)};",
+    )
+
+    # Inject Supabase auth config for browser-side OAuth flow.
+    supabase_url = os.getenv("SUPABASE_URL", "").strip().lstrip("\ufeff")
+    supabase_anon_key = (
+        os.getenv("SUPABASE_ANON_KEY", "").strip().lstrip("\ufeff")
+        or os.getenv("SUPABASE_KEY", "").strip().lstrip("\ufeff")
+    )
+    html = html.replace(
+        "const SUPABASE_URL = '';",
+        f"const SUPABASE_URL = {json.dumps(supabase_url)};",
+    )
+    html = html.replace(
+        "const SUPABASE_ANON_KEY = '';",
+        f"const SUPABASE_ANON_KEY = {json.dumps(supabase_anon_key)};",
     )
 
     # Inject Google AdSense client ID and script if configured.

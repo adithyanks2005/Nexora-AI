@@ -134,7 +134,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
 <link rel="manifest" href="/manifest.webmanifest">
 <!-- Google Identity Services -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Google AdSense -->
 <!-- ADSENSE_SCRIPT_PLACEHOLDER --><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7304874327710410" crossorigin="anonymous"></script>
 <style>
@@ -1164,7 +1164,7 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
     <div class="auth-actions">
       <!-- Official Google GSI Button Container -->
       <div id="googleSignInBtnContainer" style="display:none;"></div>
-      <button id="googlePopupBtn" class="google-btn google-primary-btn" onclick="openGoogleOAuthPopup()">
+      <button id="googlePopupBtn" class="google-btn google-primary-btn" type="button">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;flex-shrink:0;">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -1838,7 +1838,9 @@ window.onunhandledrejection = function(e) {
 };
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
-const GOOGLE_CLIENT_ID = '638093827002-msthhp8pnpi0jkui1j2n3n6j07f1cjhs.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '';
+const SUPABASE_URL = '';
+const SUPABASE_ANON_KEY = '';
 const CANONICAL_PROD_ORIGIN = 'https://nexora-ai-henna-five.vercel.app';
 let currentUser = null;
 
@@ -1880,8 +1882,45 @@ function normalizeVercelProductionOrigin() {
 function isLocalDevelopment() {
   return ['localhost', '127.0.0.1', '0.0.0.0'].includes(window.location.hostname);
 }
-let gsiInitialized = false;
-let googleTokenClient = null;
+let supabaseClient = null;
+
+function hasSupabaseConfig() {
+  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+}
+
+function getSupabaseClient() {
+  if (!hasSupabaseConfig() || !window.supabase || !window.supabase.createClient) return null;
+  if (!supabaseClient) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        persistSession: true,
+        flowType: 'pkce',
+      },
+    });
+  }
+  return supabaseClient;
+}
+
+async function bootstrapSupabaseRedirect() {
+  const client = getSupabaseClient();
+  if (!client) return false;
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has('code')) return false;
+
+  const { data, error } = await client.auth.exchangeCodeForSession(window.location.href);
+  if (error) throw error;
+
+  const session = data && data.session;
+  if (!session || !session.access_token) {
+    throw new Error('No Supabase session returned.');
+  }
+
+  await handleGoogleCredential({ credential: session.access_token });
+  window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+  return true;
+}
 
 async function authFetch(path, method = 'GET', body = null) {
   const token = getToken();
@@ -1909,48 +1948,48 @@ function initGoogleSignIn() {
   const mockContainer = document.getElementById('mockGoogleSignInContainer');
   const popupBtn = document.getElementById('googlePopupBtn');
   if (!popupBtn) return;
-  const isPlaceholder = !GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes('your_google_client_id') || GOOGLE_CLIENT_ID.includes('placeholder');
-  if (isPlaceholder) {
+  if (!hasSupabaseConfig()) {
     popupBtn.style.display = 'none';
     if (mockContainer) mockContainer.style.display = isLocalDevelopment() ? 'block' : 'none';
     return;
   }
   popupBtn.style.display = 'flex';
   if (mockContainer) mockContainer.style.display = 'none';
-  if (!window.google || !window.google.accounts) { setTimeout(initGoogleSignIn, 200); return; }
-  try {
-    if (!gsiInitialized) {
-      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential, auto_select: false });
-      gsiInitialized = true;
-    }
-  } catch(e) { console.warn('GSI init:', e); }
 }
 
-function openGoogleOAuthPopup() {
-  if (!GOOGLE_CLIENT_ID) { showLoginError('Google login is not configured.'); return; }
+async function openGoogleOAuthPopup() {
+  if (!hasSupabaseConfig()) { showLoginError('Supabase Google login is not configured.'); return; }
   if (window.location.protocol === 'file:') { showLoginError('Please run via http://localhost:8000'); return; }
   if (normalizeLocalOAuthOrigin()) return;
   if (normalizeVercelProductionOrigin()) return;
-  if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
-    showLoginError('Google Sign-In is still loading. Please wait a moment and try again.');
+  const client = getSupabaseClient();
+  if (!client) {
+    showLoginError('Supabase Sign-In is still loading. Please wait a moment and try again.');
     return;
   }
-  if (!googleTokenClient) {
-    googleTokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: 'openid email profile',
-      prompt: 'select_account',
-      callback: async (tokenResponse) => {
-        if (!tokenResponse || !tokenResponse.access_token) {
-          showLoginError('Google sign-in failed. Please try again.');
-          resetAuthButtons(); return;
-        }
-        await handleGoogleCredential({ credential: 'access_token:' + tokenResponse.access_token });
+  try {
+    const { error } = await client.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + window.location.pathname,
+        scopes: 'openid email profile',
       },
-      error_callback: () => { showLoginError('Google popup was closed. Please try again.'); resetAuthButtons(); },
     });
+    if (error) throw error;
+  } catch (e) {
+    showLoginError((e && e.message) || 'Supabase Google sign-in failed.');
+    resetAuthButtons();
   }
-  googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+}
+
+window.openGoogleOAuthPopup = openGoogleOAuthPopup;
+
+function wireAuthButtons() {
+  const popupBtn = document.getElementById('googlePopupBtn');
+  if (popupBtn && !popupBtn.dataset.wired) {
+    popupBtn.addEventListener('click', openGoogleOAuthPopup);
+    popupBtn.dataset.wired = 'true';
+  }
 }
 
 async function handleGoogleCredential(response) {
@@ -1959,14 +1998,14 @@ async function handleGoogleCredential(response) {
   const popupBtn = document.getElementById('googlePopupBtn');
   if (popupBtn) { popupBtn.disabled = true; popupBtn.textContent = 'Signing in...'; }
   try {
-    const res = await fetch('/api/auth/google', {
+    const res = await fetch('/api/auth/supabase', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_token: response.credential })
+      body: JSON.stringify({ access_token: response.credential })
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(err.detail || 'Google sign-in failed');
+      throw new Error(err.detail || 'Supabase sign-in failed');
     }
     const data = await res.json();
     if (!data || !data.token) throw new Error('No token received from server.');
@@ -1975,10 +2014,12 @@ async function handleGoogleCredential(response) {
     currentUser = data.user;
     showApp();
   } catch(e) {
-    showLoginError(e.message || 'Google sign-in failed.');
+    showLoginError(e.message || 'Supabase sign-in failed.');
     resetAuthButtons();
   }
 }
+
+window.handleGoogleCredential = handleGoogleCredential;
 
 function resetAuthButtons() {
   const btn = document.getElementById('guestSignInBtn');
@@ -1989,6 +2030,9 @@ function resetAuthButtons() {
     popupBtn.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;flex-shrink:0;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Continue with Google`;
   }
 }
+
+window.promptMockGoogleAccount = promptMockGoogleAccount;
+window.continueAsGuest = continueAsGuest;
 
 function configureLoginOptions() {
   const errEl = document.getElementById('loginError');
@@ -2102,8 +2146,9 @@ function signOut() {
   clearToken();
   clearStoredUser();
   currentUser = null;
-  if (window.google && window.google.accounts) {
-    google.accounts.id.disableAutoSelect();
+  const client = getSupabaseClient();
+  if (client) {
+    client.auth.signOut().catch(() => {});
   }
   document.getElementById('chatMessages').innerHTML = '';
   document.getElementById('reminderList').innerHTML = '';
@@ -2531,7 +2576,7 @@ themeToggle.addEventListener('click', () => {
   isDark = !isDark;
   localStorage.setItem('nexora_theme', isDark ? 'dark' : 'light');
   applyTheme();
-  // Re-render Google Sign-in to match the new theme
+  // Re-render Supabase login controls to match the new theme
   initGoogleSignIn();
 });
 
@@ -2645,7 +2690,7 @@ async function connectWatch() {
 
   dot.className = 'watch-status-dot connecting';
   nameEl.textContent = 'Searching nearby devices…';
-  infoEl.textContent = 'Select your smartwatch from the list. Make sure it's nearby and powered on…';
+  infoEl.textContent = "Select your smartwatch from the list. Make sure it's nearby and powered on…";
   btn.textContent = 'Scanning...';
   btn.disabled = true;
 
@@ -3009,7 +3054,13 @@ function initAds() {
 }
 
 // Initialize ads when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await bootstrapSupabaseRedirect();
+  } catch (e) {
+    console.warn('Supabase auth bootstrap failed:', e);
+  }
+  wireAuthButtons();
   checkAuth();
   initAds();
   if ('serviceWorker' in navigator) {
