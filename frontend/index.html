@@ -1954,11 +1954,21 @@ function openGoogleOAuthPopup() {
 }
 
 async function handleGoogleCredential(response) {
-  document.getElementById('loginError').style.display = 'none';
+  const errEl = document.getElementById('loginError');
+  if (errEl) errEl.style.display = 'none';
   const popupBtn = document.getElementById('googlePopupBtn');
   if (popupBtn) { popupBtn.disabled = true; popupBtn.textContent = 'Signing in...'; }
   try {
-    const data = await authFetch('/api/auth/google', 'POST', { id_token: response.credential });
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_token: response.credential })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || 'Google sign-in failed');
+    }
+    const data = await res.json();
     if (!data || !data.token) throw new Error('No token received from server.');
     setToken(data.token);
     setStoredUser(data.user);
@@ -1989,11 +1999,19 @@ function configureLoginOptions() {
 
 async function continueAsGuest() {
   const btn = document.getElementById('guestSignInBtn');
-  document.getElementById('loginError').style.display = 'none';
-  btn.disabled = true;
-  btn.textContent = 'Starting session...';
+  const errEl = document.getElementById('loginError');
+  if (errEl) errEl.style.display = 'none';
+  if (btn) { btn.disabled = true; btn.textContent = 'Starting session...'; }
   try {
-    const data = await authFetch('/api/auth/guest', 'POST');
+    const res = await fetch('/api/auth/guest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || 'Server error ' + res.status);
+    }
+    const data = await res.json();
     if (!data || !data.token) throw new Error('No token returned from server.');
     setToken(data.token);
     setStoredUser(data.user);
@@ -2001,13 +2019,13 @@ async function continueAsGuest() {
     showApp();
   } catch(e) {
     showLoginError(e.message || 'Could not start guest session.');
-    btn.disabled = false;
-    btn.textContent = 'Continue as Guest';
+    if (btn) { btn.disabled = false; btn.textContent = 'Continue as Guest'; }
   }
 }
 
 function showLoginError(msg) {
   const el = document.getElementById('loginError');
+  if (!el) { alert('Login error: ' + msg); return; }
   el.textContent = '⚠️ ' + msg;
   el.className = 'login-error';
   el.style.display = 'block';
