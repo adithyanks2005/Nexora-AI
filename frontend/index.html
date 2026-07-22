@@ -2492,7 +2492,6 @@ async function deleteRecord(id) {
 
 // Init — check auth first, then load data
 document.querySelector('.app').style.display = 'none';
-checkAuth();
 
 // ── THEME TOGGLE ──
 const themeToggle = document.getElementById('themeToggle');
@@ -2993,14 +2992,11 @@ function initAds() {
 
 // Initialize ads when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  // checkAuth() is already called at parse time above — don't call it again here
-  // to avoid a double /api/auth/me request on every page load
+  checkAuth();
   initAds();
-  // Register service worker for PWA / offline support
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      // Force-update any existing SW so stale caches are cleared immediately
-      registrations.forEach(reg => reg.update());
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(r => r.update());
     });
     navigator.serviceWorker.register('/service-worker.js').catch(() => {});
   }
