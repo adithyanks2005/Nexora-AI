@@ -74,11 +74,14 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Nexora AI - Healthcare Chatbot", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="Nexora AI - Healthcare Chatbot", version="3.0.0", lifespan=lifespan)
 
 _ALLOWED_ORIGINS = [
     o.strip()
-    for o in os.getenv("ALLOWED_ORIGINS", "*").split(",")
+    for o in os.getenv(
+        "ALLOWED_ORIGINS",
+        "https://nexora-ai-henna-five.vercel.app,http://localhost:8000,http://127.0.0.1:8000"
+    ).split(",")
     if o.strip()
 ]
 app.add_middleware(

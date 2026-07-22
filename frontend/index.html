@@ -1388,7 +1388,7 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
               <input class="form-input" type="number" id="bmi-w" placeholder="e.g. 70"/>
             </div>
             <div>
-              <label class="form-label">Height (cm)</label>
+              <label class="form-label" id="bmi-hlabel">Height (cm)</label>
               <input class="form-input" type="number" id="bmi-h" placeholder="e.g. 170"/>
             </div>
           </div>
@@ -1877,6 +1877,12 @@ async function authFetch(path, method = 'GET', body = null) {
   let res;
   try { res = await fetch(path, opts); }
   catch { throw new Error('You are offline or the server is unreachable.'); }
+  if (res.status === 401) {
+    // Token expired or invalid — sign out and redirect to login
+    clearToken(); clearStoredUser(); currentUser = null;
+    showLoginScreen();
+    throw new Error('Session expired. Please sign in again.');
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail || 'Request failed');
@@ -2288,6 +2294,8 @@ async function analyzeSymptoms() {
 function toggleBmiUnit() {
   const u = document.getElementById('bmi-unit').value;
   document.getElementById('bmi-wlabel').textContent = u === 'metric' ? 'Weight (kg)' : 'Weight (lbs)';
+  document.getElementById('bmi-hlabel').textContent = u === 'metric' ? 'Height (cm)' : 'Height (in)';
+  document.getElementById('bmi-h').placeholder = u === 'metric' ? 'e.g. 170' : 'e.g. 67';
 }
 
 async function calcBMI() {
@@ -2971,9 +2979,13 @@ function initAds() {
 
 // Initialize ads when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  // Kick off auth check — shows login screen or the app
-  checkAuth();
+  // checkAuth() is already called at parse time above — don't call it again here
+  // to avoid a double /api/auth/me request on every page load
   initAds();
+  // Register service worker for PWA / offline support
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+  }
 });
 
 </script>
