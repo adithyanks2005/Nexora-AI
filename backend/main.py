@@ -36,6 +36,7 @@ from backend.auth import (
     verify_supabase_token,
 )
 from backend.calculators import calc_bmi, calc_calories, calc_water, calc_ideal_weight
+from backend.config import env_check, get_google_client_id, get_supabase_anon_key, get_supabase_url
 from backend.database import (
     add_chat_message,
     clear_done_reminders as db_clear_done_reminders,
@@ -106,6 +107,11 @@ async def global_exception_handler(request: Request, exc: Exception):
 def health() -> dict[str, str]:
     from backend.ai import get_ai_status
     return {"status": "ok", **get_ai_status()}
+
+
+@app.get("/api/env-check")
+def check_environment() -> dict[str, object]:
+    return env_check()
 
 
 # ── Serve frontend with injected config ───────────────────────────────────────
@@ -484,15 +490,12 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
         )
 
     # Inject GOOGLE_CLIENT_ID from environment variables if configured.
-    google_client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip().lstrip("\ufeff")
+    google_client_id = get_google_client_id()
     html = replace_js_const(html, "GOOGLE_CLIENT_ID", google_client_id)
 
     # Inject Supabase auth config for browser-side OAuth flow.
-    supabase_url = os.getenv("SUPABASE_URL", "").strip().lstrip("\ufeff")
-    supabase_anon_key = (
-        os.getenv("SUPABASE_ANON_KEY", "").strip().lstrip("\ufeff")
-        or os.getenv("SUPABASE_KEY", "").strip().lstrip("\ufeff")
-    )
+    supabase_url = get_supabase_url()
+    supabase_anon_key = get_supabase_anon_key()
     html = replace_js_const(html, "SUPABASE_URL", supabase_url)
     html = replace_js_const(html, "SUPABASE_ANON_KEY", supabase_anon_key)
 

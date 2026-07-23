@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from backend.config import get_supabase_server_key, get_supabase_url
+
 BASE_DIR = Path(__file__).resolve().parents[1]
 
 try:
@@ -18,12 +20,8 @@ except ImportError:
 if load_dotenv:
     load_dotenv(BASE_DIR / ".env", override=False)
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
-SUPABASE_KEY = (
-    os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
-    or os.getenv("SUPABASE_ANON_KEY", "").strip()
-    or os.getenv("SUPABASE_KEY", "").strip()
-)
+SUPABASE_URL = get_supabase_url()
+SUPABASE_KEY = get_supabase_server_key()
 DEFAULT_WORKPLACE_ID = os.getenv("DEFAULT_WORKPLACE_ID", "default").strip() or "default"
 USING_SUPABASE = bool(SUPABASE_URL and SUPABASE_KEY)
 

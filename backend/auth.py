@@ -11,6 +11,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
+from backend.config import get_google_client_id, get_supabase_server_key, get_supabase_url
 from backend.database import (
     USING_SUPABASE,
     create_user,
@@ -20,12 +21,8 @@ from backend.database import (
     upsert_user as db_upsert_user,
 )
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
-SUPABASE_KEY = (
-    os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
-    or os.getenv("SUPABASE_ANON_KEY", "").strip()
-    or os.getenv("SUPABASE_KEY", "").strip()
-)
+SUPABASE_URL = get_supabase_url()
+SUPABASE_KEY = get_supabase_server_key()
 
 # ── Config ────────────────────────────────────────────────────────────────────
 _jwt_secret_raw = os.getenv("JWT_SECRET", "").strip()
@@ -161,7 +158,7 @@ def verify_google_token(id_token_str: str) -> dict[str, Any]:
             raise HTTPException(status_code=401, detail="Google userinfo response missing email or sub.")
         return info
 
-    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip().lstrip("\ufeff")
+    client_id = get_google_client_id()
     if not client_id:
         raise HTTPException(
             status_code=500,
