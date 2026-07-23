@@ -369,6 +369,7 @@ async def chat_stream(
     messages = [m.model_dump() for m in req.messages]
     
     async def generate():
+        yield " " # Flush headers immediately for 0ms TTFB
         full_reply = ""
         async for chunk in stream_ai(messages):
             full_reply += chunk

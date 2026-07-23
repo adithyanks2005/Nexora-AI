@@ -2338,7 +2338,22 @@ async function sendChat() {
   inp.value = ''; inp.style.height = 'auto';
   const btn = document.querySelector('.send-btn');
   btn.disabled = true; btn.style.opacity = '0.5';
-  showTyping();
+  
+  // Instant 0ms visual feedback: Create AI bubble immediately
+  const wrap = document.getElementById('chatMessages');
+  const d = document.createElement('div');
+  d.className = 'msg bot';
+  const avatar = document.createElement('div');
+  avatar.className = 'msg-avatar bot-avatar';
+  avatar.textContent = '🧬';
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.innerHTML = '<span style="opacity:0.5">...</span>';
+  d.appendChild(avatar);
+  d.appendChild(bubble);
+  wrap.appendChild(d);
+  wrap.scrollTop = wrap.scrollHeight;
+
   try {
     const token = getToken();
     const headers = { 'Content-Type': 'application/json' };
@@ -2351,7 +2366,7 @@ async function sendChat() {
     });
 
     if (res.status === 401) {
-      removeTyping();
+      d.remove();
       clearToken(); clearStoredUser(); currentUser = null;
       showLoginScreen();
       return;
@@ -2363,20 +2378,6 @@ async function sendChat() {
       currentSessionId = sid;
       localStorage.setItem('nexora_session_id', currentSessionId);
     }
-
-    removeTyping();
-
-    const wrap = document.getElementById('chatMessages');
-    const d = document.createElement('div');
-    d.className = 'msg bot';
-    const avatar = document.createElement('div');
-    avatar.className = 'msg-avatar bot-avatar';
-    avatar.textContent = '🧬';
-    const bubble = document.createElement('div');
-    bubble.className = 'msg-bubble';
-    d.appendChild(avatar);
-    d.appendChild(bubble);
-    wrap.appendChild(d);
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder("utf-8");
@@ -2392,8 +2393,7 @@ async function sendChat() {
 
     chatHistory.push({role: 'assistant', content: fullReply});
   } catch(e) {
-    removeTyping();
-    addMsg('⚠️ ' + (e.message || 'Could not reach the server.'), 'bot');
+    bubble.innerHTML = '⚠️ ' + (e.message || 'Could not reach the server.');
   } finally {
     btn.disabled = false; btn.style.opacity = '';
   }
