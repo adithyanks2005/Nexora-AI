@@ -1839,6 +1839,7 @@ window.onunhandledrejection = function(e) {
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 const GOOGLE_CLIENT_ID = '638093827002-msthhp8pnpi0jkui1j2n3n6j07f1cjhs.apps.googleusercontent.com';
+const DEFAULT_GOOGLE_CLIENT_ID = '638093827002-msthhp8pnpi0jkui1j2n3n6j07f1cjhs.apps.googleusercontent.com';
 const CANONICAL_PROD_ORIGIN = 'https://nexora-ai-henna-five.vercel.app';
 let currentUser = null;
 
@@ -1867,6 +1868,9 @@ function normalizeLocalOAuthOrigin() {
 }
 
 function normalizeVercelProductionOrigin() {
+  // Only redirect to canonical origin if using the default Google client ID.
+  // Custom client ID deployments should not be redirected.
+  if (GOOGLE_CLIENT_ID !== DEFAULT_GOOGLE_CLIENT_ID) return false;
   const host = window.location.hostname;
   if (!host.endsWith('.vercel.app')) return false;
   if (window.location.origin === CANONICAL_PROD_ORIGIN) return false;

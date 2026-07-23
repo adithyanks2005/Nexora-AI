@@ -135,11 +135,18 @@ def verify_google_token(id_token_str: str) -> dict[str, Any]:
         if not access_token:
             raise HTTPException(status_code=401, detail="Invalid Google access token.")
         try:
+            # Use highly compatible oauth2/v3/userinfo first, then fallback to openidconnect.googleapis.com
             resp = requests.get(
-                "https://openidconnect.googleapis.com/v1/userinfo",
+                "https://www.googleapis.com/oauth2/v3/userinfo",
                 headers={"Authorization": f"Bearer {access_token}"},
                 timeout=10,
             )
+            if resp.status_code != 200:
+                resp = requests.get(
+                    "https://openidconnect.googleapis.com/v1/userinfo",
+                    headers={"Authorization": f"Bearer {access_token}"},
+                    timeout=10,
+                )
         except Exception as e:
             raise HTTPException(status_code=401, detail=f"Google userinfo request failed: {e}")
 
@@ -154,7 +161,7 @@ def verify_google_token(id_token_str: str) -> dict[str, Any]:
             raise HTTPException(status_code=401, detail="Google userinfo response missing email or sub.")
         return info
 
-    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip().lstrip("\ufeff")
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip().lstrip("\ufeff").strip("'\"")
     if not client_id:
         raise HTTPException(
             status_code=500,
