@@ -372,7 +372,7 @@ body{
   background:linear-gradient(135deg,var(--accent),var(--accent2));
   box-shadow:0 4px 14px rgba(79,156,249,0.45),0 0 0 1px rgba(79,156,249,0.2);
 }
-.user-avatar{background:var(--surface2);border:1px solid var(--border2);font-size:13px;}
+.user-avatar{background:linear-gradient(135deg,#7da2fb,#9b81f9);border:none;color:#453a7a;}
 
 .msg-bubble{
   padding:12px 18px;border-radius:var(--radius);
@@ -1258,7 +1258,7 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
     </div>
     <nav class="nav">
       <button class="nav-item active" onclick="switchSection('chat',this)">
-        <span class="nav-icon">💬</span> Chat
+        <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="url(#chat-icon-grad)" style="filter:drop-shadow(0 2px 4px rgba(255,255,255,0.1));"><defs><linearGradient id="chat-icon-grad" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stop-color="#ffffff" /><stop offset="100%" stop-color="#e8e0ff" /></linearGradient></defs><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg></span> Chat
       </button>
       <button class="nav-item" onclick="switchSection('symptom',this)">
         <span class="nav-icon">🩺</span> Symptom Checker
@@ -1310,7 +1310,7 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
     <div class="section active" id="section-chat">
       <div class="chat-header" style="display: flex; align-items: center; justify-content: space-between;">
         <div>
-          <h2>💬 Chat with Nexora</h2>
+          <h2><svg width="22" height="22" viewBox="0 0 24 24" fill="url(#chat-icon-grad2)" style="vertical-align:middle;margin-right:8px;filter:drop-shadow(0 2px 4px rgba(255,255,255,0.1));"><defs><linearGradient id="chat-icon-grad2" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stop-color="#ffffff" /><stop offset="100%" stop-color="#e8e0ff" /></linearGradient></defs><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>Chat with Nexora</h2>
           <p>Your intelligent healthcare companion</p>
         </div>
         <button onclick="newChat()" style="padding: 8px 16px; border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
@@ -2360,7 +2360,7 @@ function addMsg(text, role, isHtml = false) {
   const isBot = role === 'bot';
   const avatar = document.createElement('div');
   avatar.className = 'msg-avatar ' + (isBot ? 'bot-avatar' : 'user-avatar');
-  avatar.textContent = isBot ? '🧬' : '👤';
+  avatar.innerHTML = isBot ? '🧬' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble';
   if (isHtml) bubble.innerHTML = text;
