@@ -2340,7 +2340,7 @@ async function sendChat() {
   btn.disabled = true; btn.style.opacity = '0.5';
   showTyping();
   try {
-    const token = localStorage.getItem('nexora_token');
+    const token = getToken();
     const headers = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -2352,8 +2352,8 @@ async function sendChat() {
 
     if (res.status === 401) {
       removeTyping();
-      localStorage.removeItem('nexora_token');
-      showAuth();
+      clearToken(); clearStoredUser(); currentUser = null;
+      showLoginScreen();
       return;
     }
     if (!res.ok) throw new Error(await res.text());
