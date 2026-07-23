@@ -270,6 +270,34 @@ body{
 }
 .nav-icon{font-size:18px;width:22px;text-align:center;flex-shrink:0;}
 
+/* -- SIDEBAR SESSION LIST -- */
+.session-list-header {
+  padding: 16px 18px 8px; font-size: 11px; font-weight: 700; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.session-list {
+  flex: 1; overflow-y: auto; padding: 0 12px 12px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.session-list::-webkit-scrollbar { width: 3px; }
+.session-list::-webkit-scrollbar-thumb { background: var(--border3); border-radius: 4px; }
+.session-item {
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 13px; color: var(--text2);
+  display: flex; align-items: center; justify-content: space-between;
+  transition: all 0.2s; gap: 8px;
+}
+.session-item:hover { background: var(--surface2); color: var(--text); }
+.session-item.active { background: rgba(79,156,249,0.1); color: var(--accent); }
+.session-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.session-del { 
+  opacity: 0; font-size: 14px; padding: 4px; border: none; background: transparent; 
+  color: var(--danger); cursor: pointer; transition: 0.2s; 
+  display: flex; align-items: center; justify-content: center; border-radius: 4px; 
+}
+.session-item:hover .session-del { opacity: 1; }
+.session-del:hover { background: rgba(255,107,107,0.15); }
+
 .sidebar-footer{
   padding:12px 10px 18px;
   border-top:1px solid rgba(79,156,249,0.08);
@@ -1279,6 +1307,8 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
         <span class="nav-icon">📚</span> Articles
       </button>
     </nav>
+    <div class="session-list-header">Recent Chats</div>
+    <div class="session-list" id="sidebarSessionList"></div>
     <div class="user-info" id="sidebarUserInfo" style="display:none;">
       <img class="user-avatar" id="userAvatarImg" src="" alt="User Avatar" width="36" height="36" style="display:none;" onerror="this.style.display='none';document.getElementById('userAvatarFallback').style.display='flex'"/>
       <div class="user-avatar-fallback" id="userAvatarFallback" style="display:flex;">👤</div>
@@ -2225,6 +2255,7 @@ function showApp() {
   loadReminders().catch(() => {});
   loadRecords().catch(() => {});
   loadChatHistory().catch(() => {});
+  if(typeof loadSessionList === 'function') loadSessionList().catch(() => {});
 }
 
 function updateUserUI() {
@@ -2298,6 +2329,7 @@ function newChat() {
   currentSessionId = generateUUID();
   localStorage.setItem('nexora_session_id', currentSessionId);
   chatHistory = [];
+  if(typeof loadSessionList === 'function') loadSessionList();
 
   // Clear messages and show welcome banner
   const wrap = document.getElementById('chatMessages');
@@ -2321,7 +2353,63 @@ function newChat() {
   const inp = document.getElementById('chatInput');
   inp.value = '';
   inp.style.height = 'auto';
-  inp.focus();
+  chatInput.focus();
+}
+
+async function loadSessionList() {
+  if (!currentUser) return;
+  try {
+    const sessions = await authFetch('/api/sessions');
+    const wrap = document.getElementById('sidebarSessionList');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    if (sessions && sessions.length > 0) {
+      sessions.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'session-item' + (s.id === currentSessionId ? ' active' : '');
+        div.onclick = () => switchSession(s.id);
+        
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'session-title';
+        titleSpan.textContent = s.title || 'New Chat';
+        
+        const delBtn = document.createElement('button');
+        delBtn.className = 'session-del';
+        delBtn.innerHTML = '✕';
+        delBtn.title = 'Delete Chat';
+        delBtn.onclick = (e) => { e.stopPropagation(); deleteChatSession(s.id); };
+        
+        div.appendChild(titleSpan);
+        div.appendChild(delBtn);
+        wrap.appendChild(div);
+      });
+    }
+  } catch(e) { console.error('Failed to load sessions', e); }
+}
+
+async function switchSession(sid) {
+  if (currentSessionId === sid) return;
+  currentSessionId = sid;
+  localStorage.setItem('nexora_session_id', currentSessionId);
+  chatHistory = [];
+  document.getElementById('chatMessages').innerHTML = '';
+  const chatNav = document.querySelector('.nav-item[onclick*="chat"]');
+  if(chatNav) switchSection('chat', chatNav);
+  await loadChatHistory();
+  loadSessionList();
+  if (window.innerWidth <= 768 && typeof closeSidebar === 'function') closeSidebar();
+}
+
+async function deleteChatSession(sid) {
+  if (!confirm('Are you sure you want to delete this chat session?')) return;
+  try {
+    await authFetch(`/api/sessions/${sid}`, { method: 'DELETE' });
+    if (sid === currentSessionId) {
+      newChat();
+    } else {
+      loadSessionList();
+    }
+  } catch(e) { console.error('Failed to delete session', e); }
 }
 
 let currentSessionId = localStorage.getItem('nexora_session_id') || generateUUID();
@@ -2432,6 +2520,7 @@ async function sendChat() {
     if (sid && sid !== currentSessionId) {
       currentSessionId = sid;
       localStorage.setItem('nexora_session_id', currentSessionId);
+      if(typeof loadSessionList === 'function') loadSessionList();
     }
 
     const reader = res.body.getReader();
