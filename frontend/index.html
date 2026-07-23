@@ -2340,16 +2340,57 @@ async function sendChat() {
   btn.disabled = true; btn.style.opacity = '0.5';
   showTyping();
   try {
-    const data = await authFetch('/api/chat', 'POST', {session_id: currentSessionId, messages: chatHistory});
-    removeTyping();
-    if (!data) { addMsg('⚠️ Session expired. Please sign in again.', 'bot'); return; }
-    if (data.session_id && data.session_id !== currentSessionId) {
-      currentSessionId = data.session_id;
+    const token = localStorage.getItem('nexora_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch('/api/chat/stream', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({session_id: currentSessionId, messages: chatHistory})
+    });
+
+    if (res.status === 401) {
+      removeTyping();
+      localStorage.removeItem('nexora_token');
+      showAuth();
+      return;
+    }
+    if (!res.ok) throw new Error(await res.text());
+
+    const sid = res.headers.get('X-Session-ID');
+    if (sid && sid !== currentSessionId) {
+      currentSessionId = sid;
       localStorage.setItem('nexora_session_id', currentSessionId);
     }
-    const reply = data.reply;
-    chatHistory.push({role: 'assistant', content: reply});
-    addMsg(renderMarkdown(reply), 'bot', true);
+
+    removeTyping();
+
+    const wrap = document.getElementById('chatMessages');
+    const d = document.createElement('div');
+    d.className = 'msg bot';
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar bot-avatar';
+    avatar.textContent = '🧬';
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    d.appendChild(avatar);
+    d.appendChild(bubble);
+    wrap.appendChild(d);
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let fullReply = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      fullReply += decoder.decode(value, { stream: true });
+      bubble.innerHTML = renderMarkdown(fullReply);
+      wrap.scrollTop = wrap.scrollHeight;
+    }
+
+    chatHistory.push({role: 'assistant', content: fullReply});
   } catch(e) {
     removeTyping();
     addMsg('⚠️ ' + (e.message || 'Could not reach the server.'), 'bot');

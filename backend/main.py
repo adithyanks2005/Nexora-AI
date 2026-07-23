@@ -19,7 +19,7 @@ if DOTENV_PATH.exists():
 
 import traceback
 from fastapi import Depends, FastAPI, HTTPException, status, Request, BackgroundTasks
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -27,7 +27,7 @@ from fastapi.staticfiles import StaticFiles
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from backend.ai import call_ai, SYSTEM_PROMPT
+from backend.ai import call_ai, stream_ai, SYSTEM_PROMPT
 from backend.auth import (
     create_jwt,
     get_current_user,
@@ -343,6 +343,49 @@ async def chat(
     background_tasks.add_task(save_chat_to_db)
 
     return {"reply": reply, "session_id": session_id}
+
+
+@app.post("/api/chat/stream")
+async def chat_stream(
+    req: ChatRequest,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
+    uid = current_user["id"]
+    workplace_id = current_user["workplace_id"]
+    session_id = req.session_id
+    row = get_chat_session(session_id, uid, workplace_id)
+    if not row:
+        existing_session = get_chat_session_by_id(session_id)
+        if existing_session:
+            session_id = str(uuid.uuid4())
+        create_chat_session(
+            session_id,
+            uid,
+            workplace_id,
+            req.messages[0].content[:40] if req.messages else "New Chat",
+        )
+
+    messages = [m.model_dump() for m in req.messages]
+    
+    async def generate():
+        full_reply = ""
+        async for chunk in stream_ai(messages):
+            full_reply += chunk
+            yield chunk
+
+        # Save to DB after streaming is done
+        def save_chat_to_db():
+            last_user = next((m for m in reversed(req.messages) if m.role == "user"), None)
+            if last_user:
+                add_chat_message(session_id, workplace_id, "user", last_user.content)
+            add_chat_message(session_id, workplace_id, "assistant", full_reply)
+            touch_chat_session(session_id, uid, workplace_id, last_user.content[:40] if last_user else "Chat")
+            
+        background_tasks.add_task(save_chat_to_db)
+
+    headers = {"X-Session-ID": session_id}
+    return StreamingResponse(generate(), media_type="text/event-stream", headers=headers)
 
 
 # ── Symptom checker ───────────────────────────────────────────────────────────

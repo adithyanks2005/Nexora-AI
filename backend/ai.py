@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 from pathlib import Path
+from typing import AsyncGenerator
 
 from dotenv import load_dotenv
 import httpx
@@ -104,6 +106,68 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
         print("ERROR: Groq returned empty response")
         raise HTTPException(status_code=502, detail="Groq returned an empty response. Please try again.")
     return reply
+
+
+async def stream_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> AsyncGenerator[str, None]:
+    api_key = os.getenv("GROQ_API_KEY", "").strip()
+    model = os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL).strip()
+
+    if not api_key:
+        raise HTTPException(
+            status_code=500,
+            detail="GROQ_API_KEY not configured."
+        )
+
+    chat_messages = [{"role": "system", "content": system}] + [
+        {"role": msg.get("role", "user"), "content": msg.get("content", "")}
+        for msg in messages
+        if msg.get("content")
+    ]
+
+    last_user_msg = next((m.get("content", "") for m in reversed(messages) if m.get("role") == "user"), "")
+    if not _is_health_query(last_user_msg):
+        yield (
+            "I am specialized exclusively in health and medical topics. "
+            "Please ask a health-related question, symptom, or wellness concern."
+        )
+        return
+
+    payload = {
+        "model": model,
+        "messages": chat_messages,
+        "temperature": 0.3,
+        "top_p": 0.9,
+        "max_tokens": 350,
+        "stream": True,
+    }
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "content-type": "application/json",
+    }
+    
+    try:
+        async with _http_client.stream("POST", GROQ_URL, json=payload, headers=headers) as response:
+            if response.status_code != 200:
+                text = await response.aread()
+                print(f"ERROR: Groq streaming returned {response.status_code}: {text}")
+                yield "I am currently experiencing technical difficulties. Please try again later."
+                return
+
+            async for line in response.aiter_lines():
+                if line.startswith("data: "):
+                    data_str = line[6:]
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        chunk = json.loads(data_str)
+                        content = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                        if content:
+                            yield content
+                    except json.JSONDecodeError:
+                        continue
+    except Exception as e:
+        print(f"ERROR: Groq streaming failed: {e}")
+        yield " Connection error. Please try again."
 
 
 def get_ai_status() -> dict[str, str]:
