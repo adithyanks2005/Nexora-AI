@@ -18,7 +18,7 @@ if DOTENV_PATH.exists():
     load_dotenv(DOTENV_PATH, override=True)
 
 import traceback
-from fastapi import Depends, FastAPI, HTTPException, status, Request
+from fastapi import Depends, FastAPI, HTTPException, status, Request, BackgroundTasks
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -312,6 +312,7 @@ def get_messages(
 @app.post("/api/chat")
 async def chat(
     req: ChatRequest,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ) -> dict[str, str]:
     uid = current_user["id"]
@@ -332,11 +333,14 @@ async def chat(
     messages = [m.model_dump() for m in req.messages]
     reply    = await call_ai(messages)
 
-    last_user = next((m for m in reversed(req.messages) if m.role == "user"), None)
-    if last_user:
-        add_chat_message(session_id, workplace_id, "user", last_user.content)
-    add_chat_message(session_id, workplace_id, "assistant", reply)
-    touch_chat_session(session_id, uid, workplace_id, last_user.content[:40] if last_user else "Chat")
+    def save_chat_to_db():
+        last_user = next((m for m in reversed(req.messages) if m.role == "user"), None)
+        if last_user:
+            add_chat_message(session_id, workplace_id, "user", last_user.content)
+        add_chat_message(session_id, workplace_id, "assistant", reply)
+        touch_chat_session(session_id, uid, workplace_id, last_user.content[:40] if last_user else "Chat")
+
+    background_tasks.add_task(save_chat_to_db)
 
     return {"reply": reply, "session_id": session_id}
 

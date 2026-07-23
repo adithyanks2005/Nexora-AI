@@ -16,6 +16,9 @@ if _dotenv.exists():
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_GROQ_MODEL = "llama-3.1-8b-instant"
 
+# Global client for reusing connections
+_http_client = httpx.AsyncClient(timeout=30)
+
 SYSTEM_PROMPT = """You are Nexora AI, a clinical medical AI companion. Provide accurate, high-quality medical insights, symptom analysis, and medication suggestions as concisely as possible.
 
 RULES:
@@ -85,12 +88,11 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
         "Authorization": f"Bearer {api_key}",
         "content-type": "application/json",
     }
-    async with httpx.AsyncClient(timeout=30) as client:
-        try:
-            resp = await client.post(GROQ_URL, json=payload, headers=headers)
-        except Exception as e:
-            print(f"ERROR: Groq request failed: {e}")
-            raise HTTPException(status_code=503, detail=f"Failed to connect to AI service: {str(e)}")
+    try:
+        resp = await _http_client.post(GROQ_URL, json=payload, headers=headers)
+    except Exception as e:
+        print(f"ERROR: Groq request failed: {e}")
+        raise HTTPException(status_code=503, detail=f"Failed to connect to AI service: {str(e)}")
 
     if resp.status_code != 200:
         print(f"ERROR: Groq returned {resp.status_code}: {resp.text}")
