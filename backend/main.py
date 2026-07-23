@@ -131,7 +131,7 @@ def service_worker() -> FileResponse:
     return FileResponse(
         worker_path,
         media_type="application/javascript",
-        headers={"Cache-Control": "no-cache"},
+        headers={"Cache-Control": "no-store, max-age=0, must-revalidate"},
     )
 
 
@@ -519,4 +519,10 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
         f'data-ad-client="{adsense_id}"'
     )
 
-    return HTMLResponse(content=html)
+    return HTMLResponse(
+        content=html,
+        headers={
+            "Cache-Control": "no-store, max-age=0, must-revalidate",
+            "Pragma": "no-cache",
+        },
+    )

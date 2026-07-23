@@ -1,6 +1,5 @@
-const CACHE_NAME = "nexora-ai-v4";
+const CACHE_NAME = "nexora-ai-v5";
 const APP_SHELL = [
-  "/",
   "/manifest.webmanifest",
   "/static/icons/icon.svg"
 ];
@@ -31,8 +30,13 @@ self.addEventListener("fetch", event => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() => caches.match("/") || Response.error())
+      fetch(request).catch(() => Response.error())
     );
+    return;
+  }
+
+  if (!url.pathname.startsWith("/static/") && url.pathname !== "/manifest.webmanifest") {
+    event.respondWith(fetch(request));
     return;
   }
 
