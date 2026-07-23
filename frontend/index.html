@@ -2463,28 +2463,31 @@ function toggleBmiUnit() {
   document.getElementById('bmi-h').placeholder = u === 'metric' ? 'e.g. 170' : 'e.g. 67';
 }
 
-async function calcBMI() {
+function calcBMI() {
   const unit = document.getElementById('bmi-unit').value;
-  const w = parseFloat(document.getElementById('bmi-w').value);
-  const h = parseFloat(document.getElementById('bmi-h').value);
+  let w = parseFloat(document.getElementById('bmi-w').value);
+  let h = parseFloat(document.getElementById('bmi-h').value);
   if (!w || !h) { alert('Please enter weight and height.'); return; }
-  try {
-    const d = await authFetch('/api/calc/bmi', 'POST', {weight: w, height: h, unit});
-    if (!d) throw new Error('Calculation failed');
-    const res = document.getElementById('bmi-result');
-    document.getElementById('bmi-val').textContent = d.bmi;
-    document.getElementById('bmi-val').style.color = d.color;
-    document.getElementById('bmi-cat').textContent = d.category;
-    document.getElementById('bmi-cat').style.color = d.color;
-    res.style.borderColor = d.color + '55';
-    const meta = res.querySelector('.result-meta');
-    if (meta) meta.innerHTML = `<span style="color:${d.color};font-weight:500;">${d.advice}</span><br><small style="color:var(--text3);">Underweight &lt;18.5 · Normal 18.5–24.9 · Overweight 25–29.9 · Obese ≥30</small>`;
-    res.classList.add('show');
-  } catch(e) { alert('Failed to calculate BMI. Make sure the backend is running.'); }
+  if (unit === 'imperial') { w = w * 0.453592; h = h * 2.54; }
+  const bmi = +(w / ((h / 100) ** 2)).toFixed(1);
+  let category, color, advice;
+  if (bmi < 18.5)      { category = 'Underweight'; color = '#3b82f6'; advice = 'Consider increasing caloric intake with nutrient-dense foods.'; }
+  else if (bmi < 25)   { category = 'Normal weight'; color = '#22c55e'; advice = 'Great! Maintain your healthy lifestyle.'; }
+  else if (bmi < 30)   { category = 'Overweight'; color = '#f59e0b'; advice = 'Consider a balanced diet and regular exercise.'; }
+  else                 { category = 'Obese'; color = '#ef4444'; advice = 'Consult a healthcare provider for a personalised plan.'; }
+  const res = document.getElementById('bmi-result');
+  document.getElementById('bmi-val').textContent = bmi;
+  document.getElementById('bmi-val').style.color = color;
+  document.getElementById('bmi-cat').textContent = category;
+  document.getElementById('bmi-cat').style.color = color;
+  res.style.borderColor = color + '55';
+  const meta = res.querySelector('.result-meta');
+  if (meta) meta.innerHTML = `<span style="color:${color};font-weight:500;">${advice}</span><br><small style="color:var(--text3);">Underweight &lt;18.5 · Normal 18.5–24.9 · Overweight 25–29.9 · Obese ≥30</small>`;
+  res.classList.add('show');
 }
 
 // ── CALORIES ──
-async function calcCal() {
+function calcCal() {
   const age = parseFloat(document.getElementById('cal-age').value);
   const gender = document.getElementById('cal-gender').value;
   const w = parseFloat(document.getElementById('cal-w').value);
@@ -2492,44 +2495,50 @@ async function calcCal() {
   const act = parseFloat(document.getElementById('cal-activity').value);
   const goal = document.getElementById('cal-goal').value;
   if (!age || !w || !h) { alert('Please fill in all fields.'); return; }
-  try {
-    const d = await authFetch('/api/calc/calories', 'POST', {age, gender, weight: w, height: h, activity: act, goal});
-    if (!d) throw new Error('Calculation failed');
-    document.getElementById('cal-val').textContent = d.target.toLocaleString();
-    document.getElementById('cal-meta').innerHTML =
-      `BMR: <strong>${d.bmr}</strong> kcal &nbsp;·&nbsp; TDEE: <strong>${d.tdee}</strong> kcal<br>
-       Protein: <strong>${d.protein_g}g</strong> &nbsp;·&nbsp; Carbs: <strong>${d.carbs_g}g</strong> &nbsp;·&nbsp; Fat: <strong>${d.fat_g}g</strong>`;
-    document.getElementById('cal-result').classList.add('show');
-  } catch(e) { alert('Failed to calculate calories. Make sure the backend is running.'); }
+  // Mifflin-St Jeor BMR
+  const bmr = Math.round(gender === 'male'
+    ? 10 * w + 6.25 * h - 5 * age + 5
+    : 10 * w + 6.25 * h - 5 * age - 161);
+  const tdee = Math.round(bmr * act);
+  const target = goal === 'lose' ? tdee - 500 : goal === 'gain' ? tdee + 500 : tdee;
+  const protein_g = Math.round(w * 1.8);
+  const fat_g = Math.round(target * 0.25 / 9);
+  const carbs_g = Math.round((target - protein_g * 4 - fat_g * 9) / 4);
+  document.getElementById('cal-val').textContent = target.toLocaleString();
+  document.getElementById('cal-meta').innerHTML =
+    `BMR: <strong>${bmr}</strong> kcal &nbsp;·&nbsp; TDEE: <strong>${tdee}</strong> kcal<br>
+     Protein: <strong>${protein_g}g</strong> &nbsp;·&nbsp; Carbs: <strong>${carbs_g}g</strong> &nbsp;·&nbsp; Fat: <strong>${fat_g}g</strong>`;
+  document.getElementById('cal-result').classList.add('show');
 }
 
 // ── WATER ──
-async function calcWater() {
+function calcWater() {
   const w = parseFloat(document.getElementById('water-w').value);
-  const ex = parseFloat(document.getElementById('water-ex').value);
-  const climate = parseFloat(document.getElementById('water-climate').value);
+  const ex = parseFloat(document.getElementById('water-ex').value) || 0;
+  const climate = parseFloat(document.getElementById('water-climate').value) || 0;
   if (!w) { alert('Please enter your weight.'); return; }
-  try {
-    const d = await authFetch('/api/calc/water', 'POST', {weight: w, activity: ex, climate});
-    if (!d) throw new Error('Calculation failed');
-    document.getElementById('water-val').textContent = d.litres;
-    document.getElementById('water-meta').textContent = `${d.ml} ml  ·  ${d.cups} cups per day`;
-    document.getElementById('water-result').classList.add('show');
-  } catch(e) { alert('Failed to calculate water intake. Make sure the backend is running.'); }
+  const ml = Math.round(w * 35 + ex * 500 + climate * 250);
+  const litres = (ml / 1000).toFixed(1);
+  const cups = Math.round(ml / 240);
+  document.getElementById('water-val').textContent = litres;
+  document.getElementById('water-meta').textContent = `${ml} ml  ·  ${cups} cups per day`;
+  document.getElementById('water-result').classList.add('show');
 }
 
 // ── IDEAL BODY WEIGHT ──
-async function calcIBW() {
+function calcIBW() {
   const h = parseFloat(document.getElementById('ibw-h').value);
   const gender = document.getElementById('ibw-gender').value;
   if (!h) { alert('Please enter your height.'); return; }
-  try {
-    const d = await authFetch('/api/calc/ideal-weight', 'POST', {height: h, gender});
-    if (!d) throw new Error('Calculation failed');
-    document.getElementById('ibw-val').textContent = d.ideal;
-    document.getElementById('ibw-meta').textContent = `Healthy range: ${d.low} – ${d.high} kg (Devine formula)`;
-    document.getElementById('ibw-result').classList.add('show');
-  } catch(e) { alert('Failed to calculate ideal weight. Make sure the backend is running.'); }
+  // Devine formula (in cm)
+  const inchesOver5ft = (h / 2.54) - 60;
+  const base = gender === 'male' ? 50 : 45.5;
+  const ideal = +(base + 2.3 * inchesOver5ft).toFixed(1);
+  const low = +(ideal * 0.9).toFixed(1);
+  const high = +(ideal * 1.1).toFixed(1);
+  document.getElementById('ibw-val').textContent = ideal;
+  document.getElementById('ibw-meta').textContent = `Healthy range: ${low} – ${high} kg (Devine formula)`;
+  document.getElementById('ibw-result').classList.add('show');
 }
 
 // ── REMINDERS ──
@@ -2541,10 +2550,13 @@ function selectIcon(el) {
   selectedIcon = el.dataset.icon;
 }
 
+let _remindersCache = [];
+
 async function loadReminders() {
   try {
     const data = await authFetch('/api/reminders');
-    renderReminders(data || []);
+    _remindersCache = data || [];
+    renderReminders(_remindersCache);
   } catch(e) { renderReminders([]); }
 }
 
@@ -2554,14 +2566,30 @@ async function addReminder() {
   const repeat = document.getElementById('rem-repeat').value;
   const notes = document.getElementById('rem-notes').value.trim();
   if (!title || !time) { alert('Please enter a title and time.'); return; }
+
+  // Optimistic UI: add immediately
+  const tempId = 'temp-' + Date.now();
+  const tempReminder = { id: tempId, title, time, repeat, notes, icon: selectedIcon, done: false };
+  _remindersCache.unshift(tempReminder);
+  renderReminders(_remindersCache);
+
+  document.getElementById('rem-title').value = '';
+  document.getElementById('rem-time').value = '';
+  document.getElementById('rem-notes').value = '';
+
   try {
     const data = await authFetch('/api/reminders', 'POST', {title, time, repeat, notes, icon: selectedIcon, color: '#E6F1FB'});
     if (!data) throw new Error('Failed to add');
-    document.getElementById('rem-title').value = '';
-    document.getElementById('rem-time').value = '';
-    document.getElementById('rem-notes').value = '';
-    loadReminders();
-  } catch(e) { alert('Failed to add reminder. Make sure the backend is running.'); }
+    // Replace temp with real data from server
+    const idx = _remindersCache.findIndex(r => r.id === tempId);
+    if (idx !== -1) _remindersCache[idx] = data;
+    renderReminders(_remindersCache);
+  } catch(e) {
+    // Revert on failure
+    _remindersCache = _remindersCache.filter(r => r.id !== tempId);
+    renderReminders(_remindersCache);
+    alert('Failed to add reminder.');
+  }
 }
 
 function renderReminders(data) {
@@ -2581,16 +2609,29 @@ function renderReminders(data) {
 }
 
 async function doneReminder(id) {
-  await authFetch(`/api/reminders/${id}/toggle`, 'PATCH');
-  loadReminders();
+  // Optimistic: immediately mark as done in cache
+  _remindersCache = _remindersCache.map(r => r.id === id ? {...r, done: !r.done} : r);
+  renderReminders(_remindersCache);
+  try { await authFetch(`/api/reminders/${id}/toggle`, 'PATCH'); }
+  catch(e) {
+    // Revert on failure
+    _remindersCache = _remindersCache.map(r => r.id === id ? {...r, done: !r.done} : r);
+    renderReminders(_remindersCache);
+  }
 }
 async function deleteReminder(id) {
-  await authFetch(`/api/reminders/${id}`, 'DELETE');
-  loadReminders();
+  const prev = [..._remindersCache];
+  _remindersCache = _remindersCache.filter(r => r.id != id);
+  renderReminders(_remindersCache);
+  try { await authFetch(`/api/reminders/${id}`, 'DELETE'); }
+  catch(e) { _remindersCache = prev; renderReminders(_remindersCache); }
 }
 async function clearDoneReminders() {
-  await authFetch('/api/reminders/done/clear', 'DELETE');
-  loadReminders();
+  const prev = [..._remindersCache];
+  _remindersCache = _remindersCache.filter(r => !r.done);
+  renderReminders(_remindersCache);
+  try { await authFetch('/api/reminders/done/clear', 'DELETE'); }
+  catch(e) { _remindersCache = prev; renderReminders(_remindersCache); }
 }
 
 // ── RECORDS ──
@@ -2599,10 +2640,13 @@ const recIcons = {
   'Temperature':'🌡️','Oxygen Level':'💨','Sleep':'😴','Exercise':'🏃','Mood':'😊','Other':'📝'
 };
 
+let _recordsCache = [];
+
 async function loadRecords() {
   try {
     const data = await authFetch('/api/records');
-    renderRecords(data || []);
+    _recordsCache = data || [];
+    renderRecords(_recordsCache);
   } catch(e) { renderRecords([]); }
 }
 
