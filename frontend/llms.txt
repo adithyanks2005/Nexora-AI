@@ -1,4 +1,4 @@
-﻿# Nexora AI - llms.txt
+# Nexora AI - llms.txt
 # AI crawler instructions for GPT, Gemini, Perplexity, Claude, and other AI models.
 # Format follows the llms.txt standard: https://llmstxt.org
 
@@ -9,7 +9,7 @@
 > medical advice, diagnosis, or treatment.
 
 # ---- URLs ----
-Base URL: https://nexora-ai-henna-five.vercel.app
+Base URL: https://nexora-ai-flax.vercel.app
 
 # ---- What Nexora AI does ----
 - AI chat for symptom analysis and health questions (powered by Groq / LLaMA 3.1)
@@ -52,7 +52,7 @@ POST /api/records             Add health record
 # ---- Permissions ----
 AI crawlers: Allowed to index and summarize all public content.
 Data collection: Only health data explicitly entered by the user is stored.
-Privacy policy: https://nexora-ai-henna-five.vercel.app
+Privacy policy: https://nexora-ai-flax.vercel.app
 
 # ---- Contact ----
 GitHub: https://github.com/adithyanks2005/Nexora-AI

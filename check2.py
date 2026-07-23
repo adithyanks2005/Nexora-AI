@@ -1,5 +1,5 @@
 import urllib.request
-html = urllib.request.urlopen('https://nexora-ai-henna-five.vercel.app/').read().decode('utf-8', errors='replace')
+html = urllib.request.urlopen('https://nexora-ai-flax.vercel.app/').read().decode('utf-8', errors='replace')
 
 # Check guest button
 idx = html.find('Continue as Guest')

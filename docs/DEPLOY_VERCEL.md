@@ -65,10 +65,10 @@ Also add the popup callback URL to **Authorized redirect URIs**:
 https://nexora-ai-phi.vercel.app/auth/google/callback
 ```
 
-If you use preview domains, add both the origin and `/auth/google/callback` redirect URI for each preview domain too. For the deployment shown at `https://nexora-ai-henna-five.vercel.app`, the redirect URI is:
+If you use preview domains, add both the origin and `/auth/google/callback` redirect URI for each preview domain too. For the deployment shown at `https://nexora-ai-flax.vercel.app`, the redirect URI is:
 
 ```text
-https://nexora-ai-henna-five.vercel.app/auth/google/callback
+https://nexora-ai-flax.vercel.app/auth/google/callback
 ```
 
 ### 6. Deploy

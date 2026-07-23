@@ -35,4 +35,4 @@ Allow: /
 User-agent: meta-externalagent
 Allow: /
 
-Sitemap: https://nexora-ai-henna-five.vercel.app/sitemap.xml
+Sitemap: https://nexora-ai-flax.vercel.app/sitemap.xml

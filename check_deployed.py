@@ -1,7 +1,7 @@
 import urllib.request
 import re
 
-r = urllib.request.urlopen('https://nexora-ai-henna-five.vercel.app/')
+r = urllib.request.urlopen('https://nexora-ai-flax.vercel.app/')
 html = r.read().decode('utf-8', errors='replace')
 
 print("=== DEPLOYED FRONTEND CHECK ===\n")

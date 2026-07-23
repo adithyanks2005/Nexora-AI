@@ -1,4 +1,4 @@
-﻿"""
+"""
 backend/crawler.py
 ------------------
 Lightweight web crawler for Nexora AI.
@@ -24,7 +24,7 @@ import httpx
 from fastapi import HTTPException
 
 # -- Constants ----------------------------------------------------------------
-CRAWLER_UA        = "NexoraBot/1.0 (+https://nexora-ai-henna-five.vercel.app/llms.txt)"
+CRAWLER_UA        = "NexoraBot/1.0 (+https://nexora-ai-flax.vercel.app/llms.txt)"
 REQUEST_TIMEOUT   = 15
 MAX_CONTENT_BYTES = 2 * 1024 * 1024
 MAX_TEXT_PREVIEW  = 500
