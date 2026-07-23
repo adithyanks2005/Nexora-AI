@@ -2401,7 +2401,6 @@ async function switchSession(sid) {
 }
 
 async function deleteChatSession(sid) {
-  if (!confirm('Are you sure you want to delete this chat session?')) return;
   try {
     await authFetch(`/api/sessions/${sid}`, { method: 'DELETE' });
     if (sid === currentSessionId) {
