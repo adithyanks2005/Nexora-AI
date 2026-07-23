@@ -106,7 +106,8 @@ All issues listed below have been resolved. The app is production-ready.
 | `GROQ_API_KEY` | Yes | Groq LLM API key |
 | `JWT_SECRET` | Yes (prod) | ≥32 chars, cryptographically random |
 | `GOOGLE_CLIENT_ID` | Yes (OAuth) | Google OAuth client ID |
-| `SUPABASE_URL` | No | Required for persistent DB on Vercel |
+| `SU` | No | Required for persistent DB on Vercel |
+| `SAN` | No | Required for browser-side Supabase OAuth on Vercel |
 | `SUPABASE_SERVICE_ROLE_KEY` | No | Required for persistent DB on Vercel |
 | `ADSENSE_CLIENT_ID` | No | Google AdSense publisher ID |
 | `ALLOWED_ORIGINS` | No | Comma-separated list (defaults to prod URL + localhost) |

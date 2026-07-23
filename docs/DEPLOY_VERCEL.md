@@ -43,7 +43,8 @@ Click "Environment Variables" and add:
 | `GROQ_MODEL` | `llama-3.1-8b-instant` |
 | `GOOGLE_CLIENT_ID` | Your OAuth 2.0 Web Client ID, ending in `.apps.googleusercontent.com` |
 | `JWT_SECRET` | A strong random string, for example from `python -c "import secrets; print(secrets.token_hex(32))"` |
-| `SUPABASE_URL` | Your Supabase project URL |
+| `SU` | Your Supabase project URL |
+| `SAN` | Your Supabase anon/public key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key |
 | `DEFAULT_WORKPLACE_ID` | `default` or your production workplace id |
 | `PYTHON_VERSION` | `3.12.10` |

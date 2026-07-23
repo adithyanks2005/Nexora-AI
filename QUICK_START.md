@@ -141,7 +141,8 @@ python test_fixes.py
 
 3. **For database persistence, set up Supabase:**
    ```
-   SUPABASE_URL=https://your-project.supabase.co
+   SU=https://your-project.supabase.co
+   SAN=your_supabase_anon_key
    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
    ```
 

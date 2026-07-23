@@ -19,12 +19,14 @@ def get_env_source(*names: str) -> str:
 
 
 SUPABASE_URL_NAMES = (
+    "SU",
     "SUPABASE_URL",
     "NEXT_PUBLIC_SUPABASE_URL",
     "VITE_SUPABASE_URL",
 )
 
 SUPABASE_ANON_KEY_NAMES = (
+    "SAN",
     "SUPABASE_ANON_KEY",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "VITE_SUPABASE_ANON_KEY",

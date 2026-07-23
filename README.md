@@ -47,7 +47,8 @@ Edit `.env` and add your key:
 ```env
 GROQ_API_KEY=your_groq_api_key_here
 GROQ_MODEL=llama-3.1-8b-instant
-SUPABASE_URL=https://your-project.supabase.co
+SU=https://your-project.supabase.co
+SAN=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 DEFAULT_WORKPLACE_ID=default
 ```
@@ -152,7 +153,8 @@ Set these environment variables in Render:
 ```env
 GROQ_API_KEY=your_groq_api_key_here
 GROQ_MODEL=llama-3.1-8b-instant
-SUPABASE_URL=https://your-project.supabase.co
+SU=https://your-project.supabase.co
+SAN=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 DEFAULT_WORKPLACE_ID=default
 ```

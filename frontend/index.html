@@ -1889,8 +1889,8 @@ function hasSupabaseConfig() {
   const hasKey = Boolean(SUPABASE_ANON_KEY && SUPABASE_ANON_KEY.trim());
   if (!hasUrl || !hasKey) {
     const missing = [];
-    if (!hasUrl) missing.push('SUPABASE_URL');
-    if (!hasKey) missing.push('SUPABASE_ANON_KEY (or SUPABASE_KEY)');
+    if (!hasUrl) missing.push('SU (or SUPABASE_URL)');
+    if (!hasKey) missing.push('SAN (or SUPABASE_ANON_KEY)');
     console.warn('[Nexora Auth Warning] Missing required environment variables:', missing.join(', '));
   }
   return hasUrl && hasKey;
@@ -1898,7 +1898,7 @@ function hasSupabaseConfig() {
 
 function getSupabaseClient() {
   if (!hasSupabaseConfig()) {
-    console.error('[Nexora Auth Error] Cannot initialize Supabase client: missing SUPABASE_URL or SUPABASE_ANON_KEY.');
+    console.error('[Nexora Auth Error] Cannot initialize Supabase client: missing SU/SUPABASE_URL or SAN/SUPABASE_ANON_KEY.');
     return null;
   }
   if (!window.supabase || !window.supabase.createClient) {
@@ -1982,13 +1982,13 @@ function initGoogleSignIn() {
   if (!hasSupabaseConfig()) {
     console.error('❌ [Nexora Auth Error] "Continue with Google" button is HIDDEN because Supabase configuration is missing!');
     console.error('📋 [Nexora Auth Environment Variable Status]:');
-    console.error('   • SUPABASE_URL:', SUPABASE_URL ? '✓ Configured (' + SUPABASE_URL + ')' : '❌ MISSING (empty string)');
-    console.error('   • SUPABASE_ANON_KEY:', SUPABASE_ANON_KEY ? '✓ Configured' : '❌ MISSING (empty string)');
+    console.error('   • SU / SUPABASE_URL:', SUPABASE_URL ? '✓ Configured (' + SUPABASE_URL + ')' : '❌ MISSING (empty string)');
+    console.error('   • SAN / SUPABASE_ANON_KEY:', SUPABASE_ANON_KEY ? '✓ Configured' : '❌ MISSING (empty string)');
     console.error('   • GOOGLE_CLIENT_ID:', GOOGLE_CLIENT_ID ? '✓ Configured' : '⚠️ UNSET (Optional)');
     console.error('🔧 [How to Fix on Vercel]:');
     console.error('   1. Open Vercel Dashboard -> Your Project -> Settings -> Environment Variables');
-    console.error('   2. Add SUPABASE_URL (e.g. https://your-project.supabase.co)');
-    console.error('   3. Add SUPABASE_ANON_KEY (or SUPABASE_KEY / SUPABASE_SERVICE_ROLE_KEY)');
+    console.error('   2. Add SU (e.g. https://your-project.supabase.co)');
+    console.error('   3. Add SAN (your Supabase anon/public key)');
     console.error('   4. Redeploy the project so Vercel builds with the new env vars!');
 
     popupBtn.style.display = 'none';
@@ -2002,8 +2002,8 @@ function initGoogleSignIn() {
 
 async function openGoogleOAuthPopup() {
   if (!hasSupabaseConfig()) {
-    console.error('❌ [Nexora Auth Error] Google OAuth attempt blocked: SUPABASE_URL and SUPABASE_ANON_KEY environment variables are not set.');
-    showLoginError('Supabase Google login is not configured. Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables.');
+    console.error('❌ [Nexora Auth Error] Google OAuth attempt blocked: SU/SUPABASE_URL and SAN/SUPABASE_ANON_KEY environment variables are not set.');
+    showLoginError('Supabase Google login is not configured. Missing SU/SUPABASE_URL or SAN/SUPABASE_ANON_KEY environment variables.');
     return;
   }
   if (window.location.protocol === 'file:') { showLoginError('Please run via http://localhost:8000'); return; }

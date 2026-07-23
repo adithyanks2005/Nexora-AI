@@ -35,7 +35,7 @@ def normalize_workplace_id(workplace_id: str | None = None) -> str:
 def get_supabase() -> Any:
     global _supabase_client
     if not USING_SUPABASE:
-        raise RuntimeError("Supabase is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.")
+        raise RuntimeError("Supabase is not configured. Set SU and SUPABASE_SERVICE_ROLE_KEY.")
     if _supabase_client is None:
         try:
             from supabase import create_client
