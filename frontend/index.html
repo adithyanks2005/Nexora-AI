@@ -1904,17 +1904,33 @@ function getSupabaseClient() {
 }
 
 async function bootstrapSupabaseRedirect() {
+  if (normalizeLocalOAuthOrigin()) return true;
+  if (normalizeVercelProductionOrigin()) return true;
+
   const client = getSupabaseClient();
   if (!client) return false;
   const params = new URLSearchParams(window.location.search);
   if (!params.has('code')) return false;
 
-  const { data, error } = await client.auth.exchangeCodeForSession(window.location.href);
-  if (error) throw error;
+  const code = params.get('code');
+  let session = null;
 
-  const session = data && data.session;
+  try {
+    const { data, error } = await client.auth.exchangeCodeForSession(code);
+    if (!error && data && data.session) {
+      session = data.session;
+    }
+  } catch (e) {
+    console.warn('exchangeCodeForSession failed or code already processed, checking session...', e);
+  }
+
+  if (!session) {
+    const { data } = await client.auth.getSession();
+    session = data && data.session;
+  }
+
   if (!session || !session.access_token) {
-    throw new Error('No Supabase session returned.');
+    throw new Error('No Supabase session returned after OAuth redirect.');
   }
 
   await handleGoogleCredential({ credential: session.access_token });

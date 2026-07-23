@@ -19,7 +19,7 @@ if DOTENV_PATH.exists():
 
 import traceback
 from fastapi import Depends, FastAPI, HTTPException, status, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -115,6 +115,18 @@ STATIC_DIR   = FRONTEND_DIR / "static"
 # Mount static files
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+@app.get("/service-worker.js", include_in_schema=False)
+def service_worker() -> FileResponse:
+    worker_path = FRONTEND_DIR / "service-worker.js"
+    if not worker_path.is_file():
+        raise HTTPException(status_code=404)
+    return FileResponse(
+        worker_path,
+        media_type="application/javascript",
+        headers={"Cache-Control": "no-cache"},
+    )
 
 
 # ── ads.txt (Google AdSense site verification) ────────────────────────────────
