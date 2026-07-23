@@ -2402,7 +2402,7 @@ async function switchSession(sid) {
 
 async function deleteChatSession(sid) {
   try {
-    await authFetch(`/api/sessions/${sid}`, { method: 'DELETE' });
+    await authFetch(`/api/sessions/${sid}`, 'DELETE');
     if (sid === currentSessionId) {
       newChat();
     } else {
