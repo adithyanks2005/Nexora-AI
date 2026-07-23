@@ -475,12 +475,17 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
         raise HTTPException(status_code=404, detail="Frontend not found")
     html = html_path.read_text(encoding="utf-8")
 
+    def replace_js_const(source: str, name: str, value: str) -> str:
+        return re.sub(
+            rf"const {re.escape(name)} = .*?;",
+            f"const {name} = {json.dumps(value)};",
+            source,
+            count=1,
+        )
+
     # Inject GOOGLE_CLIENT_ID from environment variables if configured.
     google_client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip().lstrip("\ufeff")
-    html = html.replace(
-        "const GOOGLE_CLIENT_ID = '638093827002-msthhp8pnpi0jkui1j2n3n6j07f1cjhs.apps.googleusercontent.com';",
-        f"const GOOGLE_CLIENT_ID = {json.dumps(google_client_id)};",
-    )
+    html = replace_js_const(html, "GOOGLE_CLIENT_ID", google_client_id)
 
     # Inject Supabase auth config for browser-side OAuth flow.
     supabase_url = os.getenv("SUPABASE_URL", "").strip().lstrip("\ufeff")
@@ -488,14 +493,8 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
         os.getenv("SUPABASE_ANON_KEY", "").strip().lstrip("\ufeff")
         or os.getenv("SUPABASE_KEY", "").strip().lstrip("\ufeff")
     )
-    html = html.replace(
-        "const SUPABASE_URL = '';",
-        f"const SUPABASE_URL = {json.dumps(supabase_url)};",
-    )
-    html = html.replace(
-        "const SUPABASE_ANON_KEY = '';",
-        f"const SUPABASE_ANON_KEY = {json.dumps(supabase_anon_key)};",
-    )
+    html = replace_js_const(html, "SUPABASE_URL", supabase_url)
+    html = replace_js_const(html, "SUPABASE_ANON_KEY", supabase_anon_key)
 
     # Inject Google AdSense client ID and script if configured.
     adsense_id = os.getenv("ADSENSE_CLIENT_ID", "ca-pub-7304874327710410").strip().lstrip("\ufeff")
@@ -509,10 +508,7 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
         adsense_script,
         html,
     )
-    html = html.replace(
-        "const ADSENSE_CLIENT_ID = 'ca-pub-7304874327710410';",
-        f"const ADSENSE_CLIENT_ID = {json.dumps(adsense_id)};",
-    )
+    html = replace_js_const(html, "ADSENSE_CLIENT_ID", adsense_id)
     
     # Also inject the ID into any ad units in the DOM
     html = html.replace(
