@@ -367,24 +367,24 @@ async def chat_stream(
         )
 
     messages = [m.model_dump() for m in req.messages]
-    
+    last_user = next((m for m in reversed(req.messages) if m.role == "user"), None)
+    collected: list[str] = []  # accumulate chunks outside generator
+
     async def generate():
-        yield " " # Flush headers immediately for 0ms TTFB
-        full_reply = ""
+        yield " "  # flush headers immediately → 0ms TTFB
         async for chunk in stream_ai(messages):
-            full_reply += chunk
+            collected.append(chunk)
             yield chunk
 
-        # Save to DB after streaming is done
-        def save_chat_to_db():
-            last_user = next((m for m in reversed(req.messages) if m.role == "user"), None)
-            if last_user:
-                add_chat_message(session_id, workplace_id, "user", last_user.content)
-            add_chat_message(session_id, workplace_id, "assistant", full_reply)
-            touch_chat_session(session_id, uid, workplace_id, last_user.content[:40] if last_user else "Chat")
-            
-        background_tasks.add_task(save_chat_to_db)
+    def save_to_db():
+        full_reply = "".join(collected)
+        if last_user:
+            add_chat_message(session_id, workplace_id, "user", last_user.content)
+        add_chat_message(session_id, workplace_id, "assistant", full_reply)
+        touch_chat_session(session_id, uid, workplace_id,
+                           last_user.content[:40] if last_user else "Chat")
 
+    background_tasks.add_task(save_to_db)
     headers = {"X-Session-ID": session_id}
     return StreamingResponse(generate(), media_type="text/event-stream", headers=headers)
 
@@ -405,6 +405,29 @@ async def analyze_symptoms(
     )
     reply = await call_ai([{"role": "user", "content": prompt}])
     return {"reply": reply}
+
+
+@app.post("/api/symptoms/stream")
+async def analyze_symptoms_stream(
+    req: SymptomRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Streaming symptom analysis — first token appears in ~300ms."""
+    prompt = (
+        f"Patient symptoms: {', '.join(req.symptoms)}. "
+        f"Body area: {req.body_area or 'unspecified'}. "
+        f"Severity: {req.severity or 'unspecified'}. "
+        f"Duration: {req.duration or 'unspecified'}. "
+        "Provide: 1) Possible common causes, 2) Self-care tips, "
+        "3) Warning signs that need urgent care. Under 250 words. Be reassuring but honest."
+    )
+
+    async def generate():
+        yield " "  # flush headers immediately
+        async for chunk in stream_ai([{"role": "user", "content": prompt}]):
+            yield chunk
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 
 # ── Calculators (public — no auth needed) ─────────────────────────────────────

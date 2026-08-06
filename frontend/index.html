@@ -2590,23 +2590,39 @@ async function analyzeSymptoms() {
   const badge = document.getElementById('sympBadge');
   const title = document.getElementById('sympResultTitle');
   const body = document.getElementById('sympResultText');
+
+  // Show result card immediately for instant feedback
+  badge.className = 'result-badge badge-info';
+  badge.textContent = '🩺 AI Analysis';
+  title.textContent = 'Symptom Analysis';
+  body.innerHTML = '<span style="opacity:0.5">Analyzing your symptoms...</span>';
+  result.classList.add('show');
+  result.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+
   try {
-    const data = await authFetch('/api/symptoms', 'POST', {symptoms, body_area: area, severity, duration});
-    if (!data) throw new Error('Request failed');
-    badge.className = 'result-badge badge-info';
-    badge.textContent = '🩺 AI Analysis';
-    title.textContent = 'Symptom Analysis';
-    body.innerHTML = renderMarkdown(data.reply);
-    result.classList.add('show');
-    result.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+    const token = getToken();
+    const headers = {'Content-Type': 'application/json'};
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    const res = await fetch('/api/symptoms/stream', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({symptoms, body_area: area, severity, duration})
+    });
+    if (!res.ok) throw new Error((await res.json().catch(()=>({}))).detail || 'Request failed');
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let full = '';
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      full += decoder.decode(value, {stream: true});
+      body.innerHTML = renderMarkdown(full);
+    }
   } catch(e) {
     badge.className = 'result-badge badge-warn';
     badge.textContent = '⚠️ Error';
     title.textContent = 'Analysis Failed';
-    body.textContent = e.message.includes('GROQ_API_KEY') || e.message.includes('401')
-      ? 'AI service unavailable — please update your GROQ_API_KEY in .env and restart the server.'
-      : (e.message || 'Could not analyze symptoms. Make sure the backend is running.');
-    result.classList.add('show');
+    body.textContent = e.message || 'Could not analyze symptoms.';
   } finally {
     btn.disabled = false; btn.textContent = '🔍 Analyze Symptoms';
   }

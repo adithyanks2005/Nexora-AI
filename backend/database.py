@@ -96,8 +96,13 @@ def get_connection() -> sqlite3.Connection:
         raise RuntimeError("SQLite connection requested while Supabase is configured.")
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
+    # WAL mode: readers don't block writers, massive concurrency improvement
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA cache_size=-8000")   # 8MB page cache
+    conn.execute("PRAGMA temp_store=MEMORY")
     return conn
 
 
