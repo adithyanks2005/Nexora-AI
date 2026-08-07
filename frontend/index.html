@@ -135,8 +135,6 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <!-- Google Identity Services -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- Google AdSense -->
-<!-- ADSENSE_SCRIPT_PLACEHOLDER --><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7304874327710410" crossorigin="anonymous"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -2605,6 +2603,8 @@ async function sendChat() {
     }
 
     chatHistory.push({role: 'assistant', content: fullReply});
+    // Small delay so backend DB write finishes, then refresh sidebar
+    setTimeout(() => loadSessionList().catch(() => {}), 600);
   } catch(e) {
     bubble.innerHTML = '⚠️ ' + (e.message || 'Could not reach the server.');
   } finally {
