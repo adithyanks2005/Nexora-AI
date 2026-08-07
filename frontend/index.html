@@ -1627,9 +1627,14 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
     <!-- ── REMINDERS SECTION ── -->
     <div class="section" id="section-reminders">
       <div class="panel">
-        <div class="panel-header">
-          <h2>⏰ Medication Reminders</h2>
-          <p>Never miss a dose or health routine</p>
+        <div class="panel-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div>
+            <h2>⏰ Medication Reminders</h2>
+            <p>Never miss a dose or health routine</p>
+          </div>
+          <button id="notifPermBtn" onclick="requestNotificationPermission().then(updateNotifBtn)" style="display:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);transition:all 0.2s;">
+            🔔 Enable Notifications
+          </button>
         </div>
         <div class="form-card">
           <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px;">Add Reminder</h3>
@@ -2295,6 +2300,8 @@ function showApp() {
   loadRecords().catch(() => {});
   loadChatHistory().catch(() => {});
   if(typeof loadSessionList === 'function') loadSessionList().catch(() => {});
+  // Start reminder notifications
+  requestNotificationPermission().then(() => { updateNotifBtn(); startReminderClock(); });
 }
 
 function updateUserUI() {
@@ -2320,6 +2327,7 @@ function signOut() {
   clearToken();
   clearStoredUser();
   currentUser = null;
+  stopReminderClock();
   const client = getSupabaseClient();
   if (client) {
     client.auth.signOut().catch(() => {});
@@ -2784,6 +2792,8 @@ async function loadReminders() {
     const data = await authFetch('/api/reminders');
     _remindersCache = data || [];
     renderReminders(_remindersCache);
+    // Restart clock so new reminders are picked up immediately
+    if (_reminderClockInterval) startReminderClock();
   } catch(e) { renderReminders([]); }
 }
 
@@ -2859,6 +2869,123 @@ async function clearDoneReminders() {
   renderReminders(_remindersCache);
   try { await authFetch('/api/reminders/done/clear', 'DELETE'); }
   catch(e) { _remindersCache = prev; renderReminders(_remindersCache); }
+}
+
+// ── REMINDER NOTIFICATIONS ──────────────────────────────────────────────────
+
+// Request notification permission (called once after login)
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    await Notification.requestPermission();
+  }
+  updateNotifBtn();
+}
+
+// Update the notification button state
+function updateNotifBtn() {
+  const btn = document.getElementById('notifPermBtn');
+  if (!btn) return;
+  if (!('Notification' in window)) { btn.style.display = 'none'; return; }
+  if (Notification.permission === 'granted') {
+    btn.style.display = 'inline-flex';
+    btn.textContent = '🔔 Notifications On';
+    btn.style.color = 'var(--success)';
+    btn.style.borderColor = 'rgba(67,217,140,0.3)';
+    btn.disabled = true;
+  } else if (Notification.permission === 'denied') {
+    btn.style.display = 'inline-flex';
+    btn.textContent = '🔕 Notifications Blocked';
+    btn.style.color = 'var(--danger)';
+    btn.style.borderColor = 'rgba(255,107,107,0.3)';
+    btn.disabled = true;
+  } else {
+    btn.style.display = 'inline-flex';
+    btn.textContent = '🔔 Enable Notifications';
+    btn.style.color = 'var(--accent)';
+    btn.disabled = false;
+  }
+}
+
+// Fire a browser notification for a reminder
+function fireReminderNotification(reminder) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const title = `${reminder.icon || '💊'} ${reminder.title}`;
+  const body = reminder.notes
+    ? `Time to take your medication.\n${reminder.notes}`
+    : 'Time to take your medication.';
+
+  // Use service worker notification for background support
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.ready.then(reg => {
+      reg.showNotification(title, {
+        body,
+        icon: '/static/icons/icon.svg',
+        badge: '/static/icons/icon.svg',
+        tag: `reminder-${reminder.id}`,      // prevents duplicates
+        renotify: false,
+        requireInteraction: false,
+        silent: false,
+        data: { reminderId: reminder.id }
+      });
+    });
+  } else {
+    // Fallback: plain Notification API
+    new Notification(title, { body, icon: '/static/icons/icon.svg' });
+  }
+}
+
+// Check if it's time to fire any reminders (called every minute)
+const _notifiedToday = new Set(); // track already-fired reminders today
+
+function checkReminderTimes() {
+  if (!_remindersCache.length) return;
+
+  const now = new Date();
+  const hh = now.getHours().toString().padStart(2, '0');
+  const mm = now.getMinutes().toString().padStart(2, '0');
+  const currentTime = `${hh}:${mm}`;
+  const today = now.toDateString();
+  const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][now.getDay()];
+  const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
+
+  _remindersCache.forEach(r => {
+    if (r.done) return;
+    if (r.time !== currentTime) return;
+
+    // Check repeat schedule
+    const repeat = (r.repeat || 'Daily').toLowerCase();
+    let shouldFire = false;
+    if (repeat === 'daily') shouldFire = true;
+    else if (repeat === 'weekdays' && isWeekday) shouldFire = true;
+    else if (repeat === 'weekends' && !isWeekday) shouldFire = true;
+    else if (repeat === 'once') shouldFire = true;
+
+    if (!shouldFire) return;
+
+    // Prevent firing more than once per day per reminder
+    const key = `${r.id}-${today}`;
+    if (_notifiedToday.has(key)) return;
+    _notifiedToday.add(key);
+
+    fireReminderNotification(r);
+  });
+}
+
+// Start the reminder clock — checks every 30 seconds for accuracy
+let _reminderClockInterval = null;
+function startReminderClock() {
+  if (_reminderClockInterval) clearInterval(_reminderClockInterval);
+  checkReminderTimes(); // check immediately on load
+  _reminderClockInterval = setInterval(checkReminderTimes, 30_000);
+}
+
+function stopReminderClock() {
+  if (_reminderClockInterval) {
+    clearInterval(_reminderClockInterval);
+    _reminderClockInterval = null;
+  }
 }
 
 // ── RECORDS ──
