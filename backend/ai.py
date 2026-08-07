@@ -18,8 +18,12 @@ if _dotenv.exists():
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_GROQ_MODEL = "llama-3.1-8b-instant"
 
-# Global client for reusing connections
-_http_client = httpx.AsyncClient(timeout=30)
+# Global persistent client with HTTP/2 for lower latency
+_http_client = httpx.AsyncClient(
+    timeout=30,
+    http2=True,
+    limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
+)
 
 SYSTEM_PROMPT = """You are Nexora AI, a clinical medical AI companion. Provide accurate, high-quality medical insights, symptom analysis, and medication suggestions as concisely as possible.
 
