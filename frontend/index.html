@@ -265,7 +265,16 @@ body{
   font-size:11px;font-weight:600;color:var(--text3);
   letter-spacing:0.4px;text-transform:uppercase;
   flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
 }
+.sb-clear-btn{
+  background:none;border:none;cursor:pointer;
+  font-size:11px;color:var(--text3);font-family:inherit;
+  padding:2px 6px;border-radius:5px;
+  text-transform:none;letter-spacing:0;
+  transition:all 0.15s;font-weight:500;
+}
+.sb-clear-btn:hover{color:var(--danger);background:rgba(255,107,107,0.08);}
 
 /* Session list */
 .session-list{
@@ -1321,7 +1330,10 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
     </nav>
 
     <!-- Recent chats section -->
-    <div class="sb-section-label">Recents</div>
+    <div class="sb-section-label">
+      <span>Recents</span>
+      <button class="sb-clear-btn" onclick="clearAllSessions()" title="Clear all history" aria-label="Clear all history">Clear all</button>
+    </div>
     <div class="session-list" id="sidebarSessionList"></div>
 
     <!-- Bottom: user profile -->
@@ -2406,6 +2418,7 @@ async function loadSessionList() {
       sessions.forEach(s => {
         const div = document.createElement('div');
         div.className = 'session-item' + (s.id === currentSessionId ? ' active' : '');
+        div.setAttribute('data-sid', s.id);
         div.onclick = () => switchSession(s.id);
         
         const titleSpan = document.createElement('span');
@@ -2414,8 +2427,9 @@ async function loadSessionList() {
         
         const delBtn = document.createElement('button');
         delBtn.className = 'session-del';
-        delBtn.innerHTML = '✕';
-        delBtn.title = 'Delete Chat';
+        delBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+        delBtn.title = 'Delete this chat';
+        delBtn.setAttribute('aria-label', 'Delete chat');
         delBtn.onclick = (e) => { e.stopPropagation(); deleteChatSession(s.id); };
         
         div.appendChild(titleSpan);
@@ -2440,14 +2454,36 @@ async function switchSession(sid) {
 }
 
 async function deleteChatSession(sid) {
+  // Optimistic: remove from sidebar immediately
+  const wrap = document.getElementById('sidebarSessionList');
+  const el = wrap ? wrap.querySelector(`[data-sid="${sid}"]`) : null;
+  if (el) el.remove();
+
   try {
     await authFetch(`/api/sessions/${sid}`, 'DELETE');
     if (sid === currentSessionId) {
       newChat();
-    } else {
-      loadSessionList();
     }
-  } catch(e) { console.error('Failed to delete session', e); }
+  } catch(e) {
+    console.error('Failed to delete session', e);
+    loadSessionList(); // revert on failure
+  }
+}
+
+async function clearAllSessions() {
+  if (!confirm('Clear all chat history? This cannot be undone.')) return;
+
+  // Optimistic: wipe sidebar immediately
+  const wrap = document.getElementById('sidebarSessionList');
+  if (wrap) wrap.innerHTML = '';
+
+  try {
+    await authFetch('/api/sessions', 'DELETE');
+    newChat(); // start fresh
+  } catch(e) {
+    console.error('Failed to clear sessions', e);
+    loadSessionList(); // revert on failure
+  }
 }
 
 let currentSessionId = localStorage.getItem('nexora_session_id') || generateUUID();

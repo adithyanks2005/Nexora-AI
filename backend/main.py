@@ -297,6 +297,17 @@ def delete_session(
     return {"message": "deleted"}
 
 
+@app.delete("/api/sessions")
+def clear_all_sessions(
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, str]:
+    """Delete ALL chat sessions for the current user."""
+    sessions = list_chat_sessions(current_user["id"], current_user["workplace_id"])
+    for s in sessions:
+        delete_chat_session(s["id"], current_user["id"], current_user["workplace_id"])
+    return {"message": "cleared", "count": str(len(sessions))}
+
+
 @app.get("/api/sessions/{sid}/messages")
 def get_messages(
     sid: str,
@@ -348,7 +359,6 @@ async def chat(
 @app.post("/api/chat/stream")
 async def chat_stream(
     req: ChatRequest,
-    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     uid = current_user["id"]
@@ -368,15 +378,14 @@ async def chat_stream(
 
     messages = [m.model_dump() for m in req.messages]
     last_user = next((m for m in reversed(req.messages) if m.role == "user"), None)
-    collected: list[str] = []  # accumulate chunks outside generator
+    collected: list[str] = []
 
     async def generate():
         yield " "  # flush headers immediately → 0ms TTFB
         async for chunk in stream_ai(messages):
             collected.append(chunk)
             yield chunk
-
-    def save_to_db():
+        # Save AFTER streaming finishes — background task fires here
         full_reply = "".join(collected)
         if last_user:
             add_chat_message(session_id, workplace_id, "user", last_user.content)
@@ -384,7 +393,6 @@ async def chat_stream(
         touch_chat_session(session_id, uid, workplace_id,
                            last_user.content[:40] if last_user else "Chat")
 
-    background_tasks.add_task(save_to_db)
     headers = {"X-Session-ID": session_id}
     return StreamingResponse(generate(), media_type="text/event-stream", headers=headers)
 
