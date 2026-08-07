@@ -395,6 +395,7 @@ body{
   padding:24px 28px;display:flex;flex-direction:column;gap:20px;
   scroll-behavior:smooth;
   background:var(--bg);
+  align-items:stretch;
 }
 .chat-messages::-webkit-scrollbar{width:3px;}
 .chat-messages::-webkit-scrollbar-track{background:transparent;}
@@ -821,6 +822,9 @@ body{
 }
 .welcome-banner p{font-size:13px;color:var(--text2);line-height:1.7;}
 .welcome-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+
+/* hide old separate quick-chips row */
+.quick-chips{display:none;}
 
 /* -- SMARTWATCH -- */
 .watch-connect-bar{
@@ -1358,14 +1362,16 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
 
     <!-- ── CHAT SECTION ── -->
     <div class="section active" id="section-chat">
-      <div class="chat-header" style="display: flex; align-items: center; justify-content: space-between;">
-        <div>
-          <h2><svg width="22" height="22" viewBox="0 0 24 24" fill="url(#chat-icon-grad2)" style="vertical-align:middle;margin-right:8px;filter:drop-shadow(0 2px 4px rgba(255,255,255,0.1));"><defs><linearGradient id="chat-icon-grad2" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stop-color="#ffffff" /><stop offset="100%" stop-color="#e8e0ff" /></linearGradient></defs><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>Chat with Nexora</h2>
-          <p>Your intelligent healthcare companion</p>
+      <div class="chat-header">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <h2>💬 Chat with Nexora</h2>
+            <p>Your intelligent healthcare companion</p>
+          </div>
+          <button onclick="newChat()" class="btn btn-primary" style="padding:8px 16px;font-size:13px;gap:6px;">
+            <span>+</span> New Chat
+          </button>
         </div>
-        <button onclick="newChat()" style="padding: 8px 16px; border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-          <span style="font-size: 16px;">+</span> New Chat
-        </button>
       </div>
       <div class="chat-messages" id="chatMessages">
         <div class="welcome-banner">
@@ -1379,15 +1385,13 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
               <span class="chip chip-green" onclick="sendQuick(this)"><div class="chip-icon">🥦</div><span>Immune boosting foods</span></span>
               <span class="chip chip-pink" onclick="sendQuick(this)"><div class="chip-icon">🧘</div><span>Stress management</span></span>
               <span class="chip chip-blue" onclick="sendQuick(this)"><div class="chip-icon">💧</div><span>Daily water intake</span></span>
+              <span class="chip chip-blue" onclick="sendQuick(this)"><div class="chip-icon">📅</div><span>Healthy daily routine</span></span>
+              <span class="chip chip-green" onclick="sendQuick(this)"><div class="chip-icon">🥗</div><span>Nutrition tips</span></span>
+              <span class="chip chip-red" onclick="sendQuick(this)"><div class="chip-icon">❤️</div><span>Heart health</span></span>
+              <span class="chip chip-pink" onclick="sendQuick(this)"><div class="chip-icon">🧠</div><span>Mental wellbeing</span></span>
             </div>
           </div>
         </div>
-      </div>
-      <div class="quick-chips" id="quickChips">
-        <span class="chip chip-blue" onclick="sendQuick(this)"><div class="chip-icon">📅</div><span>Healthy daily routine</span></span>
-        <span class="chip chip-green" onclick="sendQuick(this)"><div class="chip-icon">🥗</div><span>Nutrition tips</span></span>
-        <span class="chip chip-red" onclick="sendQuick(this)"><div class="chip-icon">❤️</div><span>Heart health</span></span>
-        <span class="chip chip-pink" onclick="sendQuick(this)"><div class="chip-icon">🧠</div><span>Mental wellbeing</span></span>
       </div>
       <div class="chat-input-bar">
         <div class="chat-input-row">
@@ -2361,13 +2365,11 @@ function generateUUID() {
 }
 
 function newChat() {
-  // Generate a fresh session ID
   currentSessionId = generateUUID();
   localStorage.setItem('nexora_session_id', currentSessionId);
   chatHistory = [];
   if(typeof loadSessionList === 'function') loadSessionList();
 
-  // Clear messages and show welcome banner
   const wrap = document.getElementById('chatMessages');
   wrap.innerHTML = `
     <div class="welcome-banner">
@@ -2381,15 +2383,18 @@ function newChat() {
           <span class="chip chip-green" onclick="sendQuick(this)"><div class="chip-icon">🥦</div><span>Immune boosting foods</span></span>
           <span class="chip chip-pink" onclick="sendQuick(this)"><div class="chip-icon">🧘</div><span>Stress management</span></span>
           <span class="chip chip-blue" onclick="sendQuick(this)"><div class="chip-icon">💧</div><span>Daily water intake</span></span>
+          <span class="chip chip-blue" onclick="sendQuick(this)"><div class="chip-icon">📅</div><span>Healthy daily routine</span></span>
+          <span class="chip chip-green" onclick="sendQuick(this)"><div class="chip-icon">🥗</div><span>Nutrition tips</span></span>
+          <span class="chip chip-red" onclick="sendQuick(this)"><div class="chip-icon">❤️</div><span>Heart health</span></span>
+          <span class="chip chip-pink" onclick="sendQuick(this)"><div class="chip-icon">🧠</div><span>Mental wellbeing</span></span>
         </div>
       </div>
     </div>`;
 
-  // Clear and focus input
   const inp = document.getElementById('chatInput');
   inp.value = '';
   inp.style.height = 'auto';
-  chatInput.focus();
+  inp.focus();
 }
 
 async function loadSessionList() {
