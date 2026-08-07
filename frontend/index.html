@@ -202,114 +202,126 @@ body{
 
 /* -- SIDEBAR -- */
 .sidebar{
-  width:256px;flex-shrink:0;
-  background:linear-gradient(180deg,rgba(8,14,26,0.98),rgba(10,16,28,0.98));
-  border-right:1px solid rgba(79,156,249,0.1);
+  width:260px;flex-shrink:0;
+  background:var(--surface);
+  border-right:1px solid var(--border);
   display:flex;flex-direction:column;
-  padding:0;overflow:hidden;
-  transition:transform 0.32s cubic-bezier(0.4,0,0.2,1);
+  overflow:hidden;
+  transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);
   z-index:100;
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
 }
-.sidebar-logo{
-  padding:20px 18px 16px;
-  display:flex;align-items:center;gap:12px;
-  border-bottom:1px solid rgba(79,156,249,0.1);
-  background:linear-gradient(135deg,rgba(79,156,249,0.06),rgba(123,97,255,0.06));
-  position:relative;
+
+/* Top bar: logo + icon buttons */
+.sb-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 12px 10px;
+  flex-shrink:0;
 }
-.sidebar-logo::after{
-  content:'';position:absolute;bottom:0;left:18px;right:18px;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(79,156,249,0.3),transparent);
+.sb-brand{
+  display:flex;align-items:center;gap:10px;
 }
 .logo-icon{
-  width:40px;height:40px;border-radius:12px;
+  width:34px;height:34px;border-radius:10px;
   background:linear-gradient(135deg,var(--accent),var(--accent2));
   display:flex;align-items:center;justify-content:center;
-  font-size:20px;flex-shrink:0;
-  box-shadow:0 4px 16px rgba(79,156,249,0.45),0 0 0 1px rgba(79,156,249,0.2);
+  font-size:18px;flex-shrink:0;
 }
-.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;letter-spacing:-0.4px;}
+.logo-text{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:-0.3px;
+}
 .logo-text span{
   background:linear-gradient(90deg,var(--accent),var(--accent2));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
-.sidebar-version{
-  font-size:10px;color:var(--text3);margin-left:auto;
-  letter-spacing:0.6px;text-transform:uppercase;
-  background:rgba(79,156,249,0.08);padding:3px 8px;border-radius:20px;
-  border:1px solid rgba(79,156,249,0.18);
+.sb-top-actions{
+  display:flex;align-items:center;gap:4px;
 }
+.sb-icon-btn{
+  width:34px;height:34px;border-radius:8px;
+  background:none;border:none;
+  color:var(--text2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;transition:all 0.15s;flex-shrink:0;
+}
+.sb-icon-btn:hover{background:var(--surface2);color:var(--text);}
 
-.nav{flex:1;padding:12px 10px;overflow-y:auto;}
+/* Nav */
+.nav{padding:4px 8px;flex-shrink:0;}
 .nav-item{
-  display:flex;align-items:center;gap:11px;
-  padding:11px 14px;border-radius:10px;
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;border-radius:8px;
   cursor:pointer;color:var(--text2);
-  font-size:13.5px;font-weight:500;
-  transition:all 0.2s cubic-bezier(0.4,0,0.2,1);
-  margin-bottom:2px;border:none;background:none;width:100%;text-align:left;
-  position:relative;letter-spacing:0.1px;
+  font-size:14px;font-weight:400;
+  transition:background 0.15s, color 0.15s;
+  margin-bottom:1px;border:none;background:none;width:100%;text-align:left;
 }
-.nav-item:hover{
-  background:rgba(79,156,249,0.07);
-  color:var(--text);
-  transform:translateX(3px);
-}
-.nav-item.active{
-  background:linear-gradient(90deg,rgba(79,156,249,0.16),rgba(123,97,255,0.1));
-  color:var(--accent);
-  border:1px solid rgba(79,156,249,0.25);
-  box-shadow:0 2px 12px rgba(79,156,249,0.12),inset 0 1px 0 rgba(255,255,255,0.04);
-}
-.nav-item.active::before{
-  content:'';position:absolute;left:0;top:22%;bottom:22%;
-  width:3px;border-radius:0 3px 3px 0;
-  background:linear-gradient(180deg,var(--accent),var(--accent2));
-}
-.nav-icon{font-size:18px;width:22px;text-align:center;flex-shrink:0;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--surface2);color:var(--text);font-weight:500;}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0;opacity:0.85;}
 
-/* -- SIDEBAR SESSION LIST -- */
-.session-list-header {
-  padding: 16px 18px 8px; font-size: 11px; font-weight: 700; color: var(--text3);
-  text-transform: uppercase; letter-spacing: 0.5px;
+/* Section label */
+.sb-section-label{
+  padding:16px 20px 6px;
+  font-size:11px;font-weight:600;color:var(--text3);
+  letter-spacing:0.4px;text-transform:uppercase;
+  flex-shrink:0;
 }
-.session-list {
-  flex: 1; overflow-y: auto; padding: 0 12px 12px;
-  display: flex; flex-direction: column; gap: 2px;
-}
-.session-list::-webkit-scrollbar { width: 3px; }
-.session-list::-webkit-scrollbar-thumb { background: var(--border3); border-radius: 4px; }
-.session-item {
-  padding: 8px 12px; border-radius: var(--radius-sm);
-  cursor: pointer; font-size: 13px; color: var(--text2);
-  display: flex; align-items: center; justify-content: space-between;
-  transition: all 0.2s; gap: 8px;
-}
-.session-item:hover { background: var(--surface2); color: var(--text); }
-.session-item.active { background: rgba(79,156,249,0.1); color: var(--accent); }
-.session-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.session-del { 
-  opacity: 0; font-size: 14px; padding: 4px; border: none; background: transparent; 
-  color: var(--danger); cursor: pointer; transition: 0.2s; 
-  display: flex; align-items: center; justify-content: center; border-radius: 4px; 
-}
-.session-item:hover .session-del { opacity: 1; }
-.session-del:hover { background: rgba(255,107,107,0.15); }
 
-.sidebar-footer{
-  padding:12px 10px 18px;
-  border-top:1px solid rgba(79,156,249,0.08);
-  font-size:11px;color:var(--text3);
-  line-height:1.5;padding-top:14px;
-  background:linear-gradient(0deg,rgba(4,8,15,0.8),transparent);
-  position:relative;
+/* Session list */
+.session-list{
+  flex:1;overflow-y:auto;
+  padding:0 8px 8px;
+  display:flex;flex-direction:column;gap:1px;
 }
-.sidebar-footer::before{
-  content:'';position:absolute;top:0;left:18px;right:18px;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(79,156,249,0.2),transparent);
+.session-list::-webkit-scrollbar{width:3px;}
+.session-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+.session-item{
+  padding:8px 12px;border-radius:8px;
+  cursor:pointer;font-size:13.5px;color:var(--text2);
+  display:flex;align-items:center;justify-content:space-between;
+  transition:background 0.15s,color 0.15s;gap:8px;
+  border:none;background:none;width:100%;text-align:left;
 }
+.session-item:hover{background:var(--surface2);color:var(--text);}
+.session-item.active{background:var(--surface2);color:var(--text);}
+.session-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.session-del{
+  opacity:0;font-size:14px;padding:3px 5px;border:none;background:none;
+  color:var(--text3);cursor:pointer;transition:0.15s;border-radius:5px;flex-shrink:0;
+}
+.session-item:hover .session-del{opacity:1;}
+.session-del:hover{background:rgba(255,107,107,0.12);color:var(--danger);}
+
+/* Bottom user strip */
+.sb-bottom{
+  padding:8px;
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+.sb-bottom .user-info{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 10px;border-radius:8px;
+  transition:background 0.15s;cursor:default;
+  width:100%;
+}
+.sb-bottom .user-info:hover{background:var(--surface2);}
+.sb-avatar-wrap{flex-shrink:0;}
+.sb-user-text{flex:1;min-width:0;}
+.sb-bottom-actions{display:flex;align-items:center;gap:2px;flex-shrink:0;}
+.signout-btn{
+  background:none;border:none;cursor:pointer;
+  color:var(--text3);border-radius:6px;
+  transition:all 0.15s;
+}
+.signout-btn:hover{color:var(--danger);background:rgba(255,107,107,0.1);}
+
+/* -- SIDEBAR SESSION LIST -- (legacy kept for compat) */
+.session-list-header{display:none;}
+
+/* -- SIDEBAR CSS VARS -- */
+.sidebar-logo{display:none;}
+.sidebar-version{display:none;}
+.sidebar-footer{display:none;}
 
 /* -- MAIN AREA -- */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
@@ -1112,36 +1124,23 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
 }
 
 /* -- USER AVATAR IN SIDEBAR -- */
+/* -- USER AVATAR IN SIDEBAR -- */
 .user-info{
   display:flex;align-items:center;gap:10px;
-  padding:11px 14px;border-radius:var(--radius-sm);
-  background:linear-gradient(135deg,rgba(79,156,249,0.07),rgba(123,97,255,0.05));
-  border:1px solid rgba(79,156,249,0.18);
-  margin:0 10px 8px;transition:all 0.2s;
-  cursor:default;
+  width:100%;
 }
-.user-info:hover{border-color:rgba(79,156,249,0.35);box-shadow:0 4px 16px rgba(79,156,249,0.1);}
 .user-avatar{
-  width:34px;height:34px;border-radius:50%;
+  width:32px;height:32px;border-radius:50%;
   object-fit:cover;flex-shrink:0;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  box-shadow:0 3px 10px rgba(79,156,249,0.35);
 }
 .user-avatar-fallback{
-  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
   background:linear-gradient(135deg,var(--accent),var(--accent2));
   display:flex;align-items:center;justify-content:center;
-  font-size:14px;font-weight:700;color:#fff;
-  box-shadow:0 3px 10px rgba(79,156,249,0.4),0 0 0 2px rgba(79,156,249,0.15);
+  font-size:13px;font-weight:700;color:#fff;
 }
-.user-name{font-size:12.5px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:0.2px;}
-.user-email{font-size:10.5px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
-.signout-btn{
-  background:none;border:none;cursor:pointer;
-  color:var(--text3);font-size:15px;padding:5px;
-  border-radius:6px;transition:all 0.15s;flex-shrink:0;
-}
-.signout-btn:hover{color:var(--danger);background:rgba(255,107,107,0.12);transform:scale(1.1);}
+.user-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.user-email{font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
 
 
 /* ── LANDING SCREEN ── */
@@ -1277,54 +1276,78 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
 <div class="app">
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <div class="logo-icon">🧬</div>
-      <div>
-        <div class="logo-text">Nexora<span>AI</span></div>
+
+    <!-- Top: Logo + New Chat + icon row -->
+    <div class="sb-top">
+      <div class="sb-brand">
+        <div class="logo-icon">🧬</div>
+        <span class="logo-text">Nexora<span>AI</span></span>
       </div>
-      <span class="sidebar-version">v3.0.0</span>
+      <div class="sb-top-actions">
+        <button class="sb-icon-btn" onclick="openSidebar()" title="Search" aria-label="Search" style="display:none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </button>
+        <button class="sb-icon-btn" onclick="newChat()" title="New chat" aria-label="New chat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
     </div>
+
+    <!-- Nav items -->
     <nav class="nav">
       <button class="nav-item active" onclick="switchSection('chat',this)">
-        <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="url(#chat-icon-grad)" style="filter:drop-shadow(0 2px 4px rgba(255,255,255,0.1));"><defs><linearGradient id="chat-icon-grad" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stop-color="#ffffff" /><stop offset="100%" stop-color="#e8e0ff" /></linearGradient></defs><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg></span> Chat
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+        </span>New Chat
       </button>
       <button class="nav-item" onclick="switchSection('symptom',this)">
-        <span class="nav-icon">🩺</span> Symptom Checker
+        <span class="nav-icon">🩺</span>Symptom Checker
       </button>
       <button class="nav-item" onclick="switchSection('calc',this)">
-        <span class="nav-icon">🧮</span> Calculators
+        <span class="nav-icon">🧮</span>Calculators
       </button>
       <button class="nav-item" onclick="switchSection('reminders',this)">
-        <span class="nav-icon">⏰</span> Reminders
+        <span class="nav-icon">⏰</span>Reminders
       </button>
       <button class="nav-item" onclick="switchSection('records',this)">
-        <span class="nav-icon">📋</span> Health Records
+        <span class="nav-icon">📋</span>Health Records
       </button>
       <button class="nav-item" onclick="switchSection('watch',this)">
-        <span class="nav-icon">⌚</span> Smartwatch
+        <span class="nav-icon">⌚</span>Smartwatch
       </button>
       <button class="nav-item" onclick="switchSection('articles',this)">
-        <span class="nav-icon">📚</span> Articles
+        <span class="nav-icon">📚</span>Articles
       </button>
     </nav>
-    <div class="session-list-header">Recent Chats</div>
+
+    <!-- Recent chats section -->
+    <div class="sb-section-label">Recents</div>
     <div class="session-list" id="sidebarSessionList"></div>
-    <div class="user-info" id="sidebarUserInfo" style="display:none;">
-      <img class="user-avatar" id="userAvatarImg" src="" alt="User Avatar" width="36" height="36" style="display:none;" onerror="this.style.display='none';document.getElementById('userAvatarFallback').style.display='flex'"/>
-      <div class="user-avatar-fallback" id="userAvatarFallback" style="display:flex;">👤</div>
-      <div style="flex:1;min-width:0;">
-        <div class="user-name" id="sidebarUserName">—</div>
-        <div class="user-email" id="sidebarUserEmail">—</div>
+
+    <!-- Bottom: user profile -->
+    <div class="sb-bottom">
+      <div class="user-info" id="sidebarUserInfo" style="display:none;">
+        <div class="sb-avatar-wrap">
+          <img class="user-avatar" id="userAvatarImg" src="" alt="" width="32" height="32"
+               style="display:none;"
+               onerror="this.style.display='none';document.getElementById('userAvatarFallback').style.display='flex'"/>
+          <div class="user-avatar-fallback" id="userAvatarFallback" style="display:flex;">
+            <span id="userAvatarInitial">?</span>
+          </div>
+        </div>
+        <div class="sb-user-text">
+          <div class="user-name" id="sidebarUserName">—</div>
+          <div class="user-email" id="sidebarUserEmail">—</div>
+        </div>
+        <div class="sb-bottom-actions">
+          <button id="themeToggle" class="sb-icon-btn" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+          <button class="sb-icon-btn signout-btn" onclick="signOut()" title="Sign out" aria-label="Sign out">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
       </div>
-      <button class="signout-btn" onclick="signOut()" title="Sign out" aria-label="Sign out">⏏</button>
     </div>
-    <div class="sidebar-footer">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <span style="font-size:12px; font-weight:600; color:var(--text2);">v3.0.0</span>
-        <button id="themeToggle" style="padding:4px 8px; font-size:16px; background:none; border:none; cursor:pointer;" title="Toggle theme" aria-label="Toggle theme">🌙</button>
-      </div>
-      <div style="font-size: 11px; color: var(--text3); line-height: 1.4;">Nexora AI provides general health information only.</div>
-    </div>
+
   </aside>
 
   <!-- MAIN -->
@@ -2278,14 +2301,16 @@ function updateUserUI() {
   if (panel) panel.style.display = 'flex';
   document.getElementById('sidebarUserName').textContent = currentUser.name || currentUser.email;
   document.getElementById('sidebarUserEmail').textContent = currentUser.email;
+  const initial = (currentUser.name || currentUser.email || '?')[0].toUpperCase();
+  const initEl = document.getElementById('userAvatarInitial');
+  if (initEl) initEl.textContent = initial;
   if (currentUser.picture) {
     const img = document.getElementById('userAvatarImg');
     img.src = currentUser.picture;
     img.style.display = 'block';
     document.getElementById('userAvatarFallback').style.display = 'none';
   } else {
-    document.getElementById('userAvatarFallback').textContent =
-      (currentUser.name || currentUser.email || '?')[0].toUpperCase();
+    document.getElementById('userAvatarFallback').style.display = 'flex';
   }
 }
 
