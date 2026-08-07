@@ -1,4 +1,4 @@
-const CACHE_NAME = "nexora-ai-v6";
+const CACHE_NAME = "nexora-ai-v7";
 
 // Assets that never change — cache forever
 const IMMUTABLE = [
