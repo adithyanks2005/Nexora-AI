@@ -1632,9 +1632,14 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
             <h2>⏰ Medication Reminders</h2>
             <p>Never miss a dose or health routine</p>
           </div>
-          <button id="notifPermBtn" onclick="requestNotificationPermission().then(updateNotifBtn)" style="display:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);transition:all 0.2s;">
-            🔔 Enable Notifications
-          </button>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button id="notifToggleBtn" onclick="toggleReminderClock()" style="display:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(67,217,140,0.3);background:rgba(67,217,140,0.08);color:var(--success);transition:all 0.2s;">
+              🔔 On
+            </button>
+            <button id="notifPermBtn" onclick="requestNotificationPermission().then(updateNotifBtn)" style="display:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);transition:all 0.2s;">
+              🔔 Enable Notifications
+            </button>
+          </div>
         </div>
         <div class="form-card">
           <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px;">Add Reminder</h3>
@@ -1673,7 +1678,7 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
           <h3 style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;">Your Reminders</h3>
-          <button class="btn" style="padding:6px 12px;font-size:12px;border:1px solid var(--border2);color:var(--text2);background:none;border-radius:var(--radius-sm);" onclick="clearDoneReminders()">Clear Done</button>
+          <button id="clearDoneBtn" class="btn" style="display:none;padding:6px 12px;font-size:12px;border:1px solid var(--border2);color:var(--text2);background:none;border-radius:var(--radius-sm);" onclick="clearDoneReminders()">Clear Done</button>
         </div>
         <div class="reminder-grid" id="reminderList"></div>
         <div class="empty-state" id="reminderEmpty">
@@ -2832,7 +2837,13 @@ async function addReminder() {
 function renderReminders(data) {
   const list = document.getElementById('reminderList');
   const empty = document.getElementById('reminderEmpty');
+  const clearBtn = document.getElementById('clearDoneBtn');
   const active = data.filter(r => !r.done);
+  const done = data.filter(r => r.done);
+
+  // Show "Clear Done" only if there are done items
+  if (clearBtn) clearBtn.style.display = done.length ? 'inline-flex' : 'none';
+
   empty.style.display = active.length ? 'none' : 'block';
   list.innerHTML = active.map(r => `
     <div class="reminder-item">
@@ -2885,26 +2896,63 @@ async function requestNotificationPermission() {
 // Update the notification button state
 function updateNotifBtn() {
   const btn = document.getElementById('notifPermBtn');
+  const toggleBtn = document.getElementById('notifToggleBtn');
   if (!btn) return;
-  if (!('Notification' in window)) { btn.style.display = 'none'; return; }
+  if (!('Notification' in window)) {
+    btn.style.display = 'none';
+    if (toggleBtn) toggleBtn.style.display = 'none';
+    return;
+  }
   if (Notification.permission === 'granted') {
-    btn.style.display = 'inline-flex';
-    btn.textContent = '🔔 Notifications On';
-    btn.style.color = 'var(--success)';
-    btn.style.borderColor = 'rgba(67,217,140,0.3)';
-    btn.disabled = true;
+    btn.style.display = 'none';
+    // Show the ON/OFF toggle instead
+    if (toggleBtn) {
+      toggleBtn.style.display = 'inline-flex';
+      updateToggleBtn();
+    }
   } else if (Notification.permission === 'denied') {
     btn.style.display = 'inline-flex';
     btn.textContent = '🔕 Notifications Blocked';
     btn.style.color = 'var(--danger)';
     btn.style.borderColor = 'rgba(255,107,107,0.3)';
     btn.disabled = true;
+    if (toggleBtn) toggleBtn.style.display = 'none';
   } else {
     btn.style.display = 'inline-flex';
     btn.textContent = '🔔 Enable Notifications';
     btn.style.color = 'var(--accent)';
+    btn.style.borderColor = 'rgba(79,156,249,0.3)';
     btn.disabled = false;
+    if (toggleBtn) toggleBtn.style.display = 'none';
   }
+}
+
+let _notifPaused = false;
+
+function updateToggleBtn() {
+  const btn = document.getElementById('notifToggleBtn');
+  if (!btn) return;
+  if (_notifPaused) {
+    btn.textContent = '🔕 Off';
+    btn.style.borderColor = 'rgba(255,107,107,0.3)';
+    btn.style.background = 'rgba(255,107,107,0.08)';
+    btn.style.color = 'var(--danger)';
+  } else {
+    btn.textContent = '🔔 On';
+    btn.style.borderColor = 'rgba(67,217,140,0.3)';
+    btn.style.background = 'rgba(67,217,140,0.08)';
+    btn.style.color = 'var(--success)';
+  }
+}
+
+function toggleReminderClock() {
+  _notifPaused = !_notifPaused;
+  if (_notifPaused) {
+    stopReminderClock();
+  } else {
+    startReminderClock();
+  }
+  updateToggleBtn();
 }
 
 // Fire a browser notification for a reminder
