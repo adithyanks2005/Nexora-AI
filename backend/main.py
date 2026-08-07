@@ -135,19 +135,6 @@ def service_worker() -> FileResponse:
     )
 
 
-# ── ads.txt (Google AdSense site verification) ────────────────────────────────
-@app.get("/ads.txt", include_in_schema=False)
-def ads_txt():
-    from fastapi.responses import PlainTextResponse
-    # Always generate from env var (with hardcoded fallback).
-    # Do NOT use FileResponse — the file is not reliably accessible
-    # in Vercel's serverless runtime.
-    adsense_id = os.getenv("ADSENSE_CLIENT_ID", "ca-pub-7304874327710410").strip().lstrip("\ufeff")
-    pub_id = adsense_id[3:] if adsense_id.startswith("ca-") else adsense_id
-    content = f"google.com, {pub_id}, DIRECT, f08c47fec0942fa0\n"
-    return PlainTextResponse(content=content, media_type="text/plain")
-
-
 # ── SEO (sitemap.xml, robots.txt) ─────────────────────────────────────────────
 @app.get("/sitemap.xml", include_in_schema=False)
 def sitemap_xml():
@@ -551,7 +538,6 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
         or full_path.startswith("static/")
         or full_path.startswith("_vercel/")
         or full_path.startswith(".well-known/")
-        or full_path == "ads.txt"
         or Path(full_path).suffix
     ):
         raise HTTPException(status_code=404)
@@ -577,26 +563,6 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
     supabase_anon_key = get_supabase_anon_key()
     html = replace_js_const(html, "SUPABASE_URL", supabase_url)
     html = replace_js_const(html, "SUPABASE_ANON_KEY", supabase_anon_key)
-
-    # Inject Google AdSense client ID and script if configured.
-    adsense_id = os.getenv("ADSENSE_CLIENT_ID", "ca-pub-7304874327710410").strip().lstrip("\ufeff")
-    if adsense_id:
-        adsense_script = f'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={adsense_id}" crossorigin="anonymous"></script>'
-    else:
-        adsense_script = ''
-    # Replace placeholder + any hardcoded fallback script on the same line
-    html = re.sub(
-        r'<!-- ADSENSE_SCRIPT_PLACEHOLDER -->(<script[^>]*pagead2\.googlesyndication[^>]*></script>)?',
-        adsense_script,
-        html,
-    )
-    html = replace_js_const(html, "ADSENSE_CLIENT_ID", adsense_id)
-    
-    # Also inject the ID into any ad units in the DOM
-    html = html.replace(
-        'data-ad-client="ca-pub-7304874327710410"',
-        f'data-ad-client="{adsense_id}"'
-    )
 
     return HTMLResponse(
         content=html,
