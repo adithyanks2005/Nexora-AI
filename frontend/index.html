@@ -2068,6 +2068,10 @@ async function openGoogleOAuthPopup() {
       options: {
         redirectTo: window.location.origin + window.location.pathname,
         scopes: 'openid email profile',
+        queryParams: {
+          prompt: 'select_account',   // always show account chooser
+          access_type: 'online',
+        },
       },
     });
     if (error) throw error;
