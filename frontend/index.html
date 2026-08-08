@@ -2471,6 +2471,13 @@ async function sendChat() {
   inp.value = ''; inp.style.height = 'auto';
   const btn = document.querySelector('.send-btn');
   btn.disabled = true; btn.style.opacity = '0.5';
+
+  // Optimistically update sidebar title on first message
+  if (chatHistory.filter(m => m.role === 'user').length === 1) {
+    const shortTitle = text.slice(0, 40);
+    const item = document.querySelector(`[data-sid="${currentSessionId}"] .session-title`);
+    if (item && item.textContent === 'New Chat') item.textContent = shortTitle;
+  }
   
   // Instant 0ms visual feedback: Create AI bubble immediately
   const wrap = document.getElementById('chatMessages');
@@ -2526,8 +2533,8 @@ async function sendChat() {
     }
 
     chatHistory.push({role: 'assistant', content: fullReply});
-    // Small delay so backend DB write finishes, then refresh sidebar
-    setTimeout(() => loadSessionList().catch(() => {}), 600);
+    // Refresh sidebar — delay to let serverless DB write finish
+    setTimeout(() => loadSessionList().catch(() => {}), 1500);
   } catch(e) {
     bubble.innerHTML = '⚠️ ' + (e.message || 'Could not reach the server.');
   } finally {
