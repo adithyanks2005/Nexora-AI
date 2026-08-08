@@ -1,69 +1,58 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Nexora AI">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0a0f2e"/>
-      <stop offset="100%" stop-color="#0d1f4a"/>
+      <stop offset="0%" stop-color="#060d24"/>
+      <stop offset="100%" stop-color="#0b1a3e"/>
     </linearGradient>
-    <linearGradient id="teal" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="teal" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#00e5ff"/>
       <stop offset="100%" stop-color="#4f9cf9"/>
     </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="glow-sm">
-      <feGaussianBlur stdDeviation="4" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
   <!-- Background -->
-  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
 
   <!-- Subtle radial glow -->
-  <radialGradient id="rg" cx="50%" cy="50%" r="55%">
+  <radialGradient id="rg" cx="50%" cy="50%" r="50%">
     <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.10"/>
     <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
   </radialGradient>
-  <rect width="512" height="512" rx="110" fill="url(#rg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#rg)"/>
 
-  <!-- Bold N letterform -->
-  <g filter="url(#glow-sm)">
-    <text
-      x="256" y="330"
-      text-anchor="middle"
-      font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif"
-      font-weight="900"
-      font-size="310"
-      fill="url(#teal)"
-      letter-spacing="-8"
-    >N</text>
-  </g>
-
-  <!-- Heartbeat / ECG line overlaid across the N -->
   <g filter="url(#glow)">
-    <polyline
-      points="
-        60,270
-        130,270
-        160,270
-        185,155
-        215,390
-        245,200
-        268,200
-        285,270
-        355,270
-        450,270
-      "
-      fill="none"
-      stroke="url(#teal)"
-      stroke-width="22"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-  </g>
+    <!-- Staff / Rod -->
+    <rect x="240" y="80" width="32" height="360" rx="16" fill="url(#teal)"/>
 
-  <!-- Small dot at peak -->
-  <circle cx="245" cy="200" r="16" fill="#00e5ff" filter="url(#glow)"/>
+    <!-- Snake body — sinusoidal path wrapping around staff -->
+    <path d="
+      M 256 110
+      C 310 130, 330 160, 290 190
+      C 250 220, 210 230, 220 265
+      C 230 300, 310 310, 295 345
+      C 280 375, 210 375, 220 405
+    "
+    fill="none"
+    stroke="url(#teal)"
+    stroke-width="26"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    />
+
+    <!-- Snake head -->
+    <!-- Head body -->
+    <ellipse cx="232" cy="408" rx="28" ry="20" fill="url(#teal)" transform="rotate(-20 232 408)"/>
+    <!-- Eye -->
+    <circle cx="222" cy="400" r="5" fill="#060d24"/>
+    <!-- Tongue -->
+    <line x1="210" y1="414" x2="196" y2="422" stroke="url(#teal)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="210" y1="414" x2="198" y2="410" stroke="url(#teal)" stroke-width="5" stroke-linecap="round"/>
+
+    <!-- Top of staff — small cross cap -->
+    <rect x="220" y="76" width="72" height="22" rx="11" fill="url(#teal)"/>
+  </g>
 </svg>
