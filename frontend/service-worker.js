@@ -1,9 +1,10 @@
-const CACHE_NAME = "nexora-ai-v7";
+const CACHE_NAME = "nexora-ai-v8";
 
-// Assets that never change — cache forever
 const IMMUTABLE = [
   "/manifest.webmanifest",
   "/static/icons/icon.svg",
+  "/static/icons/icon-192.png",
+  "/static/icons/icon-32.png",
 ];
 
 self.addEventListener("install", event => {
@@ -22,7 +23,6 @@ self.addEventListener("activate", event => {
   self.clients.claim();
 });
 
-// Handle notification clicks — open the app
 self.addEventListener("notificationclick", event => {
   event.notification.close();
   event.waitUntil(
@@ -41,25 +41,36 @@ self.addEventListener("fetch", event => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Never intercept API calls or non-GET
+  // Skip non-GET and API calls
   if (request.method !== "GET" || url.pathname.startsWith("/api/")) return;
 
-  // Navigation: always go to network (fresh HTML), fall back to cache
+  // Navigation (HTML page): stale-while-revalidate
+  // Returns cached page instantly, fetches fresh in background
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() => caches.match("/") || Response.error())
+      caches.open(CACHE_NAME).then(cache =>
+        cache.match(request).then(cached => {
+          const fetchPromise = fetch(request).then(res => {
+            if (res.ok) cache.put(request, res.clone());
+            return res;
+          }).catch(() => cached || Response.error());
+          return cached || fetchPromise;
+        })
+      )
     );
     return;
   }
 
-  // External CDN resources (Chart.js, Google Fonts, GSI) — cache on first load
+  // External CDN (fonts, supabase, chart.js): cache-first, no expiry
   if (url.origin !== self.location.origin) {
     event.respondWith(
       caches.match(request).then(cached => {
         if (cached) return cached;
         return fetch(request).then(res => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(request, copy));
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(request, copy));
+          }
           return res;
         });
       })
@@ -67,14 +78,16 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // Static assets (/static/*, /manifest.webmanifest) — cache-first
+  // Static assets: cache-first
   if (url.pathname.startsWith("/static/") || url.pathname === "/manifest.webmanifest") {
     event.respondWith(
       caches.match(request).then(cached => {
         if (cached) return cached;
         return fetch(request).then(res => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(request, copy));
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(request, copy));
+          }
           return res;
         });
       })
@@ -82,53 +95,6 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // Everything else — network only
-  event.respondWith(fetch(request));
-});
-  const { request } = event;
-  const url = new URL(request.url);
-
-  // Never intercept API calls or non-GET
-  if (request.method !== "GET" || url.pathname.startsWith("/api/")) return;
-
-  // Navigation: always go to network (fresh HTML), fall back to cache
-  if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request).catch(() => caches.match("/") || Response.error())
-    );
-    return;
-  }
-
-  // External CDN resources (Chart.js, Google Fonts, GSI) — cache on first load
-  if (url.origin !== self.location.origin) {
-    event.respondWith(
-      caches.match(request).then(cached => {
-        if (cached) return cached;
-        return fetch(request).then(res => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(request, copy));
-          return res;
-        });
-      })
-    );
-    return;
-  }
-
-  // Static assets (/static/*, /manifest.webmanifest) — cache-first
-  if (url.pathname.startsWith("/static/") || url.pathname === "/manifest.webmanifest") {
-    event.respondWith(
-      caches.match(request).then(cached => {
-        if (cached) return cached;
-        return fetch(request).then(res => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(request, copy));
-          return res;
-        });
-      })
-    );
-    return;
-  }
-
-  // Everything else — network only
+  // Everything else: network only
   event.respondWith(fetch(request));
 });

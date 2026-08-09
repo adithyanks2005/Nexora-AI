@@ -163,8 +163,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
 <link rel="manifest" href="/manifest.webmanifest">
+<!-- Preconnect to speed up external resources -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net"/>
+<link rel="preconnect" href="https://nexora-ai-flax.vercel.app"/>
 <!-- Google Identity Services -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -384,7 +388,7 @@ body{
 .topbar-menu:hover{background:var(--surface2);color:var(--text);}
 
 /* -- SECTIONS -- */
-.section{display:none;flex:1;overflow:hidden;}
+.section{display:none;flex:1;overflow:hidden;will-change:opacity,transform;contain:layout style;}
 .section.active{display:flex;flex-direction:column;animation:sectionIn 0.22s ease;}
 @keyframes sectionIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 
@@ -2424,6 +2428,9 @@ function switchSection(id, btn) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (btn) btn.classList.add('active');
   closeSidebar();
+  // Load data for section if stale (> 30s old) or not yet loaded
+  if (id === 'reminders') loadRemindersIfStale();
+  if (id === 'records') loadRecordsIfStale();
 }
 function openSidebar() {
   document.getElementById('sidebar').classList.add('open');
@@ -3680,6 +3687,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     navigator.serviceWorker.register('/service-worker.js').catch(() => {});
   }
 });
+
+// ── STALE-WHILE-REVALIDATE for reminders & records ──
+let _remindersFetchedAt = 0;
+let _recordsFetchedAt = 0;
+const STALE_MS = 30000; // 30 seconds
+
+function loadRemindersIfStale() {
+  if (_remindersCache.length > 0) renderReminders(_remindersCache); // instant render from cache
+  if (Date.now() - _remindersFetchedAt > STALE_MS) {
+    _remindersFetchedAt = Date.now();
+    loadReminders(); // refresh in background
+  }
+}
+function loadRecordsIfStale() {
+  if (_recordsCache.length > 0) renderRecords(_recordsCache); // instant render from cache
+  if (Date.now() - _recordsFetchedAt > STALE_MS) {
+    _recordsFetchedAt = Date.now();
+    loadRecords(); // refresh in background
+  }
+}
+
+// ── KEEP-WARM PING — prevents Vercel cold starts ──
+// Pings the health endpoint every 4 minutes to keep the serverless function warm
+(function keepWarm() {
+  const ping = () => fetch('/api/health', { method: 'GET' }).catch(() => {});
+  // First ping after 10s (after user has loaded and logged in)
+  setTimeout(() => {
+    ping();
+    setInterval(ping, 4 * 60 * 1000); // then every 4 min
+  }, 10000);
+})();
 
 </script>
 
