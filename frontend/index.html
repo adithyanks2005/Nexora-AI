@@ -2377,8 +2377,9 @@ function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.querySelector('.app').style.display = 'flex';
   updateUserUI();
-  loadReminders().catch(() => {});
-  loadRecords().catch(() => {});
+  // Use stale helpers — renders from cache instantly, fetches only if stale
+  loadRemindersIfStale();
+  loadRecordsIfStale();
   loadChatHistory().catch(() => {});
   if(typeof loadSessionList === 'function') loadSessionList().catch(() => {});
   // Start reminder notifications
@@ -2708,8 +2709,9 @@ async function sendChat() {
     if (msgCount % 3 === 0) {
       showSharePrompt(wrap);
     }
-    // Refresh sidebar — delay to let serverless DB write finish
-    setTimeout(() => loadSessionList().catch(() => {}), 1500);
+    // Debounced sidebar refresh — cancels previous timer to avoid stacking
+    clearTimeout(_sessionListTimer);
+    _sessionListTimer = setTimeout(() => loadSessionList().catch(() => {}), 1500);
   } catch(e) {
     bubble.innerHTML = '⚠️ ' + (e.message || 'Could not reach the server.');
   } finally {
@@ -2892,9 +2894,9 @@ async function loadReminders() {
   try {
     const data = await authFetch('/api/reminders');
     _remindersCache = data || [];
+    _remindersFetchedAt = Date.now();
     renderReminders(_remindersCache);
-    // Restart clock so new reminders are picked up immediately
-    if (_reminderClockInterval) startReminderClock();
+    // Clock already running from showApp — no need to restart it here
   } catch(e) { renderReminders([]); }
 }
 
@@ -3144,6 +3146,7 @@ async function loadRecords() {
   try {
     const data = await authFetch('/api/records');
     _recordsCache = data || [];
+    _recordsFetchedAt = Date.now();
     renderRecords(_recordsCache);
   } catch(e) { renderRecords([]); }
 }
@@ -3153,13 +3156,28 @@ async function addRecord() {
   const val = document.getElementById('rec-val').value.trim();
   const notes = document.getElementById('rec-notes').value.trim();
   if (!val) { alert('Please enter a value.'); return; }
+
+  // Optimistic UI — show instantly
+  const tempId = 'temp-' + Date.now();
+  const tempRecord = { id: tempId, type, data: val, notes, recorded_at: new Date().toISOString().replace('Z','') };
+  _recordsCache.unshift(tempRecord);
+  renderRecords(_recordsCache);
+  document.getElementById('rec-val').value = '';
+  document.getElementById('rec-notes').value = '';
+
   try {
     const data = await authFetch('/api/records', 'POST', {type, data: val, notes});
     if (!data) throw new Error('Failed to add');
-    document.getElementById('rec-val').value = '';
-    document.getElementById('rec-notes').value = '';
-    loadRecords();
-  } catch(e) { alert('Failed to add health record. Make sure the backend is running.'); }
+    // Replace temp entry with real one from server
+    const idx = _recordsCache.findIndex(r => r.id === tempId);
+    if (idx !== -1) { _recordsCache[idx] = data; renderRecords(_recordsCache); }
+  } catch(e) {
+    // Revert optimistic update
+    _recordsCache = _recordsCache.filter(r => r.id !== tempId);
+    renderRecords(_recordsCache);
+    document.getElementById('rec-val').value = val;
+    alert('Failed to add health record. Please try again.');
+  }
 }
 
 function renderRecords(data) {
@@ -3179,8 +3197,17 @@ function renderRecords(data) {
 }
 
 async function deleteRecord(id) {
-  await authFetch(`/api/records/${id}`, 'DELETE');
-  loadRecords();
+  // Optimistic removal — remove instantly from cache and DOM
+  const prev = [..._recordsCache];
+  _recordsCache = _recordsCache.filter(r => r.id !== id);
+  renderRecords(_recordsCache);
+  try {
+    await authFetch(`/api/records/${id}`, 'DELETE');
+  } catch(e) {
+    // Revert on failure
+    _recordsCache = prev;
+    renderRecords(_recordsCache);
+  }
 }
 
 // Init — check auth first, then load data
@@ -3691,20 +3718,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ── STALE-WHILE-REVALIDATE for reminders & records ──
 let _remindersFetchedAt = 0;
 let _recordsFetchedAt = 0;
+let _sessionListTimer = null;
 const STALE_MS = 30000; // 30 seconds
 
 function loadRemindersIfStale() {
-  if (_remindersCache.length > 0) renderReminders(_remindersCache); // instant render from cache
+  // Always render from cache instantly (zero latency)
+  renderReminders(_remindersCache);
+  // Only fetch from API if data is stale
   if (Date.now() - _remindersFetchedAt > STALE_MS) {
-    _remindersFetchedAt = Date.now();
-    loadReminders(); // refresh in background
+    loadReminders(); // updates _remindersFetchedAt and re-renders only if data changed
   }
 }
 function loadRecordsIfStale() {
-  if (_recordsCache.length > 0) renderRecords(_recordsCache); // instant render from cache
+  renderRecords(_recordsCache);
   if (Date.now() - _recordsFetchedAt > STALE_MS) {
-    _recordsFetchedAt = Date.now();
-    loadRecords(); // refresh in background
+    loadRecords();
   }
 }
 
