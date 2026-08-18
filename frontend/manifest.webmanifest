@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Nexora AI Healthcare Assistant",
-  "short_name": "Nexora AI",
+  "name": "MediCura AI Healthcare Assistant",
+  "short_name": "MediCura AI",
   "description": "A personal healthcare assistant with AI chat, symptom guidance, calculators, reminders, and records.",
   "start_url": "/",
   "scope": "/",
@@ -22,7 +22,7 @@
     {
       "name": "New Health Chat",
       "short_name": "Chat",
-      "description": "Open Nexora AI chat",
+      "description": "Open MediCura AI chat",
       "url": "/?page=chat",
       "icons": [
         {
