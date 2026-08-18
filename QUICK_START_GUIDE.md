@@ -21,7 +21,7 @@ domains/medicura-ai.json
 {
   "owner": {
     "username": "adithyanks2005",
-    "email": "ksadithyan2021.com"
+    "email": "ksadithyan2021![alt text](image.png).com"
   },
   "record": {
     "CNAME": "cname.vercel-dns.com"

@@ -1,0 +1,19 @@
+Requesting medicura-ai.is-a.dev subdomain for MediCura AI healthcare assistant.
+
+- **Domain:** medicura-ai.is-a.dev
+- **Type:** Healthcare web application
+- **Owner:** @adithyanks2005
+- **Email:** ksadithyan2021@gmail.com
+- **CNAME:** cname.vercel-dns.com (Vercel deployment)
+
+## About MediCura AI
+
+Free, open-source AI healthcare assistant providing:
+- AI health chat & symptom checking
+- Health calculators (BMI, calories, water intake)
+- Medication reminders
+- Health record tracking
+
+The domain will point to our Vercel deployment via CNAME record.
+
+Thank you for reviewing!
