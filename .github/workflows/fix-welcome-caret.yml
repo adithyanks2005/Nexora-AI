@@ -1,0 +1,66 @@
+name: Fix welcome heading caret
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ !contains(github.event.head_commit.message, 'fix: remove welcome heading caret') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Remove welcome heading caret
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('frontend/index.html')
+          text = path.read_text(encoding='utf-8')
+
+          marker = 'id="medicura-welcome-caret-fix"'
+          if marker not in text:
+              fix = r'''<style id="medicura-welcome-caret-fix">
+          .medicura-welcome-title::before,
+          .medicura-welcome-title::after {
+            content: none !important;
+            display: none !important;
+            animation: none !important;
+            border: 0 !important;
+          }
+          .medicura-welcome-title {
+            border-right: 0 !important;
+            animation: none !important;
+            caret-color: transparent !important;
+          }
+          </style>
+          <script>
+          (() => {
+            const fix = () => {
+              document.querySelectorAll('h1, h2, h3').forEach((el) => {
+                if ((el.textContent || '').includes("I'm MediCura AI")) {
+                  el.classList.add('medicura-welcome-title');
+                }
+              });
+            };
+            fix();
+            new MutationObserver(fix).observe(document.body, { childList: true, subtree: true });
+          })();
+          </script>'''
+              if '</body>' in text:
+                  text = text.replace('</body>', fix + '\n</body>', 1)
+                  path.write_text(text, encoding='utf-8')
+
+      - name: Commit fix and remove one-time workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/index.html
+          git rm .github/workflows/fix-welcome-caret.yml
+          git commit -m "fix: remove welcome heading caret"
+          git push
