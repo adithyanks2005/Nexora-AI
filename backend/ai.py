@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import re
@@ -17,10 +18,12 @@ if _dotenv.exists():
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_GROQ_MODEL = "llama-3.1-8b-instant"
+MAX_HISTORY_MESSAGES = 12
+MAX_MESSAGE_CHARS = 1400
 
-# Global persistent client with HTTP/2 for lower latency
+# Persistent client with separate connect/read timeouts for streaming.
 _http_client = httpx.AsyncClient(
-    timeout=30,
+    timeout=httpx.Timeout(60.0, connect=10.0),
     http2=True,
     limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
 )
@@ -31,7 +34,7 @@ RULES:
 0. Health & medical queries only.
 1. Use conversation context when available.
 2. Suggest relevant OTC/generic medications with typical dosage and safety disclaimers.
-3. Structure: 
+3. Structure:
    - **Analysis & Context**: Brief explanation based on symptoms/history.
    - **Medications & Care**: Clear bullet points (OTC drugs, doses, home care).
    - **Red Flags**: Brief warning signs to see a doctor.
@@ -48,8 +51,9 @@ HEALTH_KEYWORDS = {
     "bmi", "calorie", "hydration", "water", "exercise", "workout", "pulse",
     "spo2", "oxygen", "pregnancy", "period", "menstrual", "pharmacy", "drug",
     "dose", "side effect", "treatment", "diagnosis", "wellness", "care",
-    "article", "sleep", "hygiene", "pill", "tablet", "syrup", "ointment"
+    "article", "hygiene", "pill", "tablet", "syrup", "ointment"
 }
+
 
 def _is_health_query(text: str) -> bool:
     t = (text or "").strip().lower()
@@ -58,6 +62,40 @@ def _is_health_query(text: str) -> bool:
     if re.fullmatch(r"(hi|hello|hey|hii+|good (morning|afternoon|evening)|yo)\W*", t):
         return True
     return any(k in t for k in HEALTH_KEYWORDS)
+
+
+def _prepare_messages(messages: list[dict], system: str) -> list[dict]:
+    """Keep requests small enough for Groq rate/token limits while preserving recent context."""
+    cleaned = []
+    for msg in messages[-MAX_HISTORY_MESSAGES:]:
+        content = str(msg.get("content", "")).strip()
+        if not content:
+            continue
+        cleaned.append({
+            "role": msg.get("role", "user"),
+            "content": content[-MAX_MESSAGE_CHARS:],
+        })
+    return [{"role": "system", "content": system}] + cleaned
+
+
+def _groq_error(status_code: int, body: str) -> str:
+    try:
+        data = json.loads(body)
+        message = data.get("error", {}).get("message", "")
+    except (json.JSONDecodeError, TypeError):
+        message = ""
+
+    if status_code == 401:
+        return "AI service authentication failed. Check the GROQ_API_KEY configured in Vercel."
+    if status_code == 403:
+        return "AI service access was denied. Check Groq project/model permissions."
+    if status_code == 429:
+        return "AI service rate limit reached. Please wait a moment and try again."
+    if status_code == 400:
+        return f"AI request was rejected: {message or 'invalid request'}"
+    if status_code >= 500:
+        return "AI service is temporarily unavailable. Please try again shortly."
+    return f"AI service returned HTTP {status_code}."
 
 
 async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
@@ -70,13 +108,10 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
             detail="GROQ_API_KEY not configured. 🛠️ LOCAL: Add it to your .env file and restart. 🚀 VERCEL: Add it to Project Settings > Environment Variables."
         )
 
-    chat_messages = [{"role": "system", "content": system}] + [
-        {"role": msg.get("role", "user"), "content": msg.get("content", "")}
-        for msg in messages
-        if msg.get("content")
-    ]
-
-    last_user_msg = next((m.get("content", "") for m in reversed(messages) if m.get("role") == "user"), "")
+    last_user_msg = next(
+        (m.get("content", "") for m in reversed(messages) if m.get("role") == "user"),
+        "",
+    )
     if not _is_health_query(last_user_msg):
         return (
             "I am specialized exclusively in health and medical topics. "
@@ -85,7 +120,7 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
 
     payload = {
         "model": model,
-        "messages": chat_messages,
+        "messages": _prepare_messages(messages, system),
         "temperature": 0.3,
         "top_p": 0.9,
         "max_tokens": 350,
@@ -94,17 +129,21 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
         "Authorization": f"Bearer {api_key}",
         "content-type": "application/json",
     }
+
     try:
         resp = await _http_client.post(GROQ_URL, json=payload, headers=headers)
-    except Exception as e:
+    except httpx.TimeoutException as e:
+        print(f"ERROR: Groq request timed out: {e}")
+        raise HTTPException(status_code=504, detail="AI service timed out. Please try again.")
+    except httpx.HTTPError as e:
         print(f"ERROR: Groq request failed: {e}")
-        raise HTTPException(status_code=503, detail=f"Failed to connect to AI service: {str(e)}")
+        raise HTTPException(status_code=503, detail="Failed to connect to AI service. Please try again.")
 
     if resp.status_code != 200:
         print(f"ERROR: Groq returned {resp.status_code}: {resp.text}")
-        raise HTTPException(status_code=resp.status_code, detail=f"AI service error: {resp.text}")
-    
-    data  = resp.json()
+        raise HTTPException(status_code=resp.status_code, detail=_groq_error(resp.status_code, resp.text))
+
+    data = resp.json()
     reply = data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
     if not reply:
         print("ERROR: Groq returned empty response")
@@ -117,18 +156,12 @@ async def stream_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> AsyncG
     model = os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL).strip()
 
     if not api_key:
-        raise HTTPException(
-            status_code=500,
-            detail="GROQ_API_KEY not configured."
-        )
+        raise HTTPException(status_code=500, detail="GROQ_API_KEY not configured.")
 
-    chat_messages = [{"role": "system", "content": system}] + [
-        {"role": msg.get("role", "user"), "content": msg.get("content", "")}
-        for msg in messages
-        if msg.get("content")
-    ]
-
-    last_user_msg = next((m.get("content", "") for m in reversed(messages) if m.get("role") == "user"), "")
+    last_user_msg = next(
+        (m.get("content", "") for m in reversed(messages) if m.get("role") == "user"),
+        "",
+    )
     if not _is_health_query(last_user_msg):
         yield (
             "I am specialized exclusively in health and medical topics. "
@@ -138,7 +171,7 @@ async def stream_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> AsyncG
 
     payload = {
         "model": model,
-        "messages": chat_messages,
+        "messages": _prepare_messages(messages, system),
         "temperature": 0.3,
         "top_p": 0.9,
         "max_tokens": 350,
@@ -147,31 +180,50 @@ async def stream_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> AsyncG
     headers = {
         "Authorization": f"Bearer {api_key}",
         "content-type": "application/json",
+        "accept": "text/event-stream",
     }
-    
-    try:
-        async with _http_client.stream("POST", GROQ_URL, json=payload, headers=headers) as response:
-            if response.status_code != 200:
-                text = await response.aread()
-                print(f"ERROR: Groq streaming returned {response.status_code}: {text}")
-                yield "I am currently experiencing technical difficulties. Please try again later."
-                return
 
-            async for line in response.aiter_lines():
-                if line.startswith("data: "):
+    # A single short retry helps recover from transient 429/5xx responses.
+    for attempt in range(2):
+        try:
+            async with _http_client.stream("POST", GROQ_URL, json=payload, headers=headers) as response:
+                if response.status_code != 200:
+                    text = (await response.aread()).decode("utf-8", errors="replace")
+                    print(f"ERROR: Groq streaming returned {response.status_code}: {text}")
+                    if attempt == 0 and response.status_code in {429, 500, 502, 503, 504}:
+                        await asyncio.sleep(1.2)
+                        continue
+                    yield _groq_error(response.status_code, text)
+                    return
+
+                async for line in response.aiter_lines():
+                    if not line.startswith("data: "):
+                        continue
                     data_str = line[6:]
                     if data_str == "[DONE]":
-                        break
+                        return
                     try:
                         chunk = json.loads(data_str)
-                        content = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
-                        if content:
-                            yield content
                     except json.JSONDecodeError:
                         continue
-    except Exception as e:
-        print(f"ERROR: Groq streaming failed: {e}")
-        yield " Connection error. Please try again."
+                    content = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                    if content:
+                        yield content
+                return
+        except httpx.TimeoutException as e:
+            print(f"ERROR: Groq streaming timed out: {e}")
+            if attempt == 0:
+                await asyncio.sleep(0.5)
+                continue
+            yield "AI service timed out. Please try again."
+            return
+        except httpx.HTTPError as e:
+            print(f"ERROR: Groq streaming failed: {e}")
+            if attempt == 0:
+                await asyncio.sleep(0.5)
+                continue
+            yield "Unable to connect to the AI service. Please try again."
+            return
 
 
 def get_ai_status() -> dict[str, str]:
