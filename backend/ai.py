@@ -85,6 +85,31 @@ def _prepare_messages(messages: list[dict], system: str) -> list[dict]:
     return [{"role": "system", "content": system}] + cleaned
 
 
+MEDICATION_DISCLAIMER = (
+    "\n\n> ⚠️ **Medication disclaimer:** Medication information is for educational purposes only. "
+    "Do not start, stop, or change any medicine or dose without advice from a qualified "
+    "healthcare professional. Check allergies, pregnancy, age, existing conditions, and "
+    "possible drug interactions with a doctor or pharmacist."
+)
+
+
+def _contains_medication_advice(text: str) -> bool:
+    lowered = (text or "").lower()
+    medication_terms = (
+        "medication", "medicine", "tablet", "capsule", "syrup", "spray", "ointment",
+        "dose", "dosage", "mg", "mcg", "ml", "paracetamol", "acetaminophen", "ibuprofen",
+        "antibiotic", "antihistamine", "saline nasal spray", "oral rehydration",
+        "take twice", "take once", "per day", "every ", "after meals", "before meals"
+    )
+    return any(term in lowered for term in medication_terms)
+
+
+def _ensure_medication_disclaimer(text: str) -> str:
+    if not text or "Medication disclaimer:" in text:
+        return text
+    return text + MEDICATION_DISCLAIMER if _contains_medication_advice(text) else text
+
+
 def _groq_error(status_code: int, body: str) -> str:
     try:
         data = json.loads(body)
@@ -203,7 +228,7 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
     if not reply:
         print("ERROR: Groq returned empty response")
         raise HTTPException(status_code=502, detail="Groq returned an empty response. Please try again.")
-    return reply
+    return _ensure_medication_disclaimer(reply)
 
 
 async def stream_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> AsyncGenerator[str, None]:
@@ -237,6 +262,8 @@ async def stream_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> AsyncG
         "content-type": "application/json",
         "accept": "text/event-stream",
     }
+
+    collected: list[str] = []
 
     for attempt in range(2):
         try:
@@ -274,7 +301,12 @@ async def stream_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> AsyncG
                         continue
                     content = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
                     if content:
+                        collected.append(content)
                         yield content
+                if collected:
+                    full_text = "".join(collected)
+                    if _contains_medication_advice(full_text) and "Medication disclaimer:" not in full_text:
+                        yield MEDICATION_DISCLAIMER
                 return
         except httpx.TimeoutException as e:
             print(f"ERROR: Groq streaming timed out: {e}")
