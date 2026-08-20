@@ -17,7 +17,14 @@ if _dotenv.exists():
     load_dotenv(_dotenv, override=True)
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODELS_URL = "https://api.groq.com/openai/v1/models"
 DEFAULT_GROQ_MODEL = "llama-3.1-8b-instant"
+MODEL_FALLBACKS = [
+    "llama-3.1-8b-instant",
+    "llama-3.3-70b-versatile",
+    "openai/gpt-oss-20b",
+    "openai/gpt-oss-120b",
+]
 MAX_HISTORY_MESSAGES = 12
 MAX_MESSAGE_CHARS = 1400
 
@@ -90,7 +97,7 @@ def _groq_error(status_code: int, body: str) -> str:
     if status_code == 403:
         return "AI service access was denied. Check Groq project/model permissions."
     if status_code == 404:
-        return f"AI model not found: {message or 'check GROQ_MODEL in Vercel Environment Variables.'}"
+        return f"AI model is unavailable for this Groq key. Requested model: {message or 'not available'}"
     if status_code == 429:
         return "AI service rate limit reached. Please wait a moment and try again."
     if status_code == 400:
@@ -100,14 +107,45 @@ def _groq_error(status_code: int, body: str) -> str:
     return f"AI service returned HTTP {status_code}."
 
 
-async def _post_chat(payload: dict, headers: dict) -> httpx.Response:
+async def _discover_available_model(api_key: str, preferred: str) -> str | None:
+    """Ask Groq which models this API key can actually access and pick a supported fallback."""
+    try:
+        resp = await _http_client.get(
+            GROQ_MODELS_URL,
+            headers={"Authorization": f"Bearer {api_key}"},
+        )
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        available = {
+            str(item.get("id"))
+            for item in data.get("data", [])
+            if item.get("id")
+        }
+        if preferred in available:
+            return preferred
+        for candidate in MODEL_FALLBACKS:
+            if candidate in available:
+                return candidate
+        # Prefer any currently active Llama/GPT production model if the key exposes one.
+        for model_id in sorted(available):
+            if any(prefix in model_id for prefix in ("llama-", "openai/gpt-oss-")):
+                return model_id
+        return None
+    except (httpx.HTTPError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        print(f"WARN: Could not discover Groq models: {exc}")
+        return None
+
+
+async def _post_chat(api_key: str, model: str, payload: dict, headers: dict) -> httpx.Response:
+    payload = dict(payload)
+    payload["model"] = model
     return await _http_client.post(GROQ_URL, json=payload, headers=headers)
 
 
 async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
     api_key = os.getenv("GROQ_API_KEY", "").strip()
-    configured_model = os.getenv("GROQ_MODEL", "").strip()
-    model = configured_model or DEFAULT_GROQ_MODEL
+    configured_model = os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL).strip() or DEFAULT_GROQ_MODEL
 
     if not api_key:
         raise HTTPException(
@@ -125,7 +163,8 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
             "Please ask a health-related question, symptom, or wellness concern."
         )
 
-    base_payload = {
+    payload = {
+        "model": configured_model,
         "messages": _prepare_messages(messages, system),
         "temperature": 0.3,
         "top_p": 0.9,
@@ -137,18 +176,25 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
     }
 
     try:
-        resp = await _post_chat({**base_payload, "model": model}, headers)
-        # A stale/invalid Vercel GROQ_MODEL env var should not break the app.
-        # Fall back to Groq's currently documented production model once.
-        if resp.status_code == 404 and model != DEFAULT_GROQ_MODEL:
-            print(f"WARN: GROQ_MODEL '{model}' returned 404; retrying with '{DEFAULT_GROQ_MODEL}'.")
-            resp = await _post_chat({**base_payload, "model": DEFAULT_GROQ_MODEL}, headers)
+        resp = await _post_chat(api_key, configured_model, payload, headers)
     except httpx.TimeoutException as e:
         print(f"ERROR: Groq request timed out: {e}")
         raise HTTPException(status_code=504, detail="AI service timed out. Please try again.")
     except httpx.HTTPError as e:
         print(f"ERROR: Groq request failed: {e}")
         raise HTTPException(status_code=503, detail="Failed to connect to AI service. Please try again.")
+
+    # 404 can mean the configured model is unavailable to this specific API key.
+    # Discover a model that the key can actually access before failing the request.
+    if resp.status_code == 404:
+        discovered = await _discover_available_model(api_key, configured_model)
+        if discovered and discovered != configured_model:
+            print(f"INFO: Groq model {configured_model!r} unavailable; retrying with {discovered!r}")
+            try:
+                resp = await _post_chat(api_key, discovered, payload, headers)
+            except httpx.HTTPError as e:
+                print(f"ERROR: Groq fallback request failed: {e}")
+                raise HTTPException(status_code=503, detail="Failed to connect to AI service. Please try again.")
 
     if resp.status_code != 200:
         print(f"ERROR: Groq returned {resp.status_code}: {resp.text}")
@@ -164,8 +210,7 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
 
 async def stream_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> AsyncGenerator[str, None]:
     api_key = os.getenv("GROQ_API_KEY", "").strip()
-    configured_model = os.getenv("GROQ_MODEL", "").strip()
-    model = configured_model or DEFAULT_GROQ_MODEL
+    configured_model = os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL).strip() or DEFAULT_GROQ_MODEL
 
     if not api_key:
         raise HTTPException(status_code=500, detail="GROQ_API_KEY not configured.")
@@ -182,6 +227,7 @@ async def stream_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> AsyncG
         return
 
     base_payload = {
+        "model": configured_model,
         "messages": _prepare_messages(messages, system),
         "temperature": 0.3,
         "top_p": 0.9,
@@ -194,62 +240,56 @@ async def stream_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> AsyncG
         "accept": "text/event-stream",
     }
 
-    # Retry once for transient errors and once with the stable production model
-    # when a stale/invalid GROQ_MODEL environment variable causes HTTP 404.
-    models_to_try = [model]
-    if model != DEFAULT_GROQ_MODEL:
-        models_to_try.append(DEFAULT_GROQ_MODEL)
-
-    for model_index, try_model in enumerate(models_to_try):
-        for attempt in range(2):
-            try:
-                async with _http_client.stream(
-                    "POST", GROQ_URL,
-                    json={**base_payload, "model": try_model},
-                    headers=headers,
-                ) as response:
-                    if response.status_code != 200:
-                        text = (await response.aread()).decode("utf-8", errors="replace")
-                        print(f"ERROR: Groq streaming returned {response.status_code}: {text}")
-                        if response.status_code == 404 and model_index == 0 and len(models_to_try) > 1:
-                            print(f"WARN: GROQ_MODEL '{try_model}' returned 404; retrying with '{DEFAULT_GROQ_MODEL}'.")
-                            break
-                        if attempt == 0 and response.status_code in {429, 500, 502, 503, 504}:
-                            await asyncio.sleep(1.2)
+    # A single short retry helps recover from transient 429/5xx responses.
+    for attempt in range(2):
+        model = configured_model
+        try:
+            async with _http_client.stream("POST", GROQ_URL, json={**base_payload, "model": model}, headers=headers) as response:
+                if response.status_code == 404:
+                    discovered = await _discover_available_model(api_key, configured_model)
+                    if discovered and discovered != configured_model:
+                        print(f"INFO: Groq streaming model {configured_model!r} unavailable; retrying with {discovered!r}")
+                        model = discovered
+                        if attempt == 0:
                             continue
-                        yield _groq_error(response.status_code, text)
+
+                if response.status_code != 200:
+                    text = (await response.aread()).decode("utf-8", errors="replace")
+                    print(f"ERROR: Groq streaming returned {response.status_code}: {text}")
+                    if attempt == 0 and response.status_code in {429, 500, 502, 503, 504}:
+                        await asyncio.sleep(1.2)
+                        continue
+                    yield _groq_error(response.status_code, text)
+                    return
+
+                async for line in response.aiter_lines():
+                    if not line.startswith("data: "):
+                        continue
+                    data_str = line[6:]
+                    if data_str == "[DONE]":
                         return
-
-                    async for line in response.aiter_lines():
-                        if not line.startswith("data: "):
-                            continue
-                        data_str = line[6:]
-                        if data_str == "[DONE]":
-                            return
-                        try:
-                            chunk = json.loads(data_str)
-                        except json.JSONDecodeError:
-                            continue
-                        content = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
-                        if content:
-                            yield content
-                    return
-            except httpx.TimeoutException as e:
-                print(f"ERROR: Groq streaming timed out: {e}")
-                if attempt == 0:
-                    await asyncio.sleep(0.5)
-                    continue
-                if model_index == len(models_to_try) - 1:
-                    yield "AI service timed out. Please try again."
-                    return
-            except httpx.HTTPError as e:
-                print(f"ERROR: Groq streaming failed: {e}")
-                if attempt == 0:
-                    await asyncio.sleep(0.5)
-                    continue
-                if model_index == len(models_to_try) - 1:
-                    yield "Unable to connect to the AI service. Please try again."
-                    return
+                    try:
+                        chunk = json.loads(data_str)
+                    except json.JSONDecodeError:
+                        continue
+                    content = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                    if content:
+                        yield content
+                return
+        except httpx.TimeoutException as e:
+            print(f"ERROR: Groq streaming timed out: {e}")
+            if attempt == 0:
+                await asyncio.sleep(0.5)
+                continue
+            yield "AI service timed out. Please try again."
+            return
+        except httpx.HTTPError as e:
+            print(f"ERROR: Groq streaming failed: {e}")
+            if attempt == 0:
+                await asyncio.sleep(0.5)
+                continue
+            yield "Unable to connect to the AI service. Please try again."
+            return
 
 
 def get_ai_status() -> dict[str, str]:
