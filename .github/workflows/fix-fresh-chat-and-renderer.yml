@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Patch frontend chat behavior
+      - name: Patch frontend behavior
         shell: python
         run: |
           from pathlib import Path
@@ -21,16 +21,11 @@ jobs:
           path = Path("frontend/index.html")
           text = path.read_text(encoding="utf-8")
 
-          # Always create a brand-new chat session whenever the page loads.
-          old_session = "let currentSessionId = localStorage.getItem('nexora_session_id') || generateUUID();\nlocalStorage.setItem('nexora_session_id', currentSessionId);"
-          new_session = "let currentSessionId = generateUUID();\nlocalStorage.removeItem('nexora_session_id');"
-          if old_session in text:
-              text = text.replace(old_session, new_session, 1)
+          # Never restore the current chat automatically on page load.
+          text = text.replace("  loadChatHistory().catch(() => {});\n", "")
 
-          # Compact ChatGPT-like markdown rendering: collapse excess blank lines
-          # and avoid <br><br> between every bullet.
           start = text.find("function renderMarkdown(text) {")
-          end = text.find("\n}\n\nasync function loadChatHistory()", start)
+          end = text.find("\n}\n\nasync function loadChatHistory", start)
           if start == -1 or end == -1:
               raise SystemExit("renderMarkdown function not found")
 
@@ -55,6 +50,7 @@ jobs:
     .replace(/\n/g, '<br>');
 }
 '''
+
           text = text[:start] + new_fn + text[end + 2:]
 
           marker = '/* ChatGPT-like renderer */'
@@ -65,16 +61,21 @@ jobs:
                   raise SystemExit('</head> not found')
               text = text[:insert_at] + style + text[insert_at:]
 
-          path.write_text(text, encoding="utf-8")
+          path.write_text(text, encoding='utf-8')
 
-      - name: Commit patch and remove workflow
+      - name: Commit frontend patch
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add frontend/index.html .github/workflows/fix-fresh-chat-and-renderer.yml
+          git add frontend/index.html
           git diff --cached --quiet && exit 0
-          git commit -m "fix: start chats fresh and tighten response layout"
+          git commit -m "fix: start every page with a fresh chat"
+          git push
+
+      - name: Remove one-time workflow
+        shell: bash
+        run: |
           git rm .github/workflows/fix-fresh-chat-and-renderer.yml
-          git commit -m "chore: remove one-time frontend patch workflow"
+          git commit -m "chore: remove one-time fresh chat workflow"
           git push
