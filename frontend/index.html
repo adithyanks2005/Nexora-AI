@@ -2585,7 +2585,7 @@ async function switchSession(sid) {
   document.getElementById('chatMessages').innerHTML = '';
   const chatNav = document.querySelector('.nav-item[onclick*="chat"]');
   if(chatNav) switchSection('chat', chatNav);
-  await loadChatHistory();
+  await loadChatHistory(true);
   loadSessionList();
   if (window.innerWidth <= 768 && typeof closeSidebar === 'function') closeSidebar();
 }
@@ -2623,8 +2623,7 @@ async function clearAllSessions() {
   }
 }
 
-let currentSessionId = localStorage.getItem('nexora_session_id') || generateUUID();
-localStorage.setItem('nexora_session_id', currentSessionId);
+let currentSessionId = generateUUID();
 let chatHistory = [];
 
 function renderMarkdown(text) {
@@ -2639,7 +2638,8 @@ function renderMarkdown(text) {
     .replace(/\n/g, '<br>');
 }
 
-async function loadChatHistory() {
+async function loadChatHistory(force = false) {
+  if (!force) return;
   try {
     const msgs = await authFetch(`/api/sessions/${currentSessionId}/messages`);
     if (!msgs || msgs.length === 0) return;
