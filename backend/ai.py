@@ -193,7 +193,7 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
         "messages": _prepare_messages(messages, system),
         "temperature": 0.3,
         "top_p": 0.9,
-        "max_tokens": 350,
+        "max_tokens": 700,
     }
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -254,7 +254,7 @@ async def stream_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> AsyncG
         "messages": _prepare_messages(messages, system),
         "temperature": 0.3,
         "top_p": 0.9,
-        "max_tokens": 350,
+        "max_tokens": 700,
         "stream": True,
     }
     headers = {
@@ -294,7 +294,7 @@ async def stream_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> AsyncG
                         continue
                     data_str = line[6:]
                     if data_str == "[DONE]":
-                        return
+                        break
                     try:
                         chunk = json.loads(data_str)
                     except json.JSONDecodeError:
