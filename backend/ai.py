@@ -184,8 +184,6 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
         print(f"ERROR: Groq request failed: {e}")
         raise HTTPException(status_code=503, detail="Failed to connect to AI service. Please try again.")
 
-    # 404 can mean the configured model is unavailable to this specific API key.
-    # Discover a model that the key can actually access before failing the request.
     if resp.status_code == 404:
         discovered = await _discover_available_model(api_key, configured_model)
         if discovered and discovered != configured_model:
@@ -240,18 +238,20 @@ async def stream_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> AsyncG
         "accept": "text/event-stream",
     }
 
-    # A single short retry helps recover from transient 429/5xx responses.
     for attempt in range(2):
-        model = configured_model
         try:
-            async with _http_client.stream("POST", GROQ_URL, json={**base_payload, "model": model}, headers=headers) as response:
-                if response.status_code == 404:
+            async with _http_client.stream(
+                "POST",
+                GROQ_URL,
+                json={**base_payload, "model": configured_model},
+                headers=headers,
+            ) as response:
+                if response.status_code == 404 and attempt == 0:
                     discovered = await _discover_available_model(api_key, configured_model)
                     if discovered and discovered != configured_model:
                         print(f"INFO: Groq streaming model {configured_model!r} unavailable; retrying with {discovered!r}")
-                        model = discovered
-                        if attempt == 0:
-                            continue
+                        configured_model = discovered
+                        continue
 
                 if response.status_code != 200:
                     text = (await response.aread()).decode("utf-8", errors="replace")
