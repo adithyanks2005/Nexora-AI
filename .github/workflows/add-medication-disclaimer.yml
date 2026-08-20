@@ -1,6 +1,8 @@
 name: Add medication safety disclaimer
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -45,20 +47,16 @@ jobs:
           else:
               raise SystemExit("Could not patch streaming return")
 
-          # Ensure the list used by streaming is defined.
-          stream_anchor = '    headers = {\n'
-          # The streaming implementation already uses a generator-local response;
-          # add a collection before the retry loop if needed.
           if "collected: list[str] = []" not in text:
               text = text.replace('    for attempt in range(2):\n', '    collected: list[str] = []\n\n    for attempt in range(2):\n', 1)
 
           path.write_text(text, encoding="utf-8")
 
-      - name: Commit patch and remove workflow
+      - name: Commit patch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add backend/ai.py .github/workflows/add-medication-disclaimer.yml
+          git add backend/ai.py
           git diff --cached --quiet && exit 0
           git commit -m "fix: add medication safety disclaimer to AI advice"
           git push
