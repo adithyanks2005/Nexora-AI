@@ -25,8 +25,8 @@ MODEL_FALLBACKS = [
     "openai/gpt-oss-20b",
     "openai/gpt-oss-120b",
 ]
-MAX_HISTORY_MESSAGES = 12
-MAX_MESSAGE_CHARS = 1400
+MAX_HISTORY_MESSAGES = 10
+MAX_MESSAGE_CHARS = 1100
 
 # Persistent client with separate connect/read timeouts for streaming.
 _http_client = httpx.AsyncClient(
@@ -45,7 +45,7 @@ RULES:
    - **Analysis & Context**: Brief explanation based on symptoms/history.
    - **Medications & Care**: Clear bullet points (OTC drugs, doses, home care).
    - **Red Flags**: Brief warning signs to see a doctor.
-4. Keep responses direct, well-formatted, and under 200 words to save tokens while maintaining top clinical quality.
+4. Give complete, well-formatted answers, normally 250–350 words when needed. Always finish every section and sentence. Never stop mid-sentence or mid-bullet. Prioritize red flags and essential care advice if space is limited.
 """
 
 HEALTH_KEYWORDS = {
@@ -191,9 +191,9 @@ async def call_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> str:
     payload = {
         "model": configured_model,
         "messages": _prepare_messages(messages, system),
-        "temperature": 0.3,
+        "temperature": 0.2,
         "top_p": 0.9,
-        "max_tokens": 700,
+        "max_tokens": 900,
     }
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -252,9 +252,9 @@ async def stream_ai(messages: list[dict], system: str = SYSTEM_PROMPT) -> AsyncG
     base_payload = {
         "model": configured_model,
         "messages": _prepare_messages(messages, system),
-        "temperature": 0.3,
+        "temperature": 0.2,
         "top_p": 0.9,
-        "max_tokens": 700,
+        "max_tokens": 900,
         "stream": True,
     }
     headers = {
