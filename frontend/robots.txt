@@ -35,5 +35,4 @@ Allow: /
 User-agent: meta-externalagent
 Allow: /
 
-Sitemap: https://nexora-ai-flax.vercel.app/sitemap.xml
-
+Sitemap: https://medicura-ai.is-a.dev/sitemap.xml
