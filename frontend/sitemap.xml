@@ -2,15 +2,14 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
-    <loc>https://nexora-ai-flax.vercel.app/</loc>
-    <lastmod>2026-08-14</lastmod>
+    <loc>https://medicura-ai.is-a.dev/</loc>
+    <lastmod>2026-08-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
-      <image:loc>https://nexora-ai-flax.vercel.app/static/og-image.jpg</image:loc>
+      <image:loc>https://medicura-ai.is-a.dev/static/og-image.jpg</image:loc>
       <image:title>MediCura AI — Free AI Healthcare Assistant</image:title>
       <image:caption>AI-powered symptom checker, BMI calculator, medication reminders, and health record tracking — all free.</image:caption>
     </image:image>
   </url>
 </urlset>
-
