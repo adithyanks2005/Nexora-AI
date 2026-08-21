@@ -5,17 +5,6 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
-      "has": [
-        {
-          "type": "host",
-          "value": "nexora-ai-flax.vercel.app"
-        }
-      ],
-      "dest": "https://medicura-ai.is-a.dev/$1",
-      "status": 308
-    },
-    {
       "src": "/static/(.*)",
       "dest": "api/index.py",
       "headers": {

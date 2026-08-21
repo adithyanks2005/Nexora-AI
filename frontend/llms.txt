@@ -9,7 +9,7 @@
 > medical advice, diagnosis, or treatment.
 
 # ---- URLs ----
-Base URL: https://medicura-ai.is-a.dev
+Base URL: https://nexora-ai-flax.vercel.app
 
 # ---- What MediCura AI does ----
 - AI chat for symptom analysis and health questions (powered by Groq / LLaMA 3.1)
@@ -52,7 +52,8 @@ POST /api/records             Add health record
 # ---- Permissions ----
 AI crawlers: Allowed to index and summarize all public content.
 Data collection: Only health data explicitly entered by the user is stored.
-Privacy policy: https://medicura-ai.is-a.dev
+Privacy policy: https://nexora-ai-flax.vercel.app
 
 # ---- Contact ----
 GitHub: https://github.com/adithyanks2005/Nexora-AI
+
