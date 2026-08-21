@@ -24,29 +24,18 @@ from backend.database import (
 SUPABASE_URL = get_supabase_url()
 SUPABASE_KEY = get_supabase_server_key()
 
-# ── Config ────────────────────────────────────────────────────────────────────
+# Production must never fall back to a known/shared signing key.
 _jwt_secret_raw = os.getenv("JWT_SECRET", "").strip()
-if not _jwt_secret_raw or len(_jwt_secret_raw) < 16:
-    import warnings
-    # Use a stable fallback so tokens survive restarts in dev
-    # In production, JWT_SECRET must be set as an environment variable
-    JWT_SECRET = "nexora-dev-only-secret-set-JWT_SECRET-in-production"
-    if not _jwt_secret_raw:
-        warnings.warn(
-            "JWT_SECRET is not set. Using default dev secret — all users share the same key. "
-            "Set JWT_SECRET in production environment variables.",
-            UserWarning
-        )
-else:
-    JWT_SECRET = _jwt_secret_raw
+if len(_jwt_secret_raw) < 32:
+    raise RuntimeError("JWT_SECRET must be configured with at least 32 characters.")
+JWT_SECRET = _jwt_secret_raw
 
-JWT_ALGORITHM   = "HS256"
+JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_DAYS = 30
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-# ── JWT helpers ───────────────────────────────────────────────────────────────
 def create_jwt(
     user_id: str,
     email: str,
@@ -78,7 +67,6 @@ def decode_jwt(token: str) -> dict[str, Any]:
         raise HTTPException(status_code=401, detail="Invalid token. Please sign in again.")
 
 
-# ── Dependency: get current user ──────────────────────────────────────────────
 def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> dict[str, Any]:
@@ -121,19 +109,11 @@ def get_current_user(
     return user
 
 
-# ── Google token verification ─────────────────────────────────────────────────
 def verify_google_token(id_token_str: str) -> dict[str, Any]:
+    # Mock authentication is intentionally unavailable in production.
     if id_token_str.startswith("mock_google_"):
-        email = id_token_str.replace("mock_google_", "")
-        name = email.split("@")[0].replace(".", " ").title()
-        return {
-            "email": email,
-            "name": name,
-            "picture": f"https://api.dicebear.com/7.x/initials/svg?seed={name}",
-            "sub": f"google_mock_{email}"
-        }
+        raise HTTPException(status_code=401, detail="Mock authentication is disabled.")
 
-    # Popup token flow without redirect_uri: frontend sends "access_token:<token>".
     if id_token_str.startswith("access_token:"):
         access_token = id_token_str.split(":", 1)[1].strip()
         if not access_token:
@@ -144,12 +124,11 @@ def verify_google_token(id_token_str: str) -> dict[str, Any]:
                 headers={"Authorization": f"Bearer {access_token}"},
                 timeout=10,
             )
-        except Exception as e:
-            raise HTTPException(status_code=401, detail=f"Google userinfo request failed: {e}")
+        except requests.RequestException:
+            raise HTTPException(status_code=401, detail="Google userinfo request failed.")
 
         if resp.status_code != 200:
-            detail = resp.text.strip() or f"HTTP {resp.status_code}"
-            raise HTTPException(status_code=401, detail=f"Invalid Google access token: {detail}")
+            raise HTTPException(status_code=401, detail="Invalid Google access token.")
 
         info = resp.json()
         email = info.get("email")
@@ -160,55 +139,36 @@ def verify_google_token(id_token_str: str) -> dict[str, Any]:
 
     client_id = get_google_client_id()
     if not client_id:
-        raise HTTPException(
-            status_code=500,
-            detail="GOOGLE_CLIENT_ID is not configured on the server.",
-        )
+        raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_ID is not configured on the server.")
     try:
-        info = id_token.verify_oauth2_token(
+        return id_token.verify_oauth2_token(
             id_token_str,
             google_requests.Request(),
             client_id,
             clock_skew_in_seconds=120,
         )
-        return info
-    except ValueError as e:
-        raise HTTPException(status_code=401, detail=f"Invalid Google token: {e}")
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid Google token.")
 
 
-# ── Supabase token verification (placeholder) ────────────────────────────────
 def verify_supabase_token(access_token: str) -> dict[str, Any]:
     if access_token.startswith("mock_supabase_"):
-        email = access_token.replace("mock_supabase_", "")
-        name = email.split("@")[0].replace(".", " ").title()
-        return {
-            "email": email,
-            "name": name,
-            "picture": f"https://api.dicebear.com/7.x/initials/svg?seed={name}",
-            "sub": f"supabase_{email}"
-        }
+        raise HTTPException(status_code=401, detail="Mock authentication is disabled.")
 
     if not SUPABASE_URL or not SUPABASE_KEY:
-        raise HTTPException(
-            status_code=500,
-            detail="Supabase configuration is not set up on the server.",
-        )
+        raise HTTPException(status_code=500, detail="Supabase configuration is not set up on the server.")
 
     try:
         resp = requests.get(
             f"{SUPABASE_URL.rstrip('/')}/auth/v1/user",
-            headers={
-                "Authorization": f"Bearer {access_token}",
-                "apikey": SUPABASE_KEY,
-            },
+            headers={"Authorization": f"Bearer {access_token}", "apikey": SUPABASE_KEY},
             timeout=10,
         )
-    except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Supabase user lookup failed: {e}")
+    except requests.RequestException:
+        raise HTTPException(status_code=401, detail="Supabase user lookup failed.")
 
     if resp.status_code != 200:
-        detail = resp.text.strip() or f"HTTP {resp.status_code}"
-        raise HTTPException(status_code=401, detail=f"Invalid Supabase token: {detail}")
+        raise HTTPException(status_code=401, detail="Invalid Supabase token.")
 
     info = resp.json()
     user_metadata = info.get("user_metadata") or {}
@@ -217,23 +177,13 @@ def verify_supabase_token(access_token: str) -> dict[str, Any]:
     if not email or not sub:
         raise HTTPException(status_code=401, detail="Supabase user response missing email or id.")
 
-    name = (
-        user_metadata.get("full_name")
-        or user_metadata.get("name")
-        or info.get("email", "").split("@")[0]
-    )
+    name = user_metadata.get("full_name") or user_metadata.get("name") or info.get("email", "").split("@")[0]
     picture = user_metadata.get("avatar_url") or info.get("picture") or ""
-    return {
-        "email": email,
-        "name": name,
-        "picture": picture,
-        "sub": sub,
-    }
+    return {"email": email, "name": name, "picture": picture, "sub": sub}
 
 
-# ── Upsert user ───────────────────────────────────────────────────────────────
 def upsert_user(google_info: dict[str, Any], workplace_id: str = "default") -> dict[str, Any]:
-    email   = google_info["email"]
-    name    = google_info.get("name", "")
+    email = google_info["email"]
+    name = google_info.get("name", "")
     picture = google_info.get("picture", "")
     return db_upsert_user(email, name, picture, workplace_id)
