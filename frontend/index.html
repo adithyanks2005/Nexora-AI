@@ -892,11 +892,7 @@ body{
 }
 .wb-stat-dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 6px rgba(67,217,140,0.6);}
 /* Typing cursor on welcome message */
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
-.wb-cursor{
-  display:inline-block;width:2px;height:1em;background:var(--accent);
-  vertical-align:text-bottom;margin-left:2px;animation:blink 0.9s step-end infinite;
-}
+/* Typing cursor animation removed */
 /* Chip click feedback */
 .chip:active{transform:scale(0.95)!important;}
 /* Section transition enhancement */
@@ -1586,7 +1582,7 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
         <div class="welcome-banner">
           <div class="wb-icon">🧬</div>
           <div>
-            <h3 id="welcomeGreeting">Hello! I'm MediCura AI<span class="wb-cursor"></span></h3>
+            <h3 id="welcomeGreeting">Hello! I'm MediCura AI</h3>
             <p>Your intelligent healthcare companion. Ask me anything about health, wellness, symptoms, nutrition, or mental wellbeing.</p>
             <div class="wb-stats">
               <span class="wb-stat"><span class="wb-stat-dot"></span>AI Online &amp; Ready</span>
@@ -4089,7 +4085,7 @@ function setPersonalizedGreeting(name) {
   const timeOfDay = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const firstName = name ? name.split(' ')[0] : null;
   const greeting = firstName ? `${timeOfDay}, ${firstName}! I'm MediCura AI` : `Hello! I'm MediCura AI`;
-  el.innerHTML = greeting + '<span class="wb-cursor"></span>';
+  el.innerHTML = greeting;
 }
 
 // ── WELCOME BACK TOAST ──
