@@ -286,28 +286,31 @@ body{
 .sidebar-collapse-btn{
   position:absolute;
   top:50%;
-  right:-12px;
+  right:-10px;
   transform:translateY(-50%);
-  width:24px;
-  height:48px;
+  width:20px;
+  height:60px;
   background:var(--surface);
   border:1px solid var(--border);
-  border-radius:0 8px 8px 0;
+  border-left:none;
+  border-radius:0 12px 12px 0;
   cursor:pointer;
   display:flex;
   align-items:center;
   justify-content:center;
-  color:var(--text2);
+  color:var(--text);
   z-index:102;
   transition:all 0.2s;
+  opacity:1;
+  box-shadow:2px 0 8px rgba(0,0,0,0.15);
 }
 .sidebar-collapse-btn:hover{
-  background:var(--surface2);
-  color:var(--text);
+  background:var(--accent);
+  color:white;
+  width:22px;
 }
 .sidebar.collapsed .sidebar-collapse-btn{
-  right:-24px;
-  border-radius:8px;
+  right:-10px;
 }
 
 /* Top bar: logo + icon buttons */
@@ -2596,6 +2599,12 @@ function closeSidebar() {
     const isCollapsed = sidebar.classList.toggle('collapsed');
     localStorage.setItem('sidebarCollapsed', isCollapsed);
     
+    // If expanding, restore saved width
+    if (!isCollapsed) {
+      const savedWidth = localStorage.getItem('sidebarWidth') || '260';
+      sidebar.style.width = savedWidth + 'px';
+    }
+    
     // Rotate icon
     const icon = collapseBtn.querySelector('svg polyline');
     if (icon) {
@@ -2609,7 +2618,15 @@ function closeSidebar() {
   let startWidth = 0;
   
   resizeHandle.addEventListener('mousedown', (e) => {
-    if (sidebar.classList.contains('collapsed')) return;
+    // Allow resize even when collapsed - will auto-expand
+    if (sidebar.classList.contains('collapsed')) {
+      sidebar.classList.remove('collapsed');
+      localStorage.setItem('sidebarCollapsed', 'false');
+      const icon = collapseBtn.querySelector('svg polyline');
+      if (icon) {
+        icon.setAttribute('points', '15 18 9 12 15 6');
+      }
+    }
     
     isResizing = true;
     startX = e.clientX;
