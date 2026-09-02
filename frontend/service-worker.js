@@ -1,4 +1,4 @@
-const CACHE_NAME = "nexora-ai-v8";
+const CACHE_NAME = "nexora-ai-v9";
 
 const IMMUTABLE = [
   "/manifest.webmanifest",
@@ -44,24 +44,24 @@ self.addEventListener("fetch", event => {
   // Skip non-GET and API calls
   if (request.method !== "GET" || url.pathname.startsWith("/api/")) return;
 
-  // Navigation (HTML page): stale-while-revalidate
-  // Returns cached page instantly, fetches fresh in background
+  // Always fetch the HTML navigation from the network first.
+  // Never serve a cached page on startup, preventing stale chat state/UI.
   if (request.mode === "navigate") {
     event.respondWith(
-      caches.open(CACHE_NAME).then(cache =>
-        cache.match(request).then(cached => {
-          const fetchPromise = fetch(request).then(res => {
-            if (res.ok) cache.put(request, res.clone());
-            return res;
-          }).catch(() => cached || Response.error());
-          return cached || fetchPromise;
+      fetch(request, { cache: "no-store" })
+        .then(response => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
+          return response;
         })
-      )
+        .catch(() => caches.match(request).then(cached => cached || Response.error()))
     );
     return;
   }
 
-  // External CDN (fonts, supabase, chart.js): cache-first, no expiry
+  // External CDN (fonts, supabase, chart.js): cache-first.
   if (url.origin !== self.location.origin) {
     event.respondWith(
       caches.match(request).then(cached => {
@@ -69,7 +69,7 @@ self.addEventListener("fetch", event => {
         return fetch(request).then(res => {
           if (res.ok) {
             const copy = res.clone();
-            caches.open(CACHE_NAME).then(c => c.put(request, copy));
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
           }
           return res;
         });
@@ -78,7 +78,7 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // Static assets: cache-first
+  // Static assets: cache-first.
   if (url.pathname.startsWith("/static/") || url.pathname === "/manifest.webmanifest") {
     event.respondWith(
       caches.match(request).then(cached => {
@@ -86,7 +86,7 @@ self.addEventListener("fetch", event => {
         return fetch(request).then(res => {
           if (res.ok) {
             const copy = res.clone();
-            caches.open(CACHE_NAME).then(c => c.put(request, copy));
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
           }
           return res;
         });
@@ -95,6 +95,6 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // Everything else: network only
+  // Everything else: network only.
   event.respondWith(fetch(request));
 });

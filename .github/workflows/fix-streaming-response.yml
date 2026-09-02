@@ -1,0 +1,44 @@
+name: Fix streaming response completeness
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch streaming limits and completion handling
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("backend/ai.py")
+          text = path.read_text(encoding="utf-8")
+
+          # Give medical answers enough output budget to finish naturally.
+          text = text.replace('"max_tokens": 350,', '"max_tokens": 700,')
+
+          # Do not return before the post-stream disclaimer/completion logic runs.
+          text = text.replace(
+              '                    if data_str == "[DONE]":\n                        return\n',
+              '                    if data_str == "[DONE]":\n                        break\n'
+          )
+
+          path.write_text(text, encoding="utf-8")
+
+      - name: Commit patch and remove workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/ai.py .github/workflows/fix-streaming-response.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: allow complete streamed medical responses"
+          git push

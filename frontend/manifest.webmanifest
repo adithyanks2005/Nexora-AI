@@ -1,6 +1,6 @@
 {
   "id": "/",
-  "name": "MediCura AI Healthcare Assistant",
+  "name": "MediCura AI",
   "short_name": "MediCura AI",
   "description": "A personal healthcare assistant with AI chat, symptom guidance, calculators, reminders, and records.",
   "start_url": "/",

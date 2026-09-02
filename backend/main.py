@@ -69,9 +69,15 @@ from backend.models import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
+        print(f"[Startup] Initializing database...")
+        print(f"[Startup] ROOT_DIR: {ROOT_DIR}")
+        print(f"[Startup] DOTENV_PATH exists: {DOTENV_PATH.exists()}")
         init_db()
+        print(f"[Startup] Database initialized successfully")
     except Exception as e:
         print(f"CRITICAL: Database initialization failed: {e}")
+        import traceback
+        traceback.print_exc()
     yield
 
 
@@ -112,6 +118,25 @@ def health() -> dict[str, str]:
 @app.get("/api/env-check")
 def check_environment() -> dict[str, object]:
     return env_check()
+
+
+@app.get("/api/debug")
+def debug_info() -> dict[str, Any]:
+    """Debug endpoint to check deployment configuration."""
+    import platform
+    return {
+        "status": "ok",
+        "message": "Backend is running",
+        "python_version": platform.python_version(),
+        "root_dir": str(ROOT_DIR),
+        "frontend_dir_exists": FRONTEND_DIR.exists(),
+        "index_html_exists": (FRONTEND_DIR / "index.html").exists(),
+        "static_dir_exists": STATIC_DIR.exists(),
+        "environment": {
+            "is_vercel": any(os.getenv(k) for k in ["VERCEL", "VERCEL_ENV"]),
+            "vercel_env": os.getenv("VERCEL_ENV", "local"),
+        },
+    }
 
 
 # ── Serve frontend with injected config ───────────────────────────────────────
@@ -541,10 +566,25 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
         or Path(full_path).suffix
     ):
         raise HTTPException(status_code=404)
+    
     html_path = FRONTEND_DIR / "index.html"
     if not html_path.exists():
-        raise HTTPException(status_code=404, detail="Frontend not found")
-    html = html_path.read_text(encoding="utf-8")
+        # Provide detailed error for debugging
+        error_detail = {
+            "error": "Frontend not found",
+            "html_path": str(html_path),
+            "html_path_exists": html_path.exists(),
+            "frontend_dir": str(FRONTEND_DIR),
+            "frontend_dir_exists": FRONTEND_DIR.exists(),
+            "root_dir": str(ROOT_DIR),
+            "help": "Make sure frontend/index.html is committed and deployed. Check /api/debug for more info."
+        }
+        raise HTTPException(status_code=404, detail=error_detail)
+    
+    try:
+        html = html_path.read_text(encoding="utf-8")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading index.html: {str(e)}")
 
     def replace_js_const(source: str, name: str, value: str) -> str:
         return re.sub(
