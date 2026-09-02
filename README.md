@@ -1,182 +1,227 @@
-# Nexora AI - Healthcare Chatbot
+# MediCura AI - AI Healthcare Assistant
 
-An advanced AI-powered healthcare assistant with chat, symptom analysis, health calculators, medication reminders, and health record tracking.
+> **Free AI-powered healthcare assistant with symptom checker, health calculators, medication reminders, and health record tracking**
 
-> Created by **ADITHYAN KS**
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://nexora-ai-flax.vercel.app)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## Features
+Created by **Adithyan KS**
 
-| Feature | Description |
-|---|---|
-| AI Chat | Conversational health assistant powered by Groq with Llama 3.1 model and full chat history |
-| Symptom Checker | AI-powered symptom analysis with body area, severity, and duration context |
-| Health Calculators | BMI, daily calories with macros, water intake, and ideal body weight |
-| Medication Reminders | Add, toggle, and manage health reminders with icons |
-| Health Records | Log and track blood pressure, sugar, weight, heart rate, mood, and more |
-| Voice Input | Speak your health questions directly |
-| Dark / Light Mode | Toggle between themes |
-| Responsive UI | Works on desktop and mobile |
+---
 
-## Tech Stack
+## ✨ Features
 
-- **Backend**: FastAPI + Uvicorn
-- **AI**: Groq (`llama-3.1-8b-instant` by default)
-- **Database**: Supabase for chat history, reminders, and health records, scoped by workplace
-- **Frontend**: Vanilla HTML, CSS, and JavaScript
-- **Tests**: Pytest
-- **Deployment**: Render Blueprint via `render.yaml`
+- 🤖 **AI Health Chat** - Conversational assistant powered by Groq Llama 3.1
+- 🏥 **Symptom Checker** - AI-powered symptom analysis with context
+- 📊 **Health Calculators** - BMI, calories, water intake, ideal weight
+- 💊 **Medication Reminders** - Track and manage your medications
+- 📋 **Health Records** - Log vitals (BP, sugar, weight, heart rate)
+- 🎤 **Voice Input** - Speak your health questions
+- 🌓 **Dark/Light Mode** - Choose your preferred theme
+- 📱 **Progressive Web App** - Install as native app on any device
+- 🔐 **Secure** - Google OAuth & guest mode authentication
 
-## Quick Start
+---
 
-### 1. Get a Groq API Key
+## 🚀 Quick Start
 
-Create an API key at [Groq Console](https://console.groq.com/keys).
+### Prerequisites
+- Python 3.11+
+- [Groq API Key](https://console.groq.com/keys) (free)
 
-### 2. Setup
+### Installation
 
 ```bash
-cd nexora-ai
+# Clone repository
+git clone https://github.com/adithyanks2005/Nexora-AI.git
+cd Nexora-AI
+
+# Create virtual environment
 python -m venv .venv
-.venv\Scripts\activate
+.venv\Scripts\activate  # On Windows
+# source .venv/bin/activate  # On Linux/Mac
+
+# Install dependencies
 pip install -r requirements.txt
-copy .env.example .env
+
+# Setup environment variables
+copy .env.example .env  # Windows
+# cp .env.example .env  # Linux/Mac
 ```
 
-Edit `.env` and add your key:
+### Configuration
+
+Edit `.env` file:
 
 ```env
 GROQ_API_KEY=your_groq_api_key_here
-GROQ_MODEL=llama-3.1-8b-instant
-SU=https://your-project.supabase.co
-SAN=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-DEFAULT_WORKPLACE_ID=default
+GOOGLE_CLIENT_ID=your_google_client_id (optional)
+JWT_SECRET=your_random_secret_key
+
+# Optional: Supabase for persistent storage
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_key
 ```
 
-### 3. Run
+### Run Locally
 
 ```bash
-python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8001
+# Quick start with batch file (Windows)
+run.bat
+
+# Or manually
+python -m uvicorn backend.main:app --reload --port 8000
 ```
 
-Open [http://127.0.0.1:8001](http://127.0.0.1:8001) in your browser.
+Visit: **http://localhost:8000**
 
-## App Install Options
+---
 
-### Install from the live site
+## 📁 Project Structure
 
-Open the deployed site in Chrome, Edge, or another PWA-capable browser and use the app install prompt or browser menu to install **Nexora AI**.
-
-### Run as a local Windows app
-
-After downloading the GitHub ZIP, extract it and double-click:
-
-```text
-run_app.bat
 ```
-
-The launcher creates the Python environment if needed, installs dependencies, and opens Nexora AI locally. Add your Groq key to `.env` before using AI chat.
-
-### Optional desktop EXE build
-
-```bash
-pip install -r requirements-desktop.txt
-pyinstaller --onefile --name NexoraAI desktop_app.py
-```
-
-The generated executable will be in `dist/`.
-
-## Project Structure
-
-```text
 nexora-ai/
-├── backend/
-│   ├── main.py          # FastAPI routes
-│   ├── ai.py            # Groq AI integration
-│   ├── calculators.py   # Health calculators
-│   ├── database.py      # Supabase data access
-│   └── models.py        # Pydantic models
-├── frontend/
-│   ├── index.html       # Single-page app
-│   ├── manifest.webmanifest
-│   ├── service-worker.js
-│   └── static/
-│       ├── css/style.css
-│       ├── icons/icon.svg
-│       └── js/app.js
-├── tests/
-│   └── test_api.py
-├── docs/
-│   └── supabase_schema.sql
-├── .env.example
-├── render.yaml
-├── requirements.txt
-├── setup.bat
-└── run.bat
+├── api/                    # Vercel serverless entry point
+├── backend/                # Python FastAPI backend
+│   ├── main.py            # Main application & routes
+│   ├── ai.py              # Groq AI integration
+│   ├── auth.py            # Authentication logic
+│   ├── calculators.py     # Health calculators
+│   ├── database.py        # Database access layer
+│   ├── models.py          # Pydantic models
+│   └── config.py          # Configuration management
+├── frontend/              # Static frontend
+│   ├── index.html        # Single-page application
+│   ├── static/           # CSS, JS, icons
+│   ├── service-worker.js # PWA service worker
+│   └── manifest.webmanifest
+├── docs/                  # Documentation
+│   ├── DEPLOYMENT.md     # Deployment guide
+│   ├── SEO_GUIDE.md      # SEO & indexing
+│   └── QUICK_START.md    # Getting started
+├── tests/                 # Test suite
+├── .env                   # Environment variables (not in git)
+├── requirements.txt       # Python dependencies
+├── package.json          # Node.js config (for Vercel)
+├── vercel.json           # Vercel configuration
+└── README.md             # This file
 ```
 
-## API Endpoints
+---
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/health` | Health check |
-| GET/POST | `/api/sessions` | Chat sessions |
-| DELETE | `/api/sessions/{id}` | Delete session |
-| GET | `/api/sessions/{id}/messages` | Session messages |
-| POST | `/api/chat` | Send chat message |
-| POST | `/api/symptoms` | Analyze symptoms |
-| POST | `/api/calc/bmi` | BMI calculator |
-| POST | `/api/calc/calories` | Calorie calculator |
-| POST | `/api/calc/water` | Water intake calculator |
-| POST | `/api/calc/ideal-weight` | Ideal weight calculator |
-| GET/POST | `/api/reminders` | Reminders CRUD |
-| PATCH | `/api/reminders/{id}/toggle` | Toggle reminder done |
-| DELETE | `/api/reminders/{id}` | Delete reminder |
-| DELETE | `/api/reminders/done/clear` | Clear done reminders |
-| GET/POST | `/api/records` | Health records |
-| DELETE | `/api/records/{id}` | Delete record |
+## 🌐 Deployment
 
-## Deploy
+### Deploy to Vercel (Recommended)
 
-This project includes a Render Blueprint:
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/adithyanks2005/Nexora-AI)
 
-```text
-render.yaml
-```
+1. Click the deploy button above
+2. Connect your GitHub account
+3. Add environment variables:
+   - `GROQ_API_KEY`
+   - `GOOGLE_CLIENT_ID`
+   - `JWT_SECRET`
+4. Deploy!
 
-After pushing to GitHub, open:
+**See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed instructions**
 
-[Render Blueprint Deploy](https://dashboard.render.com/blueprint/new?repo=https://github.com/adithyanks2005/Nexora-AI)
+---
 
-Set these environment variables in Render:
+## 🔧 Tech Stack
 
-```env
-GROQ_API_KEY=your_groq_api_key_here
-GROQ_MODEL=llama-3.1-8b-instant
-SU=https://your-project.supabase.co
-SAN=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-DEFAULT_WORKPLACE_ID=default
-```
+| Component | Technology |
+|-----------|------------|
+| **Backend** | FastAPI + Uvicorn |
+| **AI Model** | Groq (Llama 3.1 8B) |
+| **Database** | SQLite (local) / Supabase (production) |
+| **Frontend** | Vanilla HTML/CSS/JavaScript |
+| **Auth** | Google OAuth / JWT |
+| **Deployment** | Vercel Serverless Functions |
+| **PWA** | Service Worker + Web Manifest |
 
-Before deploying, run [docs/supabase_schema.sql](docs/supabase_schema.sql) in the Supabase SQL editor.
-Every saved user row and saved health/chat row includes `workplace_id`; the frontend defaults to `default`,
-or you can open the app with `?workplace_id=your-workplace` before signing in.
+---
 
-## Running Tests
+## 📚 Documentation
+
+- 📖 [Deployment Guide](docs/DEPLOYMENT.md) - Deploy to Vercel
+- 🔍 [SEO Guide](docs/SEO_GUIDE.md) - Get indexed on Google
+- 🚀 [Quick Start](docs/QUICK_START.md) - Detailed setup
+- 📝 [Changelog](docs/CHANGELOG.md) - Version history
+- 🌐 [Domain Setup](docs/DOMAIN_SETUP.md) - Custom domain
+
+---
+
+## 🧪 Testing
 
 ```bash
+# Run tests
 pytest tests/ -v
+
+# Run with coverage
+pytest --cov=backend tests/
 ```
 
-## Disclaimer
+---
 
-Nexora AI provides general health information only. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider for medical concerns.
+## 🛡️ Security Features
 
-## Author
+- 🔒 HTTPS enforced (via Vercel)
+- 🛡️ Security headers (CSP, HSTS, X-Frame-Options)
+- ⚡ Rate limiting (30 req/min per endpoint)
+- 🔐 JWT-based authentication
+- 🚫 Protected API documentation endpoints
 
-**ADITHYAN KS**
+---
 
-## License
+## 📱 Progressive Web App
 
-MIT License. See [LICENSE](LICENSE).
+Install as a native app:
+
+1. Visit the website
+2. Click "Install" prompt (Chrome/Edge)
+3. Or: Menu → "Install App"
+4. Access from home screen like any app!
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+---
+
+## ⚠️ Medical Disclaimer
+
+**MediCura AI provides general health information only.**
+
+This application is NOT a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider for medical concerns. Never disregard professional medical advice or delay seeking it because of information from this app.
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+## 👨‍💻 Author
+
+**Adithyan KS**
+
+- GitHub: [@adithyanks2005](https://github.com/adithyanks2005)
+- Project: [Nexora AI](https://github.com/adithyanks2005/Nexora-AI)
+
+---
+
+## 🌟 Support
+
+If you find this project helpful, please give it a ⭐ on GitHub!
+
+**Live Demo:** [https://nexora-ai-flax.vercel.app](https://nexora-ai-flax.vercel.app)
