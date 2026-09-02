@@ -68,17 +68,30 @@ from backend.models import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    print(f"[Startup] Starting application lifespan...")
+    print(f"[Startup] ROOT_DIR: {ROOT_DIR}")
+    print(f"[Startup] DOTENV_PATH: {DOTENV_PATH}")
+    print(f"[Startup] DOTENV_PATH exists: {DOTENV_PATH.exists()}")
+    
+    # Check environment variables
+    has_groq = bool(os.getenv("GROQ_API_KEY"))
+    has_google = bool(os.getenv("GOOGLE_CLIENT_ID"))
+    has_jwt = bool(os.getenv("JWT_SECRET"))
+    print(f"[Startup] Environment - GROQ: {has_groq}, Google: {has_google}, JWT: {has_jwt}")
+    
     try:
         print(f"[Startup] Initializing database...")
-        print(f"[Startup] ROOT_DIR: {ROOT_DIR}")
-        print(f"[Startup] DOTENV_PATH exists: {DOTENV_PATH.exists()}")
         init_db()
         print(f"[Startup] Database initialized successfully")
     except Exception as e:
-        print(f"CRITICAL: Database initialization failed: {e}")
+        print(f"[Startup] WARNING: Database initialization failed: {e}")
         import traceback
         traceback.print_exc()
+        # Don't raise - allow the app to start even if DB init fails
+    
+    print(f"[Startup] Application startup complete")
     yield
+    print(f"[Shutdown] Application shutting down")
 
 
 app = FastAPI(title="Nexora AI - Healthcare Chatbot", version="3.0.0", lifespan=lifespan)
@@ -108,11 +121,22 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
+@app.get("/api/ping")
+def ping() -> dict[str, str]:
+    """Simplest possible endpoint to verify the backend is running."""
+    return {"status": "ok", "message": "pong"}
+
+
 # ── Health check ──────────────────────────────────────────────────────────────
 @app.get("/api/health")
 def health() -> dict[str, str]:
-    from backend.ai import get_ai_status
-    return {"status": "ok", **get_ai_status()}
+    """Basic health check that works even if AI is not configured."""
+    try:
+        from backend.ai import get_ai_status
+        return {"status": "ok", **get_ai_status()}
+    except Exception as e:
+        # Return basic health even if AI check fails
+        return {"status": "ok", "warning": f"AI status check failed: {str(e)}"}
 
 
 @app.get("/api/env-check")
@@ -136,6 +160,11 @@ def debug_info() -> dict[str, Any]:
             "is_vercel": any(os.getenv(k) for k in ["VERCEL", "VERCEL_ENV"]),
             "vercel_env": os.getenv("VERCEL_ENV", "local"),
         },
+        "env_vars": {
+            "groq_api_key_set": bool(os.getenv("GROQ_API_KEY")),
+            "google_client_id_set": bool(os.getenv("GOOGLE_CLIENT_ID")),
+            "jwt_secret_set": bool(os.getenv("JWT_SECRET")),
+        }
     }
 
 
@@ -579,12 +608,56 @@ async def serve_frontend(full_path: str = "") -> HTMLResponse:
             "root_dir": str(ROOT_DIR),
             "help": "Make sure frontend/index.html is committed and deployed. Check /api/debug for more info."
         }
-        raise HTTPException(status_code=404, detail=error_detail)
+        # Return HTML error page for better UX
+        return HTMLResponse(
+            content=f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Nexora AI - Configuration Error</title>
+                <style>
+                    body {{ font-family: system-ui, sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; }}
+                    h1 {{ color: #e53e3e; }}
+                    pre {{ background: #f7fafc; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }}
+                    a {{ color: #3182ce; }}
+                </style>
+            </head>
+            <body>
+                <h1>Configuration Error</h1>
+                <p>The frontend files are not accessible. This usually means the deployment is incomplete.</p>
+                <h2>Debug Information:</h2>
+                <pre>{json.dumps(error_detail, indent=2)}</pre>
+                <p><a href="/api/debug">View Full Debug Info</a></p>
+                <p><a href="/api/ping">Test Backend Connection</a></p>
+            </body>
+            </html>
+            """,
+            status_code=500
+        )
     
     try:
         html = html_path.read_text(encoding="utf-8")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reading index.html: {str(e)}")
+        return HTMLResponse(
+            content=f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Nexora AI - Error</title>
+                <style>
+                    body {{ font-family: system-ui, sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; }}
+                    h1 {{ color: #e53e3e; }}
+                </style>
+            </head>
+            <body>
+                <h1>Error Loading Frontend</h1>
+                <p>Error reading index.html: {str(e)}</p>
+                <p><a href="/api/debug">View Debug Info</a></p>
+            </body>
+            </html>
+            """,
+            status_code=500
+        )
 
     def replace_js_const(source: str, name: str, value: str) -> str:
         return re.sub(
