@@ -234,13 +234,80 @@ body{
 
 /* -- SIDEBAR -- */
 .sidebar{
-  width:260px;flex-shrink:0;
+  width:260px;
+  min-width:200px;
+  max-width:400px;
+  flex-shrink:0;
   background:var(--surface);
   border-right:1px solid var(--border);
   display:flex;flex-direction:column;
   overflow:hidden;
   transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);
   z-index:100;
+  position:relative;
+}
+.sidebar.collapsed{
+  width:60px !important;
+  min-width:60px;
+}
+.sidebar.collapsed .sb-brand .logo-text,
+.sidebar.collapsed .nav-item span,
+.sidebar.collapsed .recents-header,
+.sidebar.collapsed .session-item span,
+.sidebar.collapsed .sb-user-text,
+.sidebar.collapsed .sb-bottom-actions,
+.sidebar.collapsed .sb-clear-btn{
+  display:none !important;
+}
+.sidebar.collapsed .nav-item,
+.sidebar.collapsed .session-item{
+  justify-content:center;
+  padding:9px;
+}
+
+/* Resize handle */
+.sidebar-resize-handle{
+  position:absolute;
+  top:0;
+  right:0;
+  width:4px;
+  height:100%;
+  cursor:col-resize;
+  background:transparent;
+  z-index:101;
+  transition:background 0.2s;
+}
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle.resizing{
+  background:var(--accent);
+}
+
+/* Toggle collapse button */
+.sidebar-collapse-btn{
+  position:absolute;
+  top:50%;
+  right:-12px;
+  transform:translateY(-50%);
+  width:24px;
+  height:48px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:0 8px 8px 0;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--text2);
+  z-index:102;
+  transition:all 0.2s;
+}
+.sidebar-collapse-btn:hover{
+  background:var(--surface2);
+  color:var(--text);
+}
+.sidebar.collapsed .sidebar-collapse-btn{
+  right:-24px;
+  border-radius:8px;
 }
 
 /* Top bar: logo + icon buttons */
@@ -1409,6 +1476,16 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
 
+    <!-- Resize handle -->
+    <div class="sidebar-resize-handle" id="sidebarResizeHandle"></div>
+    
+    <!-- Collapse toggle button -->
+    <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Toggle sidebar" aria-label="Toggle sidebar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+
     <!-- Top: Logo + New Chat + icon row -->
     <div class="sb-top">
       <div class="sb-brand">
@@ -2494,6 +2571,80 @@ function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
 }
+
+// Sidebar collapse functionality
+(function initSidebarControls() {
+  const sidebar = document.getElementById('sidebar');
+  const collapseBtn = document.getElementById('sidebarCollapseBtn');
+  const resizeHandle = document.getElementById('sidebarResizeHandle');
+  
+  if (!sidebar || !collapseBtn || !resizeHandle) return;
+  
+  // Load saved state
+  const savedWidth = localStorage.getItem('sidebarWidth');
+  const savedCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+  
+  if (savedWidth && !savedCollapsed) {
+    sidebar.style.width = savedWidth + 'px';
+  }
+  if (savedCollapsed) {
+    sidebar.classList.add('collapsed');
+  }
+  
+  // Toggle collapse
+  collapseBtn.addEventListener('click', () => {
+    const isCollapsed = sidebar.classList.toggle('collapsed');
+    localStorage.setItem('sidebarCollapsed', isCollapsed);
+    
+    // Rotate icon
+    const icon = collapseBtn.querySelector('svg polyline');
+    if (icon) {
+      icon.setAttribute('points', isCollapsed ? '9 18 15 12 9 6' : '15 18 9 12 15 6');
+    }
+  });
+  
+  // Resize functionality
+  let isResizing = false;
+  let startX = 0;
+  let startWidth = 0;
+  
+  resizeHandle.addEventListener('mousedown', (e) => {
+    if (sidebar.classList.contains('collapsed')) return;
+    
+    isResizing = true;
+    startX = e.clientX;
+    startWidth = sidebar.offsetWidth;
+    resizeHandle.classList.add('resizing');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    if (!isResizing) return;
+    
+    const diff = e.clientX - startX;
+    let newWidth = startWidth + diff;
+    
+    // Constrain width
+    const minWidth = 200;
+    const maxWidth = 400;
+    newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+    
+    sidebar.style.width = newWidth + 'px';
+  });
+  
+  document.addEventListener('mouseup', () => {
+    if (isResizing) {
+      isResizing = false;
+      resizeHandle.classList.remove('resizing');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      
+      // Save width
+      localStorage.setItem('sidebarWidth', sidebar.offsetWidth);
+    }
+  });
+})();
 
 // ── CALCULATORS ──
 function switchCalc(id, btn) {
