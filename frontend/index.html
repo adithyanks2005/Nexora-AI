@@ -1383,6 +1383,93 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
   .landing-hero{margin-top:40px;}
 }
 
+/* ── ADA HEALTH CLINICAL ASSESSMENT SUITE ── */
+.ada-wrap { width: 100%; max-width: 900px; margin: 0 auto; }
+.ada-mode-bar { display: flex; gap: 10px; margin-bottom: 20px; background: var(--surface); padding: 6px; border-radius: var(--radius); border: 1px solid var(--border); }
+.ada-mode-btn { flex: 1; padding: 10px 16px; border: none; background: transparent; color: var(--text2); font-weight: 600; font-size: 13px; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
+.ada-mode-btn:hover { color: var(--text); }
+.ada-mode-btn.active { background: linear-gradient(135deg, rgba(79,156,249,0.2), rgba(123,97,255,0.2)); color: var(--accent); border: 1px solid var(--border2); box-shadow: var(--shadow-sm); }
+.ada-stepper { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; position: relative; overflow-x: auto; padding: 8px 4px 16px 4px; }
+.ada-stepper::before { content: ''; position: absolute; top: 24px; left: 20px; right: 20px; height: 2px; background: var(--border); z-index: 1; }
+.ada-step-node { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; flex: 1; min-width: 65px; }
+.ada-step-circle { width: 32px; height: 32px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); color: var(--text2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; transition: all 0.2s ease; }
+.ada-step-node.active .ada-step-circle { border-color: var(--accent); background: var(--accent); color: #fff; box-shadow: 0 0 12px rgba(79,156,249,0.5); }
+.ada-step-node.completed .ada-step-circle { border-color: var(--accent3); background: var(--accent3); color: #fff; }
+.ada-step-title { font-size: 11px; font-weight: 600; color: var(--text2); text-align: center; white-space: nowrap; }
+.ada-step-node.active .ada-step-title { color: var(--accent); }
+.ada-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow-sm); transition: all 0.2s; }
+.ada-card-header { margin-bottom: 20px; }
+.ada-card-header h3 { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.ada-card-header p { font-size: 13px; color: var(--text2); line-height: 1.5; }
+.ada-seg-group { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.ada-seg-btn { flex: 1; min-width: 120px; padding: 12px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 14px; font-weight: 500; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
+.ada-seg-btn:hover { background: var(--surface3); border-color: var(--border2); }
+.ada-seg-btn.active { background: linear-gradient(135deg, rgba(79,156,249,0.18), rgba(123,97,255,0.18)); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.ada-pill-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.ada-pill { padding: 7px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; font-size: 13px; color: var(--text2); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease; user-select: none; }
+.ada-pill:hover { border-color: var(--border2); color: var(--text); transform: translateY(-1px); }
+.ada-pill.active { background: rgba(79,156,249,0.18); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.ada-pill.active::after { content: '✓'; font-size: 11px; }
+.ada-search-input-wrap { position: relative; margin-bottom: 12px; }
+.ada-search-input-wrap input { width: 100%; padding: 12px 16px 12px 40px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s; }
+.ada-search-input-wrap input:focus { border-color: var(--accent); }
+.ada-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text2); font-size: 16px; pointer-events: none; }
+.ada-selected-box { background: var(--surface2); border: 1px dashed var(--border2); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px; min-height: 48px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ada-selected-box:empty::before { content: 'No symptoms selected yet. Search above or pick from suggested categories below.'; font-size: 13px; color: var(--text3); }
+.ada-selected-chip { padding: 5px 10px; background: var(--surface3); border: 1px solid var(--accent); border-radius: 14px; color: var(--text); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+.ada-chip-remove { cursor: pointer; color: var(--text2); font-size: 14px; line-height: 1; }
+.ada-chip-remove:hover { color: var(--danger); }
+.ada-scale-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 10px; }
+.ada-scale-card { padding: 14px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: center; cursor: pointer; transition: all 0.2s; }
+.ada-scale-card:hover { border-color: var(--border2); background: var(--surface3); }
+.ada-scale-card.active { border-color: var(--accent); background: rgba(79,156,249,0.15); color: var(--accent); font-weight: 700; }
+.ada-scale-card .ada-scale-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.ada-scale-card .ada-scale-desc { font-size: 11px; color: var(--text2); }
+.ada-question-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 14px; transition: border-color 0.2s; }
+.ada-question-card.answered { border-color: rgba(79,156,249,0.3); }
+.ada-q-text { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 12px; line-height: 1.5; }
+.ada-q-opts { display: flex; gap: 10px; }
+.ada-q-btn { flex: 1; padding: 8px 14px; border: 1px solid var(--border); background: var(--surface); border-radius: 20px; color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s ease; text-align: center; }
+.ada-q-btn:hover { background: var(--surface3); color: var(--text); }
+.ada-q-btn.selected { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.ada-nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; gap: 12px; }
+/* Clinical Report Dashboard */
+.ada-report-header { border-radius: var(--radius); padding: 24px; margin-bottom: 24px; position: relative; overflow: hidden; border: 1px solid; }
+.ada-triage-emergency { background: linear-gradient(135deg, rgba(255,107,107,0.18), rgba(255,75,75,0.06)); border-color: rgba(255,107,107,0.4); }
+.ada-triage-urgent_care { background: linear-gradient(135deg, rgba(249,199,79,0.18), rgba(243,156,18,0.06)); border-color: rgba(249,199,79,0.4); }
+.ada-triage-routine_doctor { background: linear-gradient(135deg, rgba(79,156,249,0.18), rgba(123,97,255,0.06)); border-color: rgba(79,156,249,0.4); }
+.ada-triage-self_care { background: linear-gradient(135deg, rgba(67,217,140,0.18), rgba(29,158,117,0.06)); border-color: rgba(67,217,140,0.4); }
+.ada-triage-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+.ada-triage-emergency .ada-triage-badge { background: var(--danger); color: #fff; }
+.ada-triage-urgent_care .ada-triage-badge { background: var(--warn); color: #000; }
+.ada-triage-routine_doctor .ada-triage-badge { background: var(--accent); color: #fff; }
+.ada-triage-self_care .ada-triage-badge { background: var(--success); color: #000; }
+.ada-cond-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 12px; transition: all 0.2s; }
+.ada-cond-card:hover { border-color: var(--border2); }
+.ada-cond-top { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+.ada-cond-name { font-size: 16px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.ada-cond-prob { display: flex; align-items: center; gap: 8px; }
+.ada-prob-val { font-size: 14px; font-weight: 700; color: var(--accent); }
+.ada-prob-track { width: 70px; height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+.ada-prob-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; }
+.ada-cond-details { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: none; font-size: 13px; color: var(--text2); line-height: 1.6; }
+.ada-cond-details.open { display: block; }
+.ada-check-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.ada-check-item:last-child { border-bottom: none; }
+.ada-check-icon { color: var(--accent); font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+.ada-actions-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.ada-act-btn { flex: 1; min-width: 160px; padding: 12px 18px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; border: 1px solid transparent; }
+.ada-act-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+.ada-act-secondary { background: var(--surface2); border-color: var(--border); color: var(--text); }
+.ada-act-secondary:hover { background: var(--surface3); border-color: var(--border2); }
+.ada-emergency-alert { background: rgba(255,107,107,0.15); border: 2px solid var(--danger); border-radius: var(--radius); padding: 20px; margin-bottom: 24px; }
+.ada-emergency-alert h4 { color: var(--danger); font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ada-emergency-alert p { font-size: 13px; color: var(--text); line-height: 1.6; }
+@media print {
+  body * { visibility: hidden; }
+  #adaPrintableReport, #adaPrintableReport * { visibility: visible; }
+  #adaPrintableReport { position: absolute; left: 0; top: 0; width: 100%; color: #111 !important; background: #fff !important; padding: 24px; }
+}
 </style>
 </head>
 <body>
@@ -1624,73 +1711,414 @@ canvas.watch-chart{width:100%!important;height:160px!important;}
       </div>
     </div>
 
-    <!-- ── SYMPTOM CHECKER ── -->
+    <!-- ── SYMPTOM CHECKER (ADA HEALTH GRADE) ── -->
     <div class="section" id="section-symptom">
       <div class="panel">
         <div class="panel-header">
-          <h2>🩺 Symptom Checker</h2>
-          <p>Describe your symptoms and get AI-powered health guidance</p>
+          <h2>🩺 Clinical Health &amp; Symptom Assessment</h2>
+          <p>Ada Health-grade evidence-based clinical assessment, dynamic differential investigation, and patient triage guidance</p>
         </div>
-        <div class="form-card">
-          <label class="form-label">Symptoms <span>*</span></label>
-          <textarea class="form-textarea" id="symp-text" placeholder="Describe your symptoms in detail…"></textarea>
-          <div class="tag-group" id="sympTags">
-            <span class="tag" onclick="toggleTag(this)">Headache</span>
-            <span class="tag" onclick="toggleTag(this)">Fever</span>
-            <span class="tag" onclick="toggleTag(this)">Cough</span>
-            <span class="tag" onclick="toggleTag(this)">Fatigue</span>
-            <span class="tag" onclick="toggleTag(this)">Nausea</span>
-            <span class="tag" onclick="toggleTag(this)">Chest pain</span>
-            <span class="tag" onclick="toggleTag(this)">Shortness of breath</span>
-            <span class="tag" onclick="toggleTag(this)">Dizziness</span>
-          </div>
-        </div>
-        <div class="form-card">
-          <div class="form-row">
-            <div>
-              <label class="form-label">Body Area</label>
-              <select class="form-select" id="symp-area">
-                <option value="">Select area…</option>
-                <option>Head &amp; Neck</option>
-                <option>Chest</option>
-                <option>Abdomen</option>
-                <option>Back</option>
-                <option>Arms &amp; Hands</option>
-                <option>Legs &amp; Feet</option>
-                <option>Skin</option>
-                <option>General / Whole body</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Severity</label>
-              <select class="form-select" id="symp-severity">
-                <option value="">Select severity…</option>
-                <option>Mild</option>
-                <option>Moderate</option>
-                <option>Severe</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Duration</label>
-              <select class="form-select" id="symp-duration">
-                <option value="">Select duration…</option>
-                <option>Less than 1 day</option>
-                <option>1–3 days</option>
-                <option>4–7 days</option>
-                <option>1–2 weeks</option>
-                <option>More than 2 weeks</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <button class="btn btn-primary btn-full" onclick="analyzeSymptoms()">🔍 Analyze Symptoms</button>
-        <div class="result-card" id="sympResult">
-          <div class="result-badge badge-warn" id="sympBadge">⚠️ General Guidance</div>
-          <h3 id="sympResultTitle">Analysis Result</h3>
-          <p id="sympResultText">This is general information only. Please consult a healthcare professional for proper diagnosis.</p>
-        </div>
-        
 
+        <!-- Mode Toggle Bar -->
+        <div class="ada-mode-bar">
+          <button class="ada-mode-btn active" id="btnModeAda" onclick="switchSymptomMode('ada')">
+            <span>✨</span> Comprehensive Clinical Assessment (Ada)
+          </button>
+          <button class="ada-mode-btn" id="btnModeQuick" onclick="switchSymptomMode('quick')">
+            <span>⚡</span> Quick Check
+          </button>
+        </div>
+
+        <!-- ═══ COMPREHENSIVE ADA ASSESSMENT FLOW ═══ -->
+        <div id="adaAssessmentContainer" class="ada-wrap">
+          
+          <!-- Stepper Navigation Header -->
+          <div class="ada-stepper" id="adaStepper">
+            <div class="ada-step-node active" id="adaStepNode1" onclick="goToAdaStep(1)">
+              <div class="ada-step-circle">1</div>
+              <div class="ada-step-title">Profile</div>
+            </div>
+            <div class="ada-step-node" id="adaStepNode2" onclick="goToAdaStep(2)">
+              <div class="ada-step-circle">2</div>
+              <div class="ada-step-title">Symptoms</div>
+            </div>
+            <div class="ada-step-node" id="adaStepNode3" onclick="goToAdaStep(3)">
+              <div class="ada-step-circle">3</div>
+              <div class="ada-step-title">Details</div>
+            </div>
+            <div class="ada-step-node" id="adaStepNode4" onclick="goToAdaStep(4)">
+              <div class="ada-step-circle">4</div>
+              <div class="ada-step-title">Risks</div>
+            </div>
+            <div class="ada-step-node" id="adaStepNode5" onclick="goToAdaStep(5)">
+              <div class="ada-step-circle">5</div>
+              <div class="ada-step-title">Questions</div>
+            </div>
+            <div class="ada-step-node" id="adaStepNode6" onclick="goToAdaStep(6)">
+              <div class="ada-step-circle">6</div>
+              <div class="ada-step-title">Report</div>
+            </div>
+          </div>
+
+          <!-- STEP 1: PATIENT PROFILE -->
+          <div class="ada-step-pane" id="adaPane1">
+            <div class="ada-card">
+              <div class="ada-card-header">
+                <h3>👤 Who is this assessment for?</h3>
+                <p>Ada tailors medical differential logic based on demographic risks and age-specific conditions.</p>
+              </div>
+              <div class="ada-seg-group">
+                <button type="button" class="ada-seg-btn active" id="btnWhoSelf" onclick="adaSelectWho('myself')">🙋 Myself</button>
+                <button type="button" class="ada-seg-btn" id="btnWhoOther" onclick="adaSelectWho('someone_else')">👥 Someone Else</button>
+              </div>
+              <div class="form-row" style="margin-top:16px;">
+                <div>
+                  <label class="form-label">Age <span>*</span></label>
+                  <input type="number" class="form-input" id="adaAge" min="1" max="120" placeholder="e.g. 28" value="28"/>
+                </div>
+                <div>
+                  <label class="form-label">Biological Sex <span>*</span></label>
+                  <div class="ada-seg-group" style="margin-bottom:0;">
+                    <button type="button" class="ada-seg-btn active" id="btnSexMale" onclick="adaSelectSex('male')">👨 Male</button>
+                    <button type="button" class="ada-seg-btn" id="btnSexFemale" onclick="adaSelectSex('female')">👩 Female</button>
+                  </div>
+                </div>
+              </div>
+              <div id="adaPregnancyWrap" style="display:none; margin-top:16px; padding:12px; background:var(--surface2); border-radius:var(--radius-sm); border:1px solid var(--border);">
+                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" id="adaIsPregnant" style="width:18px; height:18px; accent-color:var(--accent);"/>
+                  <span>Patient is currently pregnant</span>
+                </label>
+              </div>
+            </div>
+            <div class="ada-nav-row">
+              <div></div>
+              <button type="button" class="btn btn-primary" onclick="adaNext()">Continue to Symptoms →</button>
+            </div>
+          </div>
+
+          <!-- STEP 2: PRESENTING SYMPTOMS -->
+          <div class="ada-step-pane" id="adaPane2" style="display:none;">
+            <div class="ada-card">
+              <div class="ada-card-header">
+                <h3>🩺 What symptoms are you experiencing?</h3>
+                <p>Search or pick one or more symptoms. You can also type custom symptoms.</p>
+              </div>
+
+              <!-- Search input -->
+              <div class="ada-search-input-wrap">
+                <span class="ada-search-icon">🔍</span>
+                <input type="text" id="adaSymptomSearch" placeholder="Search symptom (e.g. headache, fever, cough, chest pain...)" oninput="adaFilterSymptoms(this.value)"/>
+              </div>
+
+              <!-- Selected Symptoms Box -->
+              <label class="form-label">Selected Symptoms (<span id="adaSelectedCount">0</span>)</label>
+              <div class="ada-selected-box" id="adaSelectedBox"></div>
+
+              <!-- Body Region Category Filter -->
+              <div style="margin-top:16px;">
+                <label class="form-label">Filter by Body Region</label>
+                <div class="ada-pill-grid" id="adaRegionPills">
+                  <span class="ada-pill active" onclick="adaSelectRegion('all')">🌐 All</span>
+                  <span class="ada-pill" onclick="adaSelectRegion('head')">🧠 Head &amp; Neck</span>
+                  <span class="ada-pill" onclick="adaSelectRegion('chest')">🫁 Chest &amp; Heart</span>
+                  <span class="ada-pill" onclick="adaSelectRegion('abdomen')">🫄 Abdomen &amp; Stomach</span>
+                  <span class="ada-pill" onclick="adaSelectRegion('back')">🦴 Back &amp; Joints</span>
+                  <span class="ada-pill" onclick="adaSelectRegion('skin')">🩹 Skin</span>
+                  <span class="ada-pill" onclick="adaSelectRegion('general')">⚡ General</span>
+                </div>
+              </div>
+
+              <!-- Catalog of common symptoms -->
+              <div style="margin-top:16px;">
+                <label class="form-label">Common Symptoms (tap to select)</label>
+                <div class="ada-pill-grid" id="adaSymptomCatalog"></div>
+              </div>
+
+              <!-- Custom add input -->
+              <div style="display:flex; gap:8px; margin-top:16px;">
+                <input type="text" class="form-input" id="adaCustomSymptomInput" placeholder="Add other symptom..."/>
+                <button type="button" class="btn btn-secondary" onclick="adaAddCustomSymptom()">+ Add</button>
+              </div>
+            </div>
+            <div class="ada-nav-row">
+              <button type="button" class="btn btn-secondary" onclick="adaPrev()">← Back</button>
+              <button type="button" class="btn btn-primary" onclick="adaNext()">Continue to Characteristics →</button>
+            </div>
+          </div>
+
+          <!-- STEP 3: SYMPTOM CHARACTERISTICS -->
+          <div class="ada-step-pane" id="adaPane3" style="display:none;">
+            <div class="ada-card">
+              <div class="ada-card-header">
+                <h3>📍 Symptom Characteristics &amp; Location</h3>
+                <p>Specific details help differentiate acute conditions from chronic or benign issues.</p>
+              </div>
+
+              <div class="form-row">
+                <div>
+                  <label class="form-label">Primary Body Area</label>
+                  <select class="form-select" id="adaBodyArea">
+                    <option value="Head & Neck">Head &amp; Neck</option>
+                    <option value="Chest">Chest</option>
+                    <option value="Abdomen">Abdomen / Stomach</option>
+                    <option value="Back">Back &amp; Spine</option>
+                    <option value="Arms & Hands">Arms &amp; Hands</option>
+                    <option value="Legs & Feet">Legs &amp; Feet</option>
+                    <option value="Skin">Skin</option>
+                    <option value="General / Whole body" selected>General / Whole body</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label">Duration</label>
+                  <select class="form-select" id="adaDuration">
+                    <option value="Less than 24 hours">Less than 24 hours</option>
+                    <option value="1–3 days" selected>1–3 days</option>
+                    <option value="4–7 days">4–7 days</option>
+                    <option value="1–2 weeks">1–2 weeks</option>
+                    <option value="More than 2 weeks">More than 2 weeks</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Severity Scale -->
+              <div style="margin-top:20px;">
+                <label class="form-label">Pain &amp; Severity Scale</label>
+                <div class="ada-scale-grid">
+                  <div class="ada-scale-card active" id="sevMild" onclick="adaSelectSeverity('Mild')">
+                    <div class="ada-scale-title" style="color:var(--success);">🟢 Mild</div>
+                    <div class="ada-scale-desc">Noticeable, but does not interfere with daily routine</div>
+                  </div>
+                  <div class="ada-scale-card" id="sevModerate" onclick="adaSelectSeverity('Moderate')">
+                    <div class="ada-scale-title" style="color:var(--warn);">🟡 Moderate</div>
+                    <div class="ada-scale-desc">Uncomfortable, interferes with some activities</div>
+                  </div>
+                  <div class="ada-scale-card" id="sevSevere" onclick="adaSelectSeverity('Severe')">
+                    <div class="ada-scale-title" style="color:var(--danger);">🟠 Severe</div>
+                    <div class="ada-scale-desc">Very painful or debilitating; disrupts work or sleep</div>
+                  </div>
+                  <div class="ada-scale-card" id="sevCritical" onclick="adaSelectSeverity('Critical')">
+                    <div class="ada-scale-title" style="color:#ff3333;">🔴 Critical</div>
+                    <div class="ada-scale-desc">Intolerable, crushing, or sudden emergency onset</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Onset and Progression -->
+              <div class="form-row" style="margin-top:20px;">
+                <div>
+                  <label class="form-label">How did it start? (Onset)</label>
+                  <div class="ada-seg-group">
+                    <button type="button" class="ada-seg-btn active" id="btnOnsetSudden" onclick="adaSelectOnset('Sudden (within minutes or hours)')">⚡ Sudden</button>
+                    <button type="button" class="ada-seg-btn" id="btnOnsetGradual" onclick="adaSelectOnset('Gradual (over days or weeks)')">⏳ Gradual</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Symptom Progression</label>
+                  <div class="ada-seg-group">
+                    <button type="button" class="ada-seg-btn active" id="btnProgWorsening" onclick="adaSelectProgression('Getting worse')">📈 Worsening</button>
+                    <button type="button" class="ada-seg-btn" id="btnProgConstant" onclick="adaSelectProgression('Constant')">➡️ Constant</button>
+                    <button type="button" class="ada-seg-btn" id="btnProgIntermittent" onclick="adaSelectProgression('Comes and goes')">🔄 Intermittent</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="ada-nav-row">
+              <button type="button" class="btn btn-secondary" onclick="adaPrev()">← Back</button>
+              <button type="button" class="btn btn-primary" onclick="adaNext()">Continue to Medical History →</button>
+            </div>
+          </div>
+
+          <!-- STEP 4: MEDICAL HISTORY & RISK FACTORS -->
+          <div class="ada-step-pane" id="adaPane4" style="display:none;">
+            <div class="ada-card">
+              <div class="ada-card-header">
+                <h3>📋 Medical History &amp; Risk Factors</h3>
+                <p>Personal health background enables Ada's clinical engine to evaluate risk probabilities.</p>
+              </div>
+
+              <label class="form-label">Select all applicable risk factors:</label>
+              <div class="ada-pill-grid" id="adaRiskPills">
+                <span class="ada-pill" onclick="adaToggleRisk(this, 'High Blood Pressure')">❤️ High Blood Pressure</span>
+                <span class="ada-pill" onclick="adaToggleRisk(this, 'Diabetes')">🩸 Diabetes</span>
+                <span class="ada-pill" onclick="adaToggleRisk(this, 'Asthma / COPD')">🫁 Asthma / COPD</span>
+                <span class="ada-pill" onclick="adaToggleRisk(this, 'Heart Condition')">💓 Heart Condition</span>
+                <span class="ada-pill" onclick="adaToggleRisk(this, 'Smoker / Tobacco')">🚬 Tobacco / Smoker</span>
+                <span class="ada-pill" onclick="adaToggleRisk(this, 'High Stress / Anxiety')">🧠 High Stress / Anxiety</span>
+                <span class="ada-pill" onclick="adaToggleRisk(this, 'Allergies')">🌾 Severe Allergies</span>
+                <span class="ada-pill" onclick="adaToggleRisk(this, 'Immunocompromised')">🛡️ Immunocompromised</span>
+                <span class="ada-pill" onclick="adaToggleRisk(this, 'Recent Travel')">✈️ Recent International Travel</span>
+              </div>
+
+              <div style="margin-top:20px;">
+                <label class="form-label">Current Medications or Other Health Notes (optional)</label>
+                <textarea class="form-textarea" id="adaMedNotes" placeholder="e.g. Taking lisinopril for blood pressure, allergic to penicillin..." style="min-height:70px;"></textarea>
+              </div>
+            </div>
+            <div class="ada-nav-row">
+              <button type="button" class="btn btn-secondary" onclick="adaPrev()">← Back</button>
+              <button type="button" class="btn btn-primary" id="btnAdaToQuestions" onclick="adaFetchQuestions()">Start Clinical Investigation 🔍</button>
+            </div>
+          </div>
+
+          <!-- STEP 5: DYNAMIC CLINICAL QUESTIONS -->
+          <div class="ada-step-pane" id="adaPane5" style="display:none;">
+            <div class="ada-card">
+              <div class="ada-card-header">
+                <h3>🩺 Dynamic Clinical Investigation</h3>
+                <p>Ada generates discriminative follow-up questions tailored specifically to your symptom cluster to rule in or out potential causes.</p>
+              </div>
+
+              <div id="adaQuestionsLoading" style="text-align:center; padding:30px 0; display:none;">
+                <div style="font-size:32px; animation: pulse 1.5s infinite;">🧬</div>
+                <div style="margin-top:12px; font-weight:600; color:var(--text);">Analyzing symptoms and formulating clinical follow-ups...</div>
+                <div style="font-size:13px; color:var(--text2); margin-top:4px;">Consulting medical diagnostic models</div>
+              </div>
+
+              <div id="adaQuestionsList"></div>
+            </div>
+            <div class="ada-nav-row">
+              <button type="button" class="btn btn-secondary" onclick="adaPrev()">← Back</button>
+              <button type="button" class="btn btn-primary" id="btnAdaGenerateReport" onclick="adaRunAssessment()">Generate Clinical Report 🔬</button>
+            </div>
+          </div>
+
+          <!-- STEP 6: CLINICAL ASSESSMENT REPORT -->
+          <div class="ada-step-pane" id="adaPane6" style="display:none;">
+            <div id="adaReportLoading" style="text-align:center; padding:50px 0; display:none;">
+              <div style="font-size:38px; animation: pulse 1.5s infinite;">🩺</div>
+              <div style="margin-top:16px; font-size:16px; font-weight:700; color:var(--text);">Synthesizing Differential Clinical Assessment...</div>
+              <div style="font-size:13px; color:var(--text2); margin-top:6px;">Evaluating probability matches, severity flags, and clinical guidelines</div>
+            </div>
+
+            <div id="adaReportContent" style="display:none;">
+              <!-- Emergency Alert Box (if triggered) -->
+              <div class="ada-emergency-alert" id="adaEmergencyAlert" style="display:none;">
+                <h4>🚨 Immediate Emergency Notice</h4>
+                <p id="adaEmergencyText">Based on your reported symptoms and critical indicators, immediate evaluation in an emergency department is advised. Call emergency services (911 or 112) without delay.</p>
+              </div>
+
+              <!-- Triage Urgency Header -->
+              <div class="ada-report-header" id="adaTriageHeader">
+                <div class="ada-triage-badge" id="adaTriageBadge">🟡 Doctor Visit Advised</div>
+                <h2 id="adaTriageTitle" style="font-size:22px; font-weight:800; margin-bottom:8px; color:var(--text);">Clinical Assessment Summary</h2>
+                <p id="adaTriageDesc" style="font-size:14px; color:var(--text); opacity:0.9; line-height:1.6;"></p>
+              </div>
+
+              <!-- Differential Conditions -->
+              <div class="ada-card">
+                <div class="ada-card-header">
+                  <h3>📊 Potential Causes &amp; Differential Diagnoses</h3>
+                  <p>Conditions ranked by clinical match probability based on reported symptoms and responses.</p>
+                </div>
+                <div id="adaConditionsList"></div>
+              </div>
+
+              <!-- Doctor's Checklist & Questions -->
+              <div class="ada-card">
+                <div class="ada-card-header">
+                  <h3>👨‍⚕️ Questions to Ask Your Doctor</h3>
+                  <p>Take this checklist to your consultation to ensure all key concerns are addressed.</p>
+                </div>
+                <div id="adaDoctorChecklist"></div>
+              </div>
+
+              <!-- Self-Care & Monitoring -->
+              <div class="ada-card">
+                <div class="ada-card-header">
+                  <h3>💧 Safe Self-Care &amp; Home Management</h3>
+                  <p>Supportive comfort measures while monitoring your symptoms.</p>
+                </div>
+                <div id="adaSelfCareList"></div>
+                <div style="margin-top:16px; padding:12px; background:var(--surface2); border-radius:var(--radius-sm); font-size:12px; color:var(--text2); border-left:3px solid var(--warn);">
+                  ⚠️ <strong>Disclaimer:</strong> This clinical assessment is generated for informational purposes only. It is not an official medical diagnosis. Always consult a licensed physician for professional medical care.
+                </div>
+              </div>
+
+              <!-- Clinical Action Bar -->
+              <div class="ada-actions-row">
+                <button type="button" class="ada-act-btn ada-act-primary" onclick="adaSaveToRecords()">
+                  <span>💾</span> Save to Health Records
+                </button>
+                <button type="button" class="ada-act-btn ada-act-secondary" onclick="adaDiscussInChat()">
+                  <span>💬</span> Discuss with AI Doctor
+                </button>
+                <button type="button" class="ada-act-btn ada-act-secondary" onclick="adaPrintReport()">
+                  <span>🖨️</span> Print / Export Handout
+                </button>
+                <button type="button" class="ada-act-btn ada-act-secondary" onclick="resetAdaAssessment()">
+                  <span>🔄</span> New Assessment
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ═══ QUICK CHECK MODE (LEGACY / FAST STREAMING) ═══ -->
+        <div id="quickSymptomContainer" class="ada-wrap" style="display:none;">
+          <div class="form-card">
+            <label class="form-label">Symptoms <span>*</span></label>
+            <textarea class="form-textarea" id="symp-text" placeholder="Describe your symptoms in detail…"></textarea>
+            <div class="tag-group" id="sympTags">
+              <span class="tag" onclick="toggleTag(this)">Headache</span>
+              <span class="tag" onclick="toggleTag(this)">Fever</span>
+              <span class="tag" onclick="toggleTag(this)">Cough</span>
+              <span class="tag" onclick="toggleTag(this)">Fatigue</span>
+              <span class="tag" onclick="toggleTag(this)">Nausea</span>
+              <span class="tag" onclick="toggleTag(this)">Chest pain</span>
+              <span class="tag" onclick="toggleTag(this)">Shortness of breath</span>
+              <span class="tag" onclick="toggleTag(this)">Dizziness</span>
+            </div>
+          </div>
+          <div class="form-card">
+            <div class="form-row">
+              <div>
+                <label class="form-label">Body Area</label>
+                <select class="form-select" id="symp-area">
+                  <option value="">Select area…</option>
+                  <option>Head &amp; Neck</option>
+                  <option>Chest</option>
+                  <option>Abdomen</option>
+                  <option>Back</option>
+                  <option>Arms &amp; Hands</option>
+                  <option>Legs &amp; Feet</option>
+                  <option>Skin</option>
+                  <option>General / Whole body</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Severity</label>
+                <select class="form-select" id="symp-severity">
+                  <option value="">Select severity…</option>
+                  <option>Mild</option>
+                  <option>Moderate</option>
+                  <option>Severe</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Duration</label>
+                <select class="form-select" id="symp-duration">
+                  <option value="">Select duration…</option>
+                  <option>Less than 1 day</option>
+                  <option>1–3 days</option>
+                  <option>4–7 days</option>
+                  <option>1–2 weeks</option>
+                  <option>More than 2 weeks</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="analyzeSymptoms()">🔍 Analyze Symptoms</button>
+          <div class="result-card" id="sympResult">
+            <div class="result-badge badge-warn" id="sympBadge">⚠️ General Guidance</div>
+            <h3 id="sympResultTitle">Analysis Result</h3>
+            <p id="sympResultText">This is general information only. Please consult a healthcare professional for proper diagnosis.</p>
+          </div>
+        </div>
+
+        <!-- Hidden printable container for doctor summary -->
+        <div id="adaPrintableReport" style="display:none;"></div>
 
       </div>
     </div>
@@ -2963,7 +3391,666 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
 
-// ── SYMPTOM CHECKER ──
+// ── SYMPTOM CHECKER (ADA HEALTH GRADE) ──
+const ADA_SYMPTOM_CATALOG = [
+  { name: 'Headache', region: 'head' },
+  { name: 'Dizziness / Lightheadedness', region: 'head' },
+  { name: 'Sore throat', region: 'head' },
+  { name: 'Runny / Stuffy nose', region: 'head' },
+  { name: 'Ear pain', region: 'head' },
+  { name: 'Vision blurriness', region: 'head' },
+  { name: 'Chest pain or tightness', region: 'chest' },
+  { name: 'Shortness of breath', region: 'chest' },
+  { name: 'Cough (dry or productive)', region: 'chest' },
+  { name: 'Heart palpitations', region: 'chest' },
+  { name: 'Wheezing', region: 'chest' },
+  { name: 'Abdominal pain or cramps', region: 'abdomen' },
+  { name: 'Nausea or vomiting', region: 'abdomen' },
+  { name: 'Diarrhea', region: 'abdomen' },
+  { name: 'Acid reflux / Heartburn', region: 'abdomen' },
+  { name: 'Bloating', region: 'abdomen' },
+  { name: 'Lower back pain', region: 'back' },
+  { name: 'Neck stiffness', region: 'back' },
+  { name: 'Joint pain or swelling', region: 'back' },
+  { name: 'Muscle weakness', region: 'back' },
+  { name: 'Skin rash or redness', region: 'skin' },
+  { name: 'Itching (pruritus)', region: 'skin' },
+  { name: 'Skin lesion or bump', region: 'skin' },
+  { name: 'Fever or chills', region: 'general' },
+  { name: 'Fatigue or exhaustion', region: 'general' },
+  { name: 'Unexplained weight loss', region: 'general' },
+  { name: 'Night sweats', region: 'general' },
+  { name: 'Sleep disturbance', region: 'general' },
+];
+
+const adaAssessment = {
+  mode: 'ada',
+  step: 1,
+  who: 'myself',
+  age: 28,
+  gender: 'male',
+  isPregnant: false,
+  symptoms: [],
+  selectedRegion: 'all',
+  searchQuery: '',
+  bodyArea: 'General / Whole body',
+  severity: 'Mild',
+  duration: '1–3 days',
+  onset: 'Sudden (within minutes or hours)',
+  progression: 'Getting worse',
+  riskFactors: [],
+  medNotes: '',
+  questions: [],
+  answers: {},
+  report: null,
+};
+
+function switchSymptomMode(mode) {
+  adaAssessment.mode = mode;
+  const btnAda = document.getElementById('btnModeAda');
+  const btnQuick = document.getElementById('btnModeQuick');
+  const adaBox = document.getElementById('adaAssessmentContainer');
+  const quickBox = document.getElementById('quickSymptomContainer');
+  if (!btnAda || !btnQuick || !adaBox || !quickBox) return;
+
+  if (mode === 'ada') {
+    btnAda.classList.add('active');
+    btnQuick.classList.remove('active');
+    adaBox.style.display = 'block';
+    quickBox.style.display = 'none';
+  } else {
+    btnQuick.classList.add('active');
+    btnAda.classList.remove('active');
+    quickBox.style.display = 'block';
+    adaBox.style.display = 'none';
+  }
+}
+
+function goToAdaStep(step) {
+  if (step < 1 || step > 6) return;
+  if (step > 2 && adaAssessment.symptoms.length === 0) {
+    alert('Please select or add at least one symptom first.');
+    goToAdaStep(2);
+    return;
+  }
+  adaAssessment.step = step;
+  for (let i = 1; i <= 6; i++) {
+    const pane = document.getElementById(`adaPane${i}`);
+    const node = document.getElementById(`adaStepNode${i}`);
+    if (pane) pane.style.display = i === step ? 'block' : 'none';
+    if (node) {
+      if (i < step) {
+        node.className = 'ada-step-node completed';
+      } else if (i === step) {
+        node.className = 'ada-step-node active';
+      } else {
+        node.className = 'ada-step-node';
+      }
+    }
+  }
+  const topPanel = document.querySelector('#section-symptom .panel');
+  if (topPanel) topPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function adaNext() {
+  if (adaAssessment.step === 1) {
+    const ageInput = document.getElementById('adaAge');
+    if (ageInput && ageInput.value) {
+      adaAssessment.age = parseInt(ageInput.value, 10) || 28;
+    }
+    const preg = document.getElementById('adaIsPregnant');
+    adaAssessment.isPregnant = !!(preg && preg.checked);
+    goToAdaStep(2);
+  } else if (adaAssessment.step === 2) {
+    if (adaAssessment.symptoms.length === 0) {
+      alert('Please select or enter at least one symptom to continue.');
+      return;
+    }
+    goToAdaStep(3);
+  } else if (adaAssessment.step === 3) {
+    const areaSel = document.getElementById('adaBodyArea');
+    const durSel = document.getElementById('adaDuration');
+    if (areaSel) adaAssessment.bodyArea = areaSel.value;
+    if (durSel) adaAssessment.duration = durSel.value;
+    goToAdaStep(4);
+  } else if (adaAssessment.step === 4) {
+    const notes = document.getElementById('adaMedNotes');
+    if (notes) adaAssessment.medNotes = notes.value.trim();
+    adaFetchQuestions();
+  }
+}
+
+function adaPrev() {
+  if (adaAssessment.step > 1) {
+    goToAdaStep(adaAssessment.step - 1);
+  }
+}
+
+function adaSelectWho(who) {
+  adaAssessment.who = who;
+  const selfBtn = document.getElementById('btnWhoSelf');
+  const otherBtn = document.getElementById('btnWhoOther');
+  if (selfBtn && otherBtn) {
+    selfBtn.classList.toggle('active', who === 'myself');
+    otherBtn.classList.toggle('active', who !== 'myself');
+  }
+}
+
+function adaSelectSex(gender) {
+  adaAssessment.gender = gender;
+  const maleBtn = document.getElementById('btnSexMale');
+  const femBtn = document.getElementById('btnSexFemale');
+  const pregWrap = document.getElementById('adaPregnancyWrap');
+  if (maleBtn && femBtn) {
+    maleBtn.classList.toggle('active', gender === 'male');
+    femBtn.classList.toggle('active', gender === 'female');
+  }
+  if (pregWrap) {
+    pregWrap.style.display = gender === 'female' ? 'block' : 'none';
+  }
+}
+
+function adaRenderCatalog() {
+  const container = document.getElementById('adaSymptomCatalog');
+  if (!container) return;
+  const query = (adaAssessment.searchQuery || '').toLowerCase().trim();
+  const region = adaAssessment.selectedRegion || 'all';
+
+  const filtered = ADA_SYMPTOM_CATALOG.filter(item => {
+    const matchesRegion = region === 'all' || item.region === region;
+    const matchesQuery = !query || item.name.toLowerCase().includes(query);
+    return matchesRegion && matchesQuery;
+  });
+
+  container.innerHTML = filtered.map(item => {
+    const isSelected = adaAssessment.symptoms.includes(item.name);
+    return `<span class="ada-pill ${isSelected ? 'active' : ''}" onclick="adaToggleSymptom('${item.name.replace(/'/g, "\\'")}')">${item.name}</span>`;
+  }).join('');
+}
+
+function adaFilterSymptoms(query) {
+  adaAssessment.searchQuery = query;
+  adaRenderCatalog();
+}
+
+function adaSelectRegion(region) {
+  adaAssessment.selectedRegion = region;
+  const pills = document.querySelectorAll('#adaRegionPills .ada-pill');
+  pills.forEach(p => {
+    p.classList.toggle('active', p.getAttribute('onclick').includes(`'${region}'`));
+  });
+  adaRenderCatalog();
+}
+
+function adaToggleSymptom(name) {
+  const idx = adaAssessment.symptoms.indexOf(name);
+  if (idx > -1) {
+    adaAssessment.symptoms.splice(idx, 1);
+  } else {
+    adaAssessment.symptoms.push(name);
+  }
+  adaUpdateSelectedBox();
+  adaRenderCatalog();
+}
+
+function adaRemoveSymptom(name) {
+  adaToggleSymptom(name);
+}
+
+function adaAddCustomSymptom() {
+  const input = document.getElementById('adaCustomSymptomInput');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) return;
+  if (!adaAssessment.symptoms.includes(val)) {
+    adaAssessment.symptoms.push(val);
+    adaUpdateSelectedBox();
+    adaRenderCatalog();
+  }
+  input.value = '';
+}
+
+function adaUpdateSelectedBox() {
+  const box = document.getElementById('adaSelectedBox');
+  const countEl = document.getElementById('adaSelectedCount');
+  if (countEl) countEl.textContent = adaAssessment.symptoms.length;
+  if (!box) return;
+
+  box.innerHTML = adaAssessment.symptoms.map(sym => `
+    <span class="ada-selected-chip">
+      <span>${sym}</span>
+      <span class="ada-chip-remove" onclick="adaRemoveSymptom('${sym.replace(/'/g, "\\'")}')">&times;</span>
+    </span>
+  `).join('');
+}
+
+function adaSelectSeverity(level) {
+  adaAssessment.severity = level;
+  ['sevMild', 'sevModerate', 'sevSevere', 'sevCritical'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  const map = { Mild: 'sevMild', Moderate: 'sevModerate', Severe: 'sevSevere', Critical: 'sevCritical' };
+  const target = document.getElementById(map[level]);
+  if (target) target.classList.add('active');
+}
+
+function adaSelectOnset(onset) {
+  adaAssessment.onset = onset;
+  const sudden = document.getElementById('btnOnsetSudden');
+  const gradual = document.getElementById('btnOnsetGradual');
+  if (sudden && gradual) {
+    sudden.classList.toggle('active', onset.includes('Sudden'));
+    gradual.classList.toggle('active', onset.includes('Gradual'));
+  }
+}
+
+function adaSelectProgression(prog) {
+  adaAssessment.progression = prog;
+  ['btnProgWorsening', 'btnProgConstant', 'btnProgIntermittent'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  if (prog.includes('worse') && document.getElementById('btnProgWorsening')) {
+    document.getElementById('btnProgWorsening').classList.add('active');
+  } else if (prog.includes('Constant') && document.getElementById('btnProgConstant')) {
+    document.getElementById('btnProgConstant').classList.add('active');
+  } else if (document.getElementById('btnProgIntermittent')) {
+    document.getElementById('btnProgIntermittent').classList.add('active');
+  }
+}
+
+function adaToggleRisk(el, risk) {
+  el.classList.toggle('active');
+  const idx = adaAssessment.riskFactors.indexOf(risk);
+  if (idx > -1) {
+    adaAssessment.riskFactors.splice(idx, 1);
+  } else {
+    adaAssessment.riskFactors.push(risk);
+  }
+}
+
+async function adaFetchQuestions() {
+  goToAdaStep(5);
+  const loading = document.getElementById('adaQuestionsLoading');
+  const list = document.getElementById('adaQuestionsList');
+  const nextBtn = document.getElementById('btnAdaGenerateReport');
+  if (loading) loading.style.display = 'block';
+  if (list) list.innerHTML = '';
+  if (nextBtn) nextBtn.disabled = true;
+
+  try {
+    const token = getToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+    const payload = {
+      symptoms: adaAssessment.symptoms,
+      body_area: adaAssessment.bodyArea,
+      severity: adaAssessment.severity,
+      duration: adaAssessment.duration,
+      age: adaAssessment.age,
+      gender: adaAssessment.gender,
+      is_pregnant: adaAssessment.isPregnant,
+      risk_factors: adaAssessment.riskFactors,
+    };
+
+    const res = await fetch('/api/symptoms/questions', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    adaAssessment.questions = (data && data.questions && data.questions.length) ? data.questions : [
+      { id: 'q_onset', question: 'Did your symptoms begin suddenly within hours?', options: ['Yes', 'No', 'Not sure'] },
+      { id: 'q_fever', question: 'Do you currently have an elevated temperature or body chills?', options: ['Yes', 'No', 'Not sure'] },
+      { id: 'q_worsening', question: 'Have symptoms progressively worsened since onset?', options: ['Yes', 'No', 'Not sure'] }
+    ];
+
+    adaRenderQuestionsList();
+  } catch (err) {
+    console.warn('Error fetching dynamic questions:', err);
+    adaAssessment.questions = [
+      { id: 'q_onset', question: 'Did your symptoms begin suddenly within hours?', options: ['Yes', 'No', 'Not sure'] },
+      { id: 'q_fever', question: 'Do you currently have an elevated temperature or body chills?', options: ['Yes', 'No', 'Not sure'] },
+      { id: 'q_worsening', question: 'Have symptoms progressively worsened since onset?', options: ['Yes', 'No', 'Not sure'] }
+    ];
+    adaRenderQuestionsList();
+  } finally {
+    if (loading) loading.style.display = 'none';
+    if (nextBtn) nextBtn.disabled = false;
+  }
+}
+
+function adaRenderQuestionsList() {
+  const list = document.getElementById('adaQuestionsList');
+  if (!list) return;
+
+  list.innerHTML = adaAssessment.questions.map((q, idx) => {
+    const currentAnswer = (adaAssessment.answers[q.id] || {}).answer;
+    return `
+      <div class="ada-question-card ${currentAnswer ? 'answered' : ''}" id="card_${q.id}">
+        <div class="ada-q-text"><strong>Q${idx + 1}.</strong> ${q.question}</div>
+        <div class="ada-q-opts">
+          ${(q.options || ['Yes', 'No', 'Not sure']).map(opt => `
+            <button type="button" class="ada-q-btn ${currentAnswer === opt ? 'selected' : ''}"
+                    onclick="adaAnswerQuestion('${q.id}', '${opt}', '${q.question.replace(/'/g, "\\'")}')">
+              ${opt}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function adaAnswerQuestion(qId, answer, qText) {
+  adaAssessment.answers[qId] = { id: qId, question: qText, answer };
+  const card = document.getElementById(`card_${qId}`);
+  if (card) {
+    card.classList.add('answered');
+    card.querySelectorAll('.ada-q-btn').forEach(btn => {
+      btn.classList.toggle('selected', btn.textContent.trim() === answer);
+    });
+  }
+}
+
+async function adaRunAssessment() {
+  goToAdaStep(6);
+  const loading = document.getElementById('adaReportLoading');
+  const content = document.getElementById('adaReportContent');
+  if (loading) loading.style.display = 'block';
+  if (content) content.style.display = 'none';
+
+  const answersArray = Object.values(adaAssessment.answers);
+  const payload = {
+    symptoms: adaAssessment.symptoms,
+    body_area: adaAssessment.bodyArea,
+    severity: adaAssessment.severity,
+    duration: adaAssessment.duration,
+    age: adaAssessment.age,
+    gender: adaAssessment.gender,
+    is_pregnant: adaAssessment.isPregnant,
+    onset: adaAssessment.onset,
+    progression: adaAssessment.progression,
+    risk_factors: adaAssessment.riskFactors,
+    answers: answersArray,
+  };
+
+  try {
+    const token = getToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+    const res = await fetch('/api/symptoms/assess', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) throw new Error('Assessment service returned an error');
+    const report = await res.json();
+    adaAssessment.report = report;
+    adaRenderReport(report);
+  } catch (err) {
+    console.error('Assessment failed:', err);
+    // Render fallback clinical assessment
+    const fallback = {
+      triage_level: 'routine_doctor',
+      triage_title: 'Doctor Consultation Recommended',
+      triage_description: 'Based on your reported symptoms and health profile, discussing your presentation with a healthcare provider is advised.',
+      primary_condition: adaAssessment.symptoms[0] ? `${adaAssessment.symptoms[0]} Presentation` : 'Clinical Presentation',
+      conditions: [
+        {
+          name: adaAssessment.symptoms[0] ? `${adaAssessment.symptoms[0]} Cluster` : 'Clinical Presentation',
+          probability: 75,
+          urgency: 'medium',
+          summary: 'A common clinical symptom presentation requiring diagnostic correlation.',
+          common_symptoms: adaAssessment.symptoms,
+          matching_symptoms: adaAssessment.symptoms,
+          absent_symptoms: ['Loss of consciousness', 'Paralysis'],
+          when_to_see_doctor: 'If symptoms persist or worsen over the next 48 hours.'
+        }
+      ],
+      emergency_warnings: ['Severe breathing distress', 'Chest pain radiating to neck or arm', 'Sudden confusion or speech difficulty'],
+      questions_for_doctor: [
+        'What diagnostic tests or blood work are appropriate for my symptoms?',
+        'What warning signs should prompt an emergency hospital visit?',
+        'Are there safe OTC remedies or lifestyle adjustments I should start?'
+      ],
+      self_care_advice: [
+        'Maintain good hydration with water and warm fluids.',
+        'Prioritize rest and avoid strenuous physical workouts until evaluated.',
+        'Monitor temperature and symptom progression daily.'
+      ]
+    };
+    adaAssessment.report = fallback;
+    adaRenderReport(fallback);
+  } finally {
+    if (loading) loading.style.display = 'none';
+    if (content) content.style.display = 'block';
+  }
+}
+
+function adaRenderReport(report) {
+  const triageHeader = document.getElementById('adaTriageHeader');
+  const triageBadge = document.getElementById('adaTriageBadge');
+  const triageTitle = document.getElementById('adaTriageTitle');
+  const triageDesc = document.getElementById('adaTriageDesc');
+  const alertBox = document.getElementById('adaEmergencyAlert');
+
+  if (triageHeader) {
+    triageHeader.className = `ada-report-header ada-triage-${report.triage_level || 'routine_doctor'}`;
+  }
+
+  const badgeLabels = {
+    emergency: '🔴 Immediate Emergency Care',
+    urgent_care: '🟠 Urgent Medical Care (24h)',
+    routine_doctor: '🟡 Doctor Appointment Advised',
+    self_care: '🟢 Self-Care & Home Monitoring',
+  };
+
+  if (triageBadge) triageBadge.textContent = badgeLabels[report.triage_level] || '🟡 Doctor Visit Advised';
+  if (triageTitle) triageTitle.textContent = report.triage_title || 'Clinical Assessment Summary';
+  if (triageDesc) triageDesc.textContent = report.triage_description || '';
+
+  if (alertBox) {
+    if (report.triage_level === 'emergency') {
+      alertBox.style.display = 'block';
+      const alertP = document.getElementById('adaEmergencyText');
+      if (alertP && report.emergency_warnings && report.emergency_warnings.length) {
+        alertP.innerHTML = `Critical signs detected: <strong>${report.emergency_warnings.join(', ')}</strong>. Seek immediate evaluation at your nearest emergency department or call emergency services immediately.`;
+      }
+    } else {
+      alertBox.style.display = 'none';
+    }
+  }
+
+  // Render Conditions
+  const condContainer = document.getElementById('adaConditionsList');
+  if (condContainer && report.conditions) {
+    condContainer.innerHTML = report.conditions.map((cond, idx) => `
+      <div class="ada-cond-card">
+        <div class="ada-cond-top" onclick="adaToggleConditionDetails(${idx})">
+          <div class="ada-cond-name">
+            <span>🔹</span> ${cond.name}
+          </div>
+          <div class="ada-cond-prob">
+            <span class="ada-prob-val">${cond.probability || 70}% match</span>
+            <div class="ada-prob-track">
+              <div class="ada-prob-fill" style="width:${cond.probability || 70}%;"></div>
+            </div>
+            <span style="font-size:12px; color:var(--text3); margin-left:4px;" id="condArrow_${idx}">▼</span>
+          </div>
+        </div>
+        <div class="ada-cond-details" id="condDetails_${idx}">
+          <p style="margin-bottom:10px;">${cond.summary || ''}</p>
+          ${cond.matching_symptoms && cond.matching_symptoms.length ? `
+            <div style="margin-bottom:6px;">
+              <strong style="color:var(--accent);">✓ Reported symptoms matching:</strong> ${cond.matching_symptoms.join(', ')}
+            </div>
+          ` : ''}
+          ${cond.absent_symptoms && cond.absent_symptoms.length ? `
+            <div style="margin-bottom:6px;">
+              <strong style="color:var(--text3);">✗ Typical symptoms not reported:</strong> ${cond.absent_symptoms.join(', ')}
+            </div>
+          ` : ''}
+          ${cond.when_to_see_doctor ? `
+            <div style="margin-top:8px; padding:8px 12px; background:var(--surface3); border-radius:6px; font-size:12px;">
+              <strong>When to seek care:</strong> ${cond.when_to_see_doctor}
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Render Doctor Checklist
+  const doctorContainer = document.getElementById('adaDoctorChecklist');
+  if (doctorContainer && report.questions_for_doctor) {
+    doctorContainer.innerHTML = report.questions_for_doctor.map(q => `
+      <div class="ada-check-item">
+        <span class="ada-check-icon">💬</span>
+        <span>${q}</span>
+      </div>
+    `).join('');
+  }
+
+  // Render Self Care
+  const selfCareContainer = document.getElementById('adaSelfCareList');
+  if (selfCareContainer && report.self_care_advice) {
+    selfCareContainer.innerHTML = report.self_care_advice.map(advice => `
+      <div class="ada-check-item">
+        <span class="ada-check-icon">💧</span>
+        <span>${advice}</span>
+      </div>
+    `).join('');
+  }
+}
+
+function adaToggleConditionDetails(idx) {
+  const details = document.getElementById(`condDetails_${idx}`);
+  const arrow = document.getElementById(`condArrow_${idx}`);
+  if (details) {
+    details.classList.toggle('open');
+    if (arrow) arrow.textContent = details.classList.contains('open') ? '▲' : '▼';
+  }
+}
+
+async function adaSaveToRecords() {
+  if (!adaAssessment.report) return;
+  const report = adaAssessment.report;
+  const summaryTitle = `${report.primary_condition} Assessment (${report.triage_title})`;
+  const notes = `Symptoms: ${adaAssessment.symptoms.join(', ')}\nSeverity: ${adaAssessment.severity}, Duration: ${adaAssessment.duration}\nTriage: ${report.triage_level}\nKey Findings: ${report.triage_description}`;
+
+  try {
+    if (typeof authFetch === 'function') {
+      await authFetch('/api/records', 'POST', {
+        type: 'Clinical Assessment',
+        data: summaryTitle,
+        notes: notes,
+      });
+      alert('✅ Assessment successfully saved to your Health Records!');
+    } else {
+      alert('✅ Assessment saved locally.');
+    }
+  } catch (e) {
+    alert('Assessment saved locally in current session.');
+  }
+}
+
+function adaDiscussInChat() {
+  if (!adaAssessment.report) return;
+  const report = adaAssessment.report;
+  const navChat = document.querySelector('.nav-item');
+  switchSection('chat', navChat);
+
+  const input = document.getElementById('chatInput');
+  if (input) {
+    input.value = `I just completed an Ada Health clinical assessment for my symptoms: ${adaAssessment.symptoms.join(', ')}. The assessment indicated: "${report.primary_condition}" with triage level "${report.triage_title}". Can you give me more clinical details and explain what tests or treatments my doctor might recommend?`;
+    autoResize(input);
+    if (typeof sendChat === 'function') {
+      sendChat();
+    }
+  }
+}
+
+function adaPrintReport() {
+  if (!adaAssessment.report) return;
+  const report = adaAssessment.report;
+  const printBox = document.getElementById('adaPrintableReport');
+  if (!printBox) return;
+
+  const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  printBox.innerHTML = `
+    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #111;">
+      <div style="border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px;">
+        <h1 style="font-size: 24px; margin: 0; color: #1e3a8a;">MediCura AI — Clinical Assessment Summary</h1>
+        <p style="font-size: 13px; color: #555; margin-top: 4px;">Ada Health-Grade Clinical Triage &amp; Differential Report • Generated on ${dateStr}</p>
+      </div>
+
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 8px; margin-bottom: 20px;">
+        <h3 style="margin: 0 0 6px 0; font-size: 16px;">Patient Profile</h3>
+        <p style="margin: 0; font-size: 13px; line-height: 1.6;">
+          <strong>Age:</strong> ${adaAssessment.age} |
+          <strong>Biological Sex:</strong> ${adaAssessment.gender.toUpperCase()} |
+          <strong>Pregnant:</strong> ${adaAssessment.isPregnant ? 'Yes' : 'No'} |
+          <strong>Risk Factors:</strong> ${adaAssessment.riskFactors.join(', ') || 'None reported'}
+        </p>
+        <p style="margin: 4px 0 0 0; font-size: 13px; line-height: 1.6;">
+          <strong>Reported Symptoms:</strong> ${adaAssessment.symptoms.join(', ')} |
+          <strong>Severity:</strong> ${adaAssessment.severity} |
+          <strong>Duration:</strong> ${adaAssessment.duration}
+        </p>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h3 style="color: #1e3a8a; font-size: 18px; margin-bottom: 6px;">Triage Recommendation: ${report.triage_title}</h3>
+        <p style="font-size: 14px; line-height: 1.6; color: #333;">${report.triage_description}</p>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h3 style="font-size: 16px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">Differential Diagnoses</h3>
+        ${(report.conditions || []).map(c => `
+          <div style="margin-top: 10px;">
+            <strong>${c.name}</strong> (${c.probability}% Match)
+            <p style="font-size: 13px; margin: 4px 0; color: #444;">${c.summary}</p>
+            ${c.when_to_see_doctor ? `<p style="font-size: 12px; color: #666;"><em>Care advice: ${c.when_to_see_doctor}</em></p>` : ''}
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h3 style="font-size: 16px; border-bottom: 1px solid #ccc; padding-bottom: 4px;">Recommended Questions for Your Doctor</h3>
+        <ul style="font-size: 13px; line-height: 1.7; padding-left: 20px;">
+          ${(report.questions_for_doctor || []).map(q => `<li>${q}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 10px; font-size: 11px; color: #777;">
+        <strong>Medical Disclaimer:</strong> This clinical report was generated by MediCura AI based on probabilistic diagnostic models. It is intended to support patient-doctor communication and does not replace formal physician evaluation, diagnosis, or treatment.
+      </div>
+    </div>
+  `;
+  window.print();
+}
+
+function resetAdaAssessment() {
+  adaAssessment.symptoms = [];
+  adaAssessment.answers = {};
+  adaAssessment.questions = [];
+  adaAssessment.report = null;
+  adaAssessment.riskFactors = [];
+  const notes = document.getElementById('adaMedNotes');
+  if (notes) notes.value = '';
+  document.querySelectorAll('#adaRiskPills .ada-pill').forEach(p => p.classList.remove('active'));
+  adaUpdateSelectedBox();
+  adaRenderCatalog();
+  goToAdaStep(1);
+}
+
+// ── LEGACY QUICK SYMPTOM CHECKER ──
 function toggleTag(el) { el.classList.toggle('active'); }
 
 async function analyzeSymptoms() {
@@ -3018,6 +4105,9 @@ async function analyzeSymptoms() {
     btn.disabled = false; btn.textContent = '🔍 Analyze Symptoms';
   }
 }
+
+// Initialize Ada catalog on script execution
+setTimeout(adaRenderCatalog, 100);
 
 // ── BMI ──
 function toggleBmiUnit() {

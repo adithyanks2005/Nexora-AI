@@ -27,7 +27,14 @@ from fastapi.staticfiles import StaticFiles
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from backend.ai import call_ai, stream_ai, SYSTEM_PROMPT
+from backend.ai import (
+    call_ai,
+    stream_ai,
+    SYSTEM_PROMPT,
+    generate_clinical_questions,
+    generate_clinical_assessment,
+    _fallback_clinical_assessment,
+)
 from backend.auth import (
     create_jwt,
     get_current_user,
@@ -63,6 +70,7 @@ from backend.models import (
     BMIRequest, CalorieRequest, ChatRequest, CrawlRequest, CrawlResponse,
     GoogleAuthRequest, HealthRecordIn, IdealWeightRequest, ReminderIn,
     SessionCreate, SupabaseAuthRequest, SymptomRequest, WaterRequest,
+    ClinicalQuestionsRequest, ClinicalAssessmentRequest, ClinicalReportResponse,
 )
 
 
@@ -452,7 +460,20 @@ async def analyze_symptoms(
         "Provide: 1) Possible common causes, 2) Self-care tips, "
         "3) Warning signs that need urgent care. Under 250 words. Be reassuring but honest."
     )
-    reply = await call_ai([{"role": "user", "content": prompt}])
+    try:
+        reply = await call_ai([{"role": "user", "content": prompt}])
+    except Exception as exc:
+        # Resilient clinical fallback if AI service times out or errors
+        assessment = _fallback_clinical_assessment(req.model_dump())
+        conds = ", ".join(c["name"] for c in assessment.get("conditions", []))
+        reply = (
+            f"**Clinical Analysis ({req.body_area or 'General'}):**\n\n"
+            f"- **Possible Causes**: {conds}\n"
+            f"- **Triage Assessment**: {assessment.get('triage_title', 'Doctor Consultation')}\n"
+            f"- **Self-Care Tips**: {'; '.join(assessment.get('self_care_advice', [])[:2])}\n"
+            f"- **Warning Signs**: {'; '.join(assessment.get('emergency_warnings', [])[:2])}\n\n"
+            f"> ⚠️ *Always consult a certified healthcare professional for formal diagnosis.*"
+        )
     return {"reply": reply}
 
 
@@ -477,6 +498,26 @@ async def analyze_symptoms_stream(
             yield chunk
 
     return StreamingResponse(generate(), media_type="text/event-stream")
+
+
+@app.post("/api/symptoms/questions")
+async def get_clinical_questions(
+    req: ClinicalQuestionsRequest,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, Any]:
+    """Ada Health-style dynamic clinical questioning based on intake symptoms and demographics."""
+    questions = await generate_clinical_questions(req.model_dump())
+    return {"questions": questions}
+
+
+@app.post("/api/symptoms/assess")
+async def perform_clinical_assessment(
+    req: ClinicalAssessmentRequest,
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, Any]:
+    """Ada Health-grade comprehensive clinical triage and differential diagnosis assessment."""
+    report = await generate_clinical_assessment(req.model_dump())
+    return report
 
 
 # ── Calculators (public — no auth needed) ─────────────────────────────────────

@@ -59,10 +59,76 @@ class IdealWeightRequest(BaseModel):
 
 
 class SymptomRequest(BaseModel):
-    symptoms: list[str] = Field(min_length=1, max_length=20)
+    symptoms: list[str] = Field(min_length=1, max_length=25)
     body_area: str = Field(default="", max_length=200)
     severity: str = Field(default="", max_length=100)
     duration: str = Field(default="", max_length=100)
+    age: int | None = Field(default=None, ge=0, le=125)
+    gender: str | None = Field(default=None, max_length=20)
+    is_pregnant: bool = False
+    onset: str = Field(default="", max_length=100)
+    progression: str = Field(default="", max_length=100)
+    risk_factors: list[str] = Field(default_factory=list)
+    answers: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class FollowupQuestion(BaseModel):
+    id: str
+    question: str
+    options: list[str] = Field(default_factory=lambda: ["Yes", "No", "Not sure"])
+    category: str = "general"
+
+
+class ClinicalQuestionsRequest(BaseModel):
+    symptoms: list[str] = Field(min_length=1, max_length=25)
+    body_area: str = Field(default="", max_length=200)
+    severity: str = Field(default="", max_length=100)
+    duration: str = Field(default="", max_length=100)
+    age: int | None = Field(default=None, ge=0, le=125)
+    gender: str | None = Field(default=None, max_length=20)
+    is_pregnant: bool = False
+    risk_factors: list[str] = Field(default_factory=list)
+
+
+class ClinicalAssessmentRequest(BaseModel):
+    symptoms: list[str] = Field(min_length=1, max_length=25)
+    body_area: str = Field(default="", max_length=200)
+    severity: str = Field(default="", max_length=100)
+    duration: str = Field(default="", max_length=100)
+    age: int | None = Field(default=None, ge=0, le=125)
+    gender: str | None = Field(default=None, max_length=20)
+    is_pregnant: bool = False
+    onset: str = Field(default="", max_length=100)
+    progression: str = Field(default="", max_length=100)
+    risk_factors: list[str] = Field(default_factory=list)
+    answers: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class AssessmentCondition(BaseModel):
+    name: str
+    probability: int = Field(ge=0, le=100)
+    urgency: Literal["low", "medium", "high", "critical"] = "medium"
+    summary: str
+    common_symptoms: list[str] = Field(default_factory=list)
+    matching_symptoms: list[str] = Field(default_factory=list)
+    absent_symptoms: list[str] = Field(default_factory=list)
+    when_to_see_doctor: str = ""
+
+
+class ClinicalReportResponse(BaseModel):
+    triage_level: Literal["emergency", "urgent_care", "routine_doctor", "self_care"]
+    triage_title: str
+    triage_description: str
+    primary_condition: str
+    conditions: list[AssessmentCondition] = Field(default_factory=list)
+    emergency_warnings: list[str] = Field(default_factory=list)
+    questions_for_doctor: list[str] = Field(default_factory=list)
+    self_care_advice: list[str] = Field(default_factory=list)
+    disclaimer: str = (
+        "This assessment is powered by clinical AI models for informational purposes only. "
+        "It is not a medical diagnosis or treatment plan. If you are experiencing a life-threatening "
+        "emergency, call emergency services immediately."
+    )
 
 
 class GoogleAuthRequest(BaseModel):
